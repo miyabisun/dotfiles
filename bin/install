@@ -5,6 +5,7 @@ cd "$script_dir/../"
 for f in .??*
 do
   [ "$f" == ".git" ] && continue
+  [ "$f" == ".ssh" ] && continue
   [ "$f" == ".DS_Store" ] && continue
   ln -sfv "$(pwd)/$f" "$HOME"/"$f"
 done
