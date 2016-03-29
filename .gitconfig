@@ -1,0 +1,25 @@
+[user]
+  name = miyabi
+  email = miyabi.ooh@gmail.com
+[core]
+  autocrlf = input
+  safecrlf = true
+  whitespace = cr-at-eol
+  excludesfile = ~/.gitignore
+  editor = vim -c \"set fenc=utf-8\"
+[fetch]
+  prune = true
+[alias]
+  ad = !git add $(git status -s | grep ' M' | awk '{print $2}' | peco)
+  df = !git diff $(git status -s | grep ' M' | awk '{print $2}' | peco)
+  st = status -s
+  pl = !git pull origin $(git branch | grep "*" | awk '{print $2}')
+  ps = !git push origin $(git branch | grep "*" | awk '{print $2}')
+  diffw = diff --word-diff
+  alias = !git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort
+  conflicts = !git ls-files -u | cut -f 2 | sort -u
+  logg = log --stat --decorate=short --pretty=format:'%C(yellow)%h %Cgreen%cr %Cblue%cn%Cred%d %Creset%s %C(cyan)%b'
+  amend = commit --amend -m
+[ghq]
+  root = ~/src
+

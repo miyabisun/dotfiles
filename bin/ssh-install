@@ -1,0 +1,15 @@
+#!/bin/bash
+script_dir="$(cd "$(dirname "${BASH_SOURCE:-${(%):-%N}}")"; pwd)"
+cd "$script_dir/../"
+
+# copy config files.
+mkdir -p ~/.ssh/conf.d
+if [ ! -e ~/.ssh/conf.d/config ]; then
+  cp .ssh/conf.d/config ~/.ssh/conf.d/
+fi
+
+# copy ssh-update command
+if [ ! -e /usr/local/bin/ssh-update ]; then
+  cp bin/ssh-update /usr/local/bin
+fi
+
