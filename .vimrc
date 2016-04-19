@@ -23,8 +23,11 @@ Plug 'tpope/vim-fugitive'
 Plug 'airblade/vim-gitgutter'
 Plug 'ConradIrwin/vim-bracketed-paste'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'kannokanno/previm', { 'for': ['markdown'] }
+Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
 
 " Add plagin's in Language
+Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
 Plug 'pangloss/vim-javascript', { 'for': ['js'] }
 Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
 Plug 'gkz/vim-ls', { 'for': ['ls'] }
@@ -34,6 +37,10 @@ Plug 'dag/vim2hs', { 'for': ['hs'] }
 Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
 
 call plug#end()
+
+# markdown preview setting -> :PrevimOpen command
+au BufRead,BufNewFile *.md set filetype=markdown
+let g:previm_open_cmd = 'open -a "Google Chrome"'
 
 hi link lsSpaceError NONE
 hi link lsReservedError NONE
