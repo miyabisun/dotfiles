@@ -31,7 +31,7 @@ Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
 Plug 'pangloss/vim-javascript', { 'for': ['js'] }
 Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
 Plug 'gkz/vim-ls', { 'for': ['ls'] }
-Plug 'digitaltoad/vim-jade', { 'for': ['jade'] }
+Plug 'statianzo/vim-jade', { 'for': ['jade'] }
 Plug 'wavded/vim-stylus', { 'for': ['styl'] }
 Plug 'dag/vim2hs', { 'for': ['hs'] }
 Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
