@@ -31,7 +31,7 @@ Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
 Plug 'pangloss/vim-javascript', { 'for': ['js'] }
 Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
 Plug 'gkz/vim-ls', { 'for': ['ls'] }
-Plug 'statianzo/vim-jade', { 'for': ['jade'] }
+Plug 'digitaltoad/vim-pug', { 'for': ['pug'] }
 Plug 'wavded/vim-stylus', { 'for': ['stylus'] }
 Plug 'dag/vim2hs', { 'for': ['hs'] }
 Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
@@ -46,6 +46,7 @@ hi link lsSpaceError NONE
 hi link lsReservedError NONE
 au BufNewFile,BufReadPost *.ls setl foldmethod=indent nofoldenable
 au BufNewFile,BufReadPost *.ls setl shiftwidth=2 expandtab
+au BufRead,BufNewFile *.jade set filetype=pug
 
 set background=dark
 hi IndentGuidesOdd  ctermbg=black
