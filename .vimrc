@@ -1,8 +1,10 @@
 syntax on
 filetype plugin indent on
 set encoding=utf-8
+scriptencoding utf-8
 set fileencodings=utf-8,cp932
 
+" vim-plug
 if has('vim_starting')
   set rtp+=~/.vim/plugged/vim-plug
   if !isdirectory(expand('~/.vim/plugged/vim-plug'))
@@ -38,14 +40,17 @@ Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
 
 call plug#end()
 
+" livescript
+function! s:isLiveScript()
+  let shebang = getline(1)
+  if shebang =~# '^#!.*/bin/env\s\+lsc\>' | return 1 | en
+  return 0
+endfunction
+au BufRead,BufNewFile * if s:isLiveScript() | set filetype=ls | en
+
 " markdown preview setting -> :PrevimOpen command
 au BufRead,BufNewFile *.md set filetype=markdown
 let g:previm_open_cmd = 'open -a "Google Chrome"'
-
-hi link lsSpaceError NONE
-hi link lsReservedError NONE
-au BufNewFile,BufReadPost *.ls setl foldmethod=indent nofoldenable
-au BufNewFile,BufReadPost *.ls setl shiftwidth=2 expandtab
 
 set background=dark
 hi IndentGuidesOdd  ctermbg=black
