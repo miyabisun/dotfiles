@@ -19,5 +19,8 @@ tab_width = 2
 
 # not trim traling whitespace
 [*.md]
-trim_traling_whitespace = false
+trim_trailing_whitespacee = false
+
+[*.markdown]
+trim_trailing_whitespacee = false
 

@@ -29,6 +29,7 @@ Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
 " Add plagin's in Language
 Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
 Plug 'pangloss/vim-javascript', { 'for': ['js'] }
+Plug 'kchmck/vim-coffee-script', { 'for': ['coffee'] }
 Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
 Plug 'gkz/vim-ls', { 'for': ['ls'] }
 Plug 'statianzo/vim-jade', { 'for': ['jade'] }
@@ -41,6 +42,7 @@ call plug#end()
 " markdown preview setting -> :PrevimOpen command
 au BufRead,BufNewFile *.md set filetype=markdown
 let g:previm_open_cmd = 'open -a "Google Chrome"'
+let g:vim_markdown_folding_disabled=1
 
 hi link lsSpaceError NONE
 hi link lsReservedError NONE
@@ -57,8 +59,6 @@ set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:%
 set nu
 set ruler
 set tabstop=2
-set shiftwidth=2
-set softtabstop=2
 set incsearch
 set hlsearch
 
