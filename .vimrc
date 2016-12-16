@@ -27,6 +27,7 @@ Plug 'ConradIrwin/vim-bracketed-paste'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'kannokanno/previm', { 'for': ['markdown'] }
 Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
+Plug 'scrooloose/syntastic'
 
 " Add plagin's in Language
 Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
@@ -46,18 +47,32 @@ function! s:isLiveScript()
   if shebang =~# '^#!.*/bin/env\s\+lsc\>' | return 1 | en
   return 0
 endfunction
-au BufRead,BufNewFile * if s:isLiveScript() | set filetype=ls | en
+augroup livescriptSyntax
+  autocmd!
+  autocmd BufRead,BufNewFile * if s:isLiveScript() | set filetype=ls | en
+augroup END
 
 " markdown preview setting -> :PrevimOpen command
-au BufRead,BufNewFile *.md set filetype=markdown
-let g:previm_open_cmd = 'open -a "Google Chrome"'
+augroup markdownPreviewSetting
+  autocmd!
+  autocmd BufRead,BufNewFile *.md set filetype=markdown
+  let g:previm_open_cmd = 'open -a "Google Chrome"'
+augroup END
 
 set background=dark
 hi IndentGuidesOdd  ctermbg=black
 hi IndentGuidesEven ctermbg=darkgrey
 
+let g:syntastic_pug_checkers = ['pug_lint']
+
+" highlight settings
 set list
 set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:%
+augroup highlightIdegraphicSpace
+  autocmd!
+  autocmd VimEnter,ColorScheme * highlight IdeographicSpace term=underline ctermbg=DarkGreen guibg=DarkGreen
+  autocmd VimEnter,WinEnter * match IdeographicSpace /　/
+augroup END
 
 set nu
 set ruler
@@ -77,3 +92,4 @@ set cursorline
 inoremap <silent> jj <ESC>
 
 nmap <C-p> :FZF<CR>
+
