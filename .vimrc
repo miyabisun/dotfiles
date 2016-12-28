@@ -38,6 +38,9 @@ Plug 'digitaltoad/vim-pug', { 'for': ['pug'] }
 Plug 'wavded/vim-stylus', { 'for': ['stylus'] }
 Plug 'dag/vim2hs', { 'for': ['hs'] }
 Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
+Plug 'aharisu/vim_goshrepl'
+Plug 'aharisu/vim-gdev'
+Plug 'stephpy/vim-yaml'
 
 call plug#end()
 
