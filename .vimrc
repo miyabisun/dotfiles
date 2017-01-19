@@ -28,6 +28,7 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'kannokanno/previm', { 'for': ['markdown'] }
 Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
 Plug 'scrooloose/syntastic'
+Plug 'kana/vim-submode'
 
 " Add plagin's in Language
 Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
@@ -89,7 +90,31 @@ vnoremap * "zy:let @/ = '\V' . substitute(escape(@z, '\/'), '\n', '\\n', 'g')<CR
 set hlsearch
 nnoremap <ESC><ESC> :nohlsearch<CR>
 set cursorline
+set autoread
+set diffopt+=vertical
 inoremap <silent> jj <ESC>
 
 nmap <C-p> :FZF<CR>
+
+" Tab Remap
+nnoremap gj <C-w>j
+nnoremap gk <C-w>k
+nnoremap gl <C-w>l
+nnoremap gh <C-w>h
+nnoremap gJ <C-w>J
+nnoremap gK <C-w>K
+nnoremap gL <C-w>L
+nnoremap gH <C-w>H
+
+call submode#enter_with('bufmove', 'n', '', 's>', '<C-w>>')
+call submode#enter_with('bufmove', 'n', '', 's<', '<C-w><')
+call submode#enter_with('bufmove', 'n', '', 's+', '<C-w>+')
+call submode#enter_with('bufmove', 'n', '', 's-', '<C-w>-')
+call submode#map('bufmove', 'n', '', '>', '<C-w>>')
+call submode#map('bufmove', 'n', '', '<', '<C-w><')
+call submode#map('bufmove', 'n', '', '+', '<C-w>+')
+call submode#map('bufmove', 'n', '', '-', '<C-w>-')
+
+" Tools
+command! UniDecode %s/\\u\([0-9a-f]\{4}\)/\=nr2char(eval("0x".submatch(1)),1)/g
 
