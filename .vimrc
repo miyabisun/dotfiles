@@ -33,12 +33,16 @@ Plug 'kana/vim-submode'
 " Add plagin's in Language
 Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
 Plug 'pangloss/vim-javascript', { 'for': ['js'] }
+Plug 'kchmck/vim-coffee-script', { 'for': ['coffee'] }
 Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
 Plug 'gkz/vim-ls', { 'for': ['ls'] }
 Plug 'digitaltoad/vim-pug', { 'for': ['pug'] }
 Plug 'wavded/vim-stylus', { 'for': ['stylus'] }
 Plug 'dag/vim2hs', { 'for': ['hs'] }
 Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
+Plug 'aharisu/vim_goshrepl'
+Plug 'aharisu/vim-gdev'
+Plug 'stephpy/vim-yaml'
 
 call plug#end()
 
@@ -53,11 +57,11 @@ augroup livescriptSyntax
   autocmd BufRead,BufNewFile * if s:isLiveScript() | set filetype=ls | en
 augroup END
 
-" markdown preview setting -> :PrevimOpen command
 augroup markdownPreviewSetting
   autocmd!
   autocmd BufRead,BufNewFile *.md set filetype=markdown
   let g:previm_open_cmd = 'open -a "Google Chrome"'
+  let g:vim_markdown_folding_disabled=1
 augroup END
 
 set background=dark
@@ -78,8 +82,6 @@ augroup END
 set nu
 set ruler
 set tabstop=2
-set shiftwidth=2
-set softtabstop=2
 set incsearch
 set hlsearch
 
