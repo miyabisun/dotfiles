@@ -99,19 +99,19 @@ inoremap <silent> jj <ESC>
 nmap <C-p> :FZF<CR>
 
 " Tab Remap
-nnoremap gj <C-w>j
-nnoremap gk <C-w>k
-nnoremap gl <C-w>l
-nnoremap gh <C-w>h
-nnoremap gJ <C-w>J
-nnoremap gK <C-w>K
-nnoremap gL <C-w>L
-nnoremap gH <C-w>H
+nnoremap zj <C-w>j
+nnoremap zk <C-w>k
+nnoremap zl <C-w>l
+nnoremap zh <C-w>h
+nnoremap zJ <C-w>J
+nnoremap zK <C-w>K
+nnoremap zL <C-w>L
+nnoremap zH <C-w>H
 
-call submode#enter_with('bufmove', 'n', '', 'g>', '<C-w>>')
-call submode#enter_with('bufmove', 'n', '', 'g<', '<C-w><')
-call submode#enter_with('bufmove', 'n', '', 'g+', '<C-w>+')
-call submode#enter_with('bufmove', 'n', '', 'g-', '<C-w>-')
+call submode#enter_with('bufmove', 'n', '', 'z>', '<C-w>>')
+call submode#enter_with('bufmove', 'n', '', 'z<', '<C-w><')
+call submode#enter_with('bufmove', 'n', '', 'z+', '<C-w>+')
+call submode#enter_with('bufmove', 'n', '', 'z-', '<C-w>-')
 call submode#map('bufmove', 'n', '', '>', '<C-w>>')
 call submode#map('bufmove', 'n', '', '<', '<C-w><')
 call submode#map('bufmove', 'n', '', '+', '<C-w>+')
