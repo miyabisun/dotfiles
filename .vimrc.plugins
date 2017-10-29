@@ -1,0 +1,44 @@
+" vim-plug
+if has('vim_starting')
+  set rtp+=~/.vim/plugged/vim-plug
+  if !isdirectory(expand('~/.vim/plugged/vim-plug'))
+    echo 'install vim-plug...'
+    call system('mkdir -p ~/.vim/plugged/vim-plug')
+    call system('git clone https://github.com/junegunn/vim-plug.git ~/.vim/plugged/vim-plug/autoload')
+  end
+endif
+
+call plug#begin('~/.vim/plugged')
+
+" Add plagin's
+Plug 'crusoexia/vim-monokai'
+Plug 'editorconfig/editorconfig-vim'
+Plug 'Shougo/unite.vim'
+Plug 'rking/ag.vim'
+Plug 'tpope/vim-fugitive'
+Plug 'airblade/vim-gitgutter'
+Plug 'ConradIrwin/vim-bracketed-paste'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'kannokanno/previm', { 'for': ['markdown'] }
+Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
+Plug 'scrooloose/syntastic'
+Plug 'kana/vim-submode'
+
+" Add plagin's in Language
+Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
+Plug 'pangloss/vim-javascript', { 'for': ['js'] }
+Plug 'kchmck/vim-coffee-script', { 'for': ['coffee'] }
+Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
+Plug 'gkz/vim-ls', { 'for': ['ls'] }
+Plug 'digitaltoad/vim-pug', { 'for': ['pug'] }
+Plug 'wavded/vim-stylus', { 'for': ['stylus'] }
+Plug 'dag/vim2hs', { 'for': ['hs'] }
+Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
+Plug 'fatih/vim-go'
+Plug 'aharisu/vim_goshrepl'
+Plug 'aharisu/vim-gdev'
+Plug 'stephpy/vim-yaml'
+Plug 'elmcast/elm-vim'
+
+call plug#end()
+

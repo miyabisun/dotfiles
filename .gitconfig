@@ -2,7 +2,7 @@
   name = miyabi
   email = miyabi.ooh@gmail.com
 [core]
-  autocrlf = input
+  autocrlf = false
   safecrlf = true
   whitespace = cr-at-eol
   excludesfile = ~/.gitignore
