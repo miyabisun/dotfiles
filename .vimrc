@@ -20,6 +20,7 @@ set hlsearch
 set cursorline
 set autoread
 set diffopt+=vertical
+set noundofile
 vnoremap * "zy:let @/ = '\V' . substitute(escape(@z, '\/'), '\n', '\\n', 'g')<CR>n
 inoremap <silent> jj <ESC>
 nmap <C-p> :FZF<CR>
@@ -59,6 +60,17 @@ call submode#map('bufmove', 'n', '', '<', '<C-w><')
 call submode#map('bufmove', 'n', '', '+', '<C-w>+')
 call submode#map('bufmove', 'n', '', '-', '<C-w>-')
 
+" linter
+let g:ale_fixers = {
+\   'javascript': ['eslint'],
+\}
+let g:ale_lint_on_enter = 1
+let g:ale_fix_on_save = 1
+let g:ale_completion_enabled = 1
+let g:ale_sign_column_always = 1
+nmap <silent> <C-k> <Plug>(ale_previous_wrap)
+nmap <silent> <C-j> <Plug>(ale_next_wrap)
+
 " others
 command! UniDecode %s/\\u\([0-9a-f]\{4}\)/\=nr2char(eval("0x".submatch(1)),1)/g
 
@@ -82,5 +94,5 @@ augroup markdownPreviewSetting
   let g:vim_markdown_folding_disabled=1
 augroup END
 
-" gug
+" pug
 let g:syntastic_pug_checkers = ['pug_lint']

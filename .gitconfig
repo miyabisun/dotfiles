@@ -1,8 +1,8 @@
 [user]
-  name = miyabi
-  email = miyabi.ooh@gmail.com
+  name = masashi ohata
+  email = moohata@fibergate.co.jp
 [core]
-  autocrlf = false
+  autoCRLF = false
   safecrlf = true
   whitespace = cr-at-eol
   excludesfile = ~/.gitignore

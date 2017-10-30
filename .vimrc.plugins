@@ -11,18 +11,17 @@ endif
 call plug#begin('~/.vim/plugged')
 
 " Add plagin's
-Plug 'crusoexia/vim-monokai'
 Plug 'editorconfig/editorconfig-vim'
 Plug 'Shougo/unite.vim'
 Plug 'rking/ag.vim'
 Plug 'tpope/vim-fugitive'
 Plug 'airblade/vim-gitgutter'
-Plug 'ConradIrwin/vim-bracketed-paste'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'kannokanno/previm', { 'for': ['markdown'] }
 Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
-Plug 'scrooloose/syntastic'
 Plug 'kana/vim-submode'
+Plug 'cocopon/iceberg.vim'
+Plug 'w0rp/ale'
 
 " Add plagin's in Language
 Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
@@ -30,7 +29,7 @@ Plug 'pangloss/vim-javascript', { 'for': ['js'] }
 Plug 'kchmck/vim-coffee-script', { 'for': ['coffee'] }
 Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
 Plug 'gkz/vim-ls', { 'for': ['ls'] }
-Plug 'digitaltoad/vim-pug', { 'for': ['pug'] }
+Plug 'digitaltoad/vim-pug', { 'for': ['pug', 'jade'] }
 Plug 'wavded/vim-stylus', { 'for': ['stylus'] }
 Plug 'dag/vim2hs', { 'for': ['hs'] }
 Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
@@ -41,4 +40,3 @@ Plug 'stephpy/vim-yaml'
 Plug 'elmcast/elm-vim'
 
 call plug#end()
-
