@@ -20,6 +20,7 @@
   conflicts = !git ls-files -u | cut -f 2 | sort -u
   logg = log --stat --decorate=short --pretty=format:'%C(yellow)%h %Cgreen%cr %Cblue%cn%Cred%d %Creset%s %C(cyan)%b'
   amend = commit --amend -m
+  fpull = !git pull && git submodule foreach git pull origin master
   full-clean = !git checkout . && git clean -fdx
 [ghq]
   root = ~/src
