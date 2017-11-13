@@ -32,7 +32,7 @@ Plug 'gkz/vim-ls', { 'for': ['ls'] }
 Plug 'digitaltoad/vim-pug', { 'for': ['pug', 'jade'] }
 Plug 'wavded/vim-stylus', { 'for': ['stylus'] }
 Plug 'dag/vim2hs', { 'for': ['hs'] }
-Plug 'elixir-lang/vim-elixir', { 'for': ['ex'] }
+Plug 'elixir-editors/vim-elixir'
 Plug 'fatih/vim-go'
 Plug 'aharisu/vim_goshrepl'
 Plug 'aharisu/vim-gdev'
