@@ -22,10 +22,11 @@ Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
 Plug 'kana/vim-submode'
 Plug 'cocopon/iceberg.vim'
 Plug 'w0rp/ale'
+Plug 'severin-lemaignan/vim-minimap'
 
 " Add plagin's in Language
 Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
-Plug 'pangloss/vim-javascript', { 'for': ['js'] }
+Plug 'othree/yajs.vim', { 'for': ['javascript', 'js'] }
 Plug 'kchmck/vim-coffee-script', { 'for': ['coffee'] }
 Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
 Plug 'gkz/vim-ls', { 'for': ['ls'] }
@@ -37,6 +38,7 @@ Plug 'fatih/vim-go'
 Plug 'aharisu/vim_goshrepl'
 Plug 'aharisu/vim-gdev'
 Plug 'stephpy/vim-yaml'
+Plug 'cespare/vim-toml'
 Plug 'elmcast/elm-vim'
 
 call plug#end()
