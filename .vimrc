@@ -132,3 +132,9 @@ augroup END
 " pug
 let g:syntastic_pug_checkers = ['pug_lint']
 
+" vim-go
+map <C-n> :cnext<CR>
+map <C-m> :cprevious<CR>
+nnoremap <leader>a :cclose<CR>
+let g:go_fmt_command = "goimports"
+
