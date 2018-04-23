@@ -6,6 +6,7 @@ filetype plugin indent on
 
 " Install Packages
 if filereadable(expand('~/.vimrc.plugins')) | source ~/.vimrc.plugins | en
+if filereadable(expand('~/.vimrc.local')) | source ~/.vimrc.local | en
 
 " Common Settings
 syntax on
@@ -62,6 +63,9 @@ augroup vimrc-auto-cursorline
 augroup END
 
 " Tab Remap
+nnoremap zt :tabe<cr>
+nnoremap zs <C-w>s
+nnoremap zv <C-w>v
 nnoremap zj <C-w>j
 nnoremap zk <C-w>k
 nnoremap zl <C-w>l
@@ -127,3 +131,4 @@ augroup END
 
 " pug
 let g:syntastic_pug_checkers = ['pug_lint']
+
