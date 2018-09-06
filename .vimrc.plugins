@@ -40,6 +40,5 @@ Plug 'aharisu/vim-gdev'
 Plug 'stephpy/vim-yaml'
 Plug 'cespare/vim-toml'
 Plug 'elmcast/elm-vim'
-Plug 'zah/nim.vim'
 
 call plug#end()

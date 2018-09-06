@@ -98,13 +98,16 @@ call submode#map('bufmove', 'n', '', '-', '<C-w>-')
 " linter
 let g:ale_fixers = {
 \   'javascript': ['eslint'],
+\   'livescript': [
+\     {buffer, lines -> {'command': 'ls-lint %t', 'read_temporary_file': 1}}
+\   ],
 \}
-let g:ale_lint_on_enter = 1
+let g:ale_lint_on_enter = 0
 let g:ale_fix_on_save = 1
 let g:ale_completion_enabled = 1
 let g:ale_sign_column_always = 1
-nmap <silent> <C-k> <Plug>(ale_previous_wrap)
-nmap <silent> <C-j> <Plug>(ale_next_wrap)
+nmap <silent> <C-k> <Plug>(ale_previous)
+nmap <silent> <C-j> <Plug>(ale_next)
 
 " others
 command! UniDecode %s/\\u\([0-9a-f]\{4}\)/\=nr2char(eval("0x".submatch(1)),1)/g
@@ -118,7 +121,7 @@ function! s:isLiveScript()
 endfunction
 augroup livescriptSyntax
   autocmd!
-  autocmd BufRead,BufNewFile * if s:isLiveScript() | set filetype=ls | en
+  autocmd BufRead,BufNewFile * if s:isLiveScript() | set filetype=livescript | en
 augroup END
 
 " markdown
