@@ -40,5 +40,8 @@ Plug 'aharisu/vim-gdev'
 Plug 'stephpy/vim-yaml'
 Plug 'cespare/vim-toml'
 Plug 'elmcast/elm-vim'
+Plug 'guns/vim-clojure-static'
+Plug 'guns/vim-clojure-highlight'
+Plug 'tpope/vim-fireplace'
 
 call plug#end()
