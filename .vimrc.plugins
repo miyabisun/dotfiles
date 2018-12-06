@@ -23,6 +23,7 @@ Plug 'kana/vim-submode'
 Plug 'cocopon/iceberg.vim'
 Plug 'w0rp/ale'
 Plug 'severin-lemaignan/vim-minimap'
+Plug 'vim-scripts/dbext.vim'
 
 " Add plagin's in Language
 Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
@@ -41,8 +42,7 @@ Plug 'stephpy/vim-yaml'
 Plug 'cespare/vim-toml'
 Plug 'elmcast/elm-vim'
 Plug 'zah/nim.vim'
-Plug 'guns/vim-clojure-static'
-Plug 'guns/vim-clojure-highlight'
-Plug 'tpope/vim-fireplace'
+Plug 'guns/vim-sexp', {'for': 'clojure'}
+Plug 'liquidz/vim-iced', {'for': 'clojure'}
 
 call plug#end()
