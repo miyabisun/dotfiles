@@ -22,6 +22,7 @@ Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
 Plug 'kana/vim-submode'
 Plug 'cocopon/iceberg.vim'
 Plug 'w0rp/ale'
+Plug 'miyabisun/lslint.vim'
 Plug 'severin-lemaignan/vim-minimap'
 Plug 'vim-scripts/dbext.vim'
 
