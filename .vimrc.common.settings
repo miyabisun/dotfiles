@@ -1,3 +1,5 @@
+set nocompatible
+
 " File Encoding
 set encoding=utf-8
 scriptencoding utf-8
@@ -23,6 +25,7 @@ vnoremap * "zy:let @/ = '\V' . substitute(escape(@z, '\/'), '\n', '\\n', 'g')<CR
 inoremap <silent> jj <ESC>
 nmap <C-p> :FZF<CR>
 nnoremap <ESC><ESC> :nohlsearch<CR>
+nnoremap c "_c
 
 set background=dark
 hi IndentGuidesOdd  ctermbg=black

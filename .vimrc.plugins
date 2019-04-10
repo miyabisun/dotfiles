@@ -43,7 +43,8 @@ Plug 'stephpy/vim-yaml'
 Plug 'cespare/vim-toml'
 Plug 'elmcast/elm-vim'
 Plug 'zah/nim.vim'
-Plug 'guns/vim-sexp', {'for': 'clojure'}
+Plug 'guns/vim-clojure-static', {'for': 'clojure'}
 Plug 'liquidz/vim-iced', {'for': 'clojure'}
+Plug 'aclaimant/syntastic-joker', {'for': 'clojure'}
 
 call plug#end()
