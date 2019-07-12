@@ -11,6 +11,7 @@ syntax on
 set nu
 set ruler
 set incsearch
+set hidden
 set hlsearch
 set ignorecase
 set smartcase

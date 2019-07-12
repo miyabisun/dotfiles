@@ -16,6 +16,7 @@ let g:ale_lint_on_enter = 1
 let g:ale_fix_on_save = 1
 let g:ale_completion_enabled = 1
 let g:ale_sign_column_always = 1
+let g:ale_ignore_2_4_warnings = 1
 nmap <silent> <C-k> <Plug>(ale_previous_wrap)
 nmap <silent> <C-j> <Plug>(ale_next_wrap)
 
@@ -52,9 +53,28 @@ nnoremap <leader>a :cclose<CR>
 let g:go_fmt_command = "goimports"
 
 " clojure
+let g:sexp_enable_insert_mode_mappings = 0
 let g:clojure_fuzzy_indent_patterns = ['^are$']
 let g:iced_enable_default_key_mappings = v:true
+let g:iced_enable_auto_linting = v:true
 let g:iced#format#rule = {
   \ 'are': '[[:block 2] [:inner 2 0]]',
   \ 'clojure.test/are': '[[:block 2] [:inner 2 0]]',
 \ }
+
+" Define mappings
+autocmd FileType denite call s:denite_my_settings()
+function! s:denite_my_settings() abort
+  nnoremap <silent><buffer><expr> <CR>
+  \ denite#do_map('do_action')
+  nnoremap <silent><buffer><expr> d
+  \ denite#do_map('do_action', 'delete')
+  nnoremap <silent><buffer><expr> p
+  \ denite#do_map('do_action', 'preview')
+  nnoremap <silent><buffer><expr> q
+  \ denite#do_map('quit')
+  nnoremap <silent><buffer><expr> i
+  \ denite#do_map('open_filter_buffer')
+  nnoremap <silent><buffer><expr> <Space>
+  \ denite#do_map('toggle_select').'j'
+endfunction

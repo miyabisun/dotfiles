@@ -12,7 +12,7 @@ call plug#begin('~/.vim/plugged')
 
 " Add plagin's
 Plug 'editorconfig/editorconfig-vim'
-Plug 'Shougo/unite.vim'
+Plug 'Shougo/denite.nvim'
 Plug 'rking/ag.vim'
 Plug 'tpope/vim-fugitive'
 Plug 'airblade/vim-gitgutter'
@@ -43,8 +43,9 @@ Plug 'stephpy/vim-yaml'
 Plug 'cespare/vim-toml'
 Plug 'elmcast/elm-vim'
 Plug 'zah/nim.vim'
+Plug 'tpope/vim-repeat', {'for': 'clojure'}
+Plug 'guns/vim-sexp',    {'for': 'clojure'}
 Plug 'guns/vim-clojure-static', {'for': 'clojure'}
 Plug 'liquidz/vim-iced', {'for': 'clojure'}
-Plug 'aclaimant/syntastic-joker', {'for': 'clojure'}
 
 call plug#end()
