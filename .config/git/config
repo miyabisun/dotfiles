@@ -1,11 +1,10 @@
 [user]
-	name = miyabisun
-	email = miyabi.ooh@gmail.com
+  name = miyabisun
+  email = miyabi.ooh@gmail.com
 [core]
   autoCRLF = false
   safecrlf = true
   whitespace = cr-at-eol
-  excludesfile = ~/.gitignore
   editor = vim -c \"set fenc=utf-8\"
 [fetch]
   prune = true
