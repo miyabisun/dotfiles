@@ -14,3 +14,7 @@ done
 mkdir -p "$HOME"/.config/git/
 ln -sfv "$(pwd)/.config/git/ignore" "$HOME"/.config/git/ignore
 ln -sfv "$(pwd)/.config/git/config" "$HOME"/.config/git/config
+
+mkdir -p "$HOME"/.config/tmux/
+ln -sfv "$(pwd)/.config/tmux/tmux.conf" "$HOME"/.config/tmux/tmux.conf
+ln -sfv "$(pwd)/.config/tmux/tmux.osx.conf" "$HOME"/.config/tmux/tmux.osx.conf
