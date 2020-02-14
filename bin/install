@@ -8,13 +8,14 @@ do
   [ "$f" == ".ssh" ] && continue
   [ "$f" == ".config" ] && continue
   [ "$f" == ".DS_Store" ] && continue
-  ln -sfv "$(pwd)/$f" "$HOME"/"$f"
+  ln -sfv "$(pwd)/$f" "$HOME/$f"
 done
 
-mkdir -p "$HOME"/.config/git/
-ln -sfv "$(pwd)/.config/git/ignore" "$HOME"/.config/git/ignore
-ln -sfv "$(pwd)/.config/git/config" "$HOME"/.config/git/config
-
-mkdir -p "$HOME"/.config/tmux/
-ln -sfv "$(pwd)/.config/tmux/tmux.conf" "$HOME"/.config/tmux/tmux.conf
-ln -sfv "$(pwd)/.config/tmux/tmux.osx.conf" "$HOME"/.config/tmux/tmux.osx.conf
+for d in .config/??*
+do
+  mkdir -p "$HOME"/"$d"
+  for f in "$d"/??*
+  do
+    ln -sfv "$(pwd)/$f" "$HOME/$f"
+  done
+done
