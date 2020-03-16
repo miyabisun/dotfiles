@@ -17,35 +17,28 @@ Plug 'rking/ag.vim'
 Plug 'tpope/vim-fugitive'
 Plug 'airblade/vim-gitgutter'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plug 'kannokanno/previm', { 'for': ['markdown'] }
-Plug 'tyru/open-browser.vim', { 'for': ['markdown'] }
 Plug 'kana/vim-submode'
 Plug 'cocopon/iceberg.vim'
-Plug 'w0rp/ale'
-Plug 'miyabisun/lslint.vim'
 Plug 'severin-lemaignan/vim-minimap'
 Plug 'vim-scripts/dbext.vim'
+Plug 'w0rp/ale'
 
 " Add plagin's in Language
-Plug 'plasticboy/vim-markdown', { 'for': ['markdown'] }
-Plug 'othree/yajs.vim', { 'for': ['javascript', 'js'] }
-Plug 'kchmck/vim-coffee-script', { 'for': ['coffee'] }
-Plug 'raichoo/purescript-vim', { 'for': ['purs'] }
-Plug 'gkz/vim-ls', { 'for': ['ls'] }
-Plug 'digitaltoad/vim-pug', { 'for': ['pug', 'jade'] }
-Plug 'wavded/vim-stylus', { 'for': ['stylus'] }
-Plug 'dag/vim2hs', { 'for': ['hs'] }
-Plug 'elixir-editors/vim-elixir'
-Plug 'fatih/vim-go', { 'do': ':GoInstallBinaries' }
-Plug 'aharisu/vim_goshrepl'
-Plug 'aharisu/vim-gdev'
-Plug 'stephpy/vim-yaml'
-Plug 'cespare/vim-toml'
-Plug 'elmcast/elm-vim'
-Plug 'zah/nim.vim'
-Plug 'tpope/vim-repeat', {'for': 'clojure'}
-Plug 'guns/vim-sexp',    {'for': 'clojure'}
-Plug 'guns/vim-clojure-static', {'for': 'clojure'}
-Plug 'liquidz/vim-iced', {'for': 'clojure'}
+Plug 'plasticboy/vim-markdown', { 'for': 'markdown' }
+Plug 'kannokanno/previm', { 'for': 'markdown' }
+Plug 'tyru/open-browser.vim', { 'for': 'markdown' }
+Plug 'othree/yajs.vim', { 'for': 'javascript' }
+Plug 'gkz/vim-ls', { 'for': 'ls' }
+Plug 'miyabisun/lslint.vim', { 'for': 'ls' }
+Plug 'digitaltoad/vim-pug', { 'for': 'pug' }
+Plug 'wavded/vim-stylus', { 'for': 'stylus' }
+Plug 'fatih/vim-go', { 'for': 'go', 'do': ':GoInstallBinaries' }
+Plug 'stephpy/vim-yaml', { 'for': 'yaml' }
+Plug 'cespare/vim-toml', { 'for': 'toml' }
+Plug 'venantius/vim-eastwood', { 'for': 'clojure' }
+Plug 'tpope/vim-repeat', { 'for': 'clojure' }
+Plug 'guns/vim-sexp',    { 'for': 'clojure' }
+Plug 'guns/vim-clojure-static', { 'for': 'clojure' }
+Plug 'liquidz/vim-iced', { 'for': 'clojure' }
 
 call plug#end()
