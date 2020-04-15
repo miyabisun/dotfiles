@@ -9,8 +9,8 @@
 [fetch]
   prune = true
 [alias]
-  ad = !git add $(git status -s | grep ' M' | awk '{print $2}' | peco)
-  df = !git diff $(git status -s | grep ' M' | awk '{print $2}' | peco)
+  ad = !git add $(git status -s | grep ' M' | awk '{print $2}' | fzf)
+  df = !git diff $(git status -s | grep ' M' | awk '{print $2}' | fzf)
   st = status -s
   pl = !git pull origin $(git branch | grep "*" | awk '{print $2}')
   ps = !git push origin $(git branch | grep "*" | awk '{print $2}')
