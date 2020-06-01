@@ -12,8 +12,9 @@
   ad = !git add $(git status -s | grep ' M' | awk '{print $2}' | fzf)
   df = !git diff $(git status -s | grep ' M' | awk '{print $2}' | fzf)
   st = status -s
-  pl = !git pull origin $(git branch | grep "*" | awk '{print $2}')
-  ps = !git push origin $(git branch | grep "*" | awk '{print $2}')
+  pl = !git pull origin $(git symbolic-ref --short HEAD)
+  ps = !git push origin $(git symbolic-ref --short HEAD)
+  psf = !git push --force-with-lease origin $(git symbolic-ref --short HEAD)
   diffw = diff --word-diff
   alias = !git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort
   conflicts = !git ls-files -u | cut -f 2 | sort -u
