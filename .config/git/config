@@ -10,7 +10,7 @@
   prune = true
 [alias]
   ad = !git add $(git status -s | grep ' M' | awk '{print $2}' | fzf)
-  df = !git diff $(git status -s | grep ' M' | awk '{print $2}' | fzf)
+  df = !ydiff -s -w0 $(git status -s | grep ' M' | awk '{print $2}' | fzf)
   st = status -s
   pl = !git pull origin $(git symbolic-ref --short HEAD)
   ps = !git push origin $(git symbolic-ref --short HEAD)
@@ -24,4 +24,3 @@
   full-clean = !git checkout . && git clean -fdx
 [ghq]
   root = ~/src
-
