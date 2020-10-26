@@ -9,8 +9,8 @@
 [fetch]
   prune = true
 [alias]
-  ad = !git add $(git status -s | grep ' M' | awk '{print $2}' | fzf)
-  df = !ydiff -s -w0 $(git status -s | grep ' M' | awk '{print $2}' | fzf)
+  ad = !git add $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
+  df = !ydiff -s -w0 $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
   st = status -s
   pl = !git pull origin $(git symbolic-ref --short HEAD)
   ps = !git push origin $(git symbolic-ref --short HEAD)
