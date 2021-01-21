@@ -1,39 +1,17 @@
-" submode
-call submode#enter_with('bufmove', 'n', '', 'z>', '<C-w>>')
-call submode#enter_with('bufmove', 'n', '', 'z<', '<C-w><')
-call submode#enter_with('bufmove', 'n', '', 'z+', '<C-w>+')
-call submode#enter_with('bufmove', 'n', '', 'z-', '<C-w>-')
-call submode#map('bufmove', 'n', '', '>', '<C-w>>')
-call submode#map('bufmove', 'n', '', '<', '<C-w><')
-call submode#map('bufmove', 'n', '', '+', '<C-w>+')
-call submode#map('bufmove', 'n', '', '-', '<C-w>-')
-
 " linter
-let g:ale_fixers = {
-\   'javascript': ['eslint'],
-\}
-let g:ale_lint_on_enter = 1
-let g:ale_fix_on_save = 1
-let g:ale_completion_enabled = 1
-let g:ale_sign_column_always = 1
-let g:ale_ignore_2_4_warnings = 1
-nmap <silent> <C-k> <Plug>(ale_previous_wrap)
-nmap <silent> <C-j> <Plug>(ale_next_wrap)
-
-" others
-command! UniDecode %s/\\u\([0-9a-f]\{4}\)/\=nr2char(eval("0x".submatch(1)),1)/g
+" let g:ale_fixers = {
+" \   'javascript': ['eslint'],
+" \}
+" let g:ale_lint_on_enter = 1
+" let g:ale_fix_on_save = 1
+" let g:ale_completion_enabled = 1
+" let g:ale_sign_column_always = 1
+" let g:ale_ignore_2_4_warnings = 1
+" nmap <silent> <C-k> <Plug>(ale_previous_wrap)
+" nmap <silent> <C-j> <Plug>(ale_next_wrap)
 
 " Language Settings
 " livescript
-function! s:isLiveScript()
-  let shebang = getline(1)
-  if shebang =~# '^#!.*/bin/env\s\+lsc\>' | return 1 | en
-  return 0
-endfunction
-augroup livescriptSyntax
-  autocmd!
-  autocmd BufRead,BufNewFile * if s:isLiveScript() | set filetype=ls | en
-augroup END
 
 " markdown
 augroup markdownPreviewSetting
@@ -53,16 +31,25 @@ nnoremap <leader>a :cclose<CR>
 let g:go_fmt_command = "goimports"
 
 " clojure
-let g:syntastic_clojure_checkers = ['eastwood']
-let g:sexp_enable_insert_mode_mappings = 0
-let g:clojure_fuzzy_indent_patterns = ['with-let', 'are']
 let g:iced_enable_default_key_mappings = v:true
-let g:iced_enable_auto_linting = v:true
-let g:iced#format#rule = {
-  \ 'are': '[[:block 2] [:inner 2 0]]',
-  \ 'r/with-let': '[[:block 2] [:inner 2 0]]',
-  \ 'clojure.test/are': '[[:block 2] [:inner 2 0]]',
-\ }
+" let g:syntastic_clojure_checkers = ['eastwood']
+" let g:sexp_enable_insert_mode_mappings = 0
+" let g:clojure_fuzzy_indent_patterns = ['with-let', 'are']
+" let g:iced_enable_auto_linting = v:true
+" let g:iced#format#rule = {
+  " \ 'are': '[[:block 2] [:inner 2 0]]',
+  " \ 'r/with-let': '[[:block 2] [:inner 2 0]]',
+  " \ 'clojure.test/are': '[[:block 2] [:inner 2 0]]',
+" \ }
+function! s:isClojure()
+  let shebang = getline(1)
+  if shebang =~# '^#!.*/bin/env\s\+bb\>' | return 1 | en
+  return 0
+endfunction
+augroup clojureSyntax
+  autocmd!
+  autocmd BufRead,BufNewFile * if s:isClojure() | set filetype=clojure | en
+augroup END
 
 " Define mappings
 autocmd FileType denite call s:denite_my_settings()
@@ -80,3 +67,7 @@ function! s:denite_my_settings() abort
   nnoremap <silent><buffer><expr> <Space>
   \ denite#do_map('toggle_select').'j'
 endfunction
+
+" open-browser
+nmap zx <Plug>(openbrowser-smart-search)
+vmap zx <Plug>(openbrowser-smart-search)

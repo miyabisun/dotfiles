@@ -1,0 +1,12 @@
+nnoremap ze :Ex<cr>
+nnoremap zt :tabe<cr>
+nnoremap zs <C-w>s
+nnoremap zv <C-w>v
+nnoremap zj <C-w>j
+nnoremap zk <C-w>k
+nnoremap zl <C-w>l
+nnoremap zh <C-w>h
+nnoremap zJ <C-w>J
+nnoremap zK <C-w>K
+nnoremap zL <C-w>L
+nnoremap zH <C-w>H

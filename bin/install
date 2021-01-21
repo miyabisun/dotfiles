@@ -4,18 +4,22 @@ cd "$script_dir/../"
 
 for f in .??*
 do
+  [ "$f" == ".config" ] && continue
   [ "$f" == ".git" ] && continue
   [ "$f" == ".ssh" ] && continue
-  [ "$f" == ".config" ] && continue
+  [ "$f" == ".vim" ] && continue
   [ "$f" == ".DS_Store" ] && continue
   ln -sfv "$(pwd)/$f" "$HOME/$f"
 done
 
 for d in .config/??*
 do
-  mkdir -p "$HOME"/"$d"
+  mkdir -p "$HOME/$d"
   for f in "$d"/??*
   do
     ln -sfv "$(pwd)/$f" "$HOME/$f"
   done
 done
+
+mkdir -p "$HOME/.vim"
+ln -sfv "$(pwd)/.vim/config" "$HOME/.vim/config"
