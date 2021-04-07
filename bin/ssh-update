@@ -1,3 +1,0 @@
-#!/bin/bash
-
-cat $HOME/.ssh/conf.d/config $HOME/.ssh/conf.d/*.conf > $HOME/.ssh/config

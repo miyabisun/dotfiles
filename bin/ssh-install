@@ -7,9 +7,3 @@ mkdir -p ~/.ssh/conf.d
 if [ ! -e ~/.ssh/conf.d/config ]; then
   cp .ssh/conf.d/config ~/.ssh/conf.d/
 fi
-
-# copy ssh-update command
-if [ ! -e /usr/local/bin/ssh-update ]; then
-  cp bin/ssh-update /usr/local/bin
-fi
-
