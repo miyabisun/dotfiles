@@ -1,4 +1,3 @@
-nnoremap ze :Ex<cr>
 nnoremap zt :tabe<cr>
 nnoremap zs <C-w>s
 nnoremap zv <C-w>v

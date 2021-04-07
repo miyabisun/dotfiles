@@ -12,12 +12,14 @@ indent_size = 2
 charset = utf-8
 # trim_trailing_whitespace = true
 
-# 4 Tab indentation
+[Makefile]
+indent_style = tab
+tab_width = 2
+
 [*.php]
 indent_style = tab
 tab_width = 2
 
-# not trim traling whitespace
 [*.md]
 trim_trailing_whitespacee = false
 

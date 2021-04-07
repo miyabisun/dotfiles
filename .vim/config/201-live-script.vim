@@ -7,4 +7,5 @@ augroup livescriptSyntax
   autocmd!
   autocmd BufRead,BufNewFile *.lson set filetype=ls
   autocmd BufRead,BufNewFile * if s:isLiveScript() | set filetype=ls | en
+  autocmd FileType ls set formatoptions-=ro
 augroup END
