@@ -1,2 +1,2 @@
-nnoremap ze :Ex<cr>
-let g:netrw_keepdir= 0
+nnoremap ze :Explore<cr>
+" direcotry change: netrw-cd

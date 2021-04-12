@@ -2,4 +2,4 @@ vnoremap * "zy:let @/ = '\V' . substitute(escape(@z, '\/'), '\n', '\\n', 'g')<CR
 inoremap <silent> jj <ESC>
 nmap <C-p> :FZF<CR>
 nnoremap <ESC><ESC> :nohlsearch<CR>
-nnoremap c "_c
+"nnoremap c "_c
