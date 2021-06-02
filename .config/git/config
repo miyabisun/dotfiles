@@ -9,6 +9,7 @@
 [fetch]
   prune = true
 [alias]
+  e = !vim $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
   ad = !git add $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
   df = !ydiff -s -w0 $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
   st = status -s
@@ -27,3 +28,7 @@
   assumed = !git ls-files -v | grep "^h" | awk '{print $2}'
 [ghq]
   root = ~/src
+[pull]
+  rebase = false  # merge (the default strategy)
+  rebase = true   # rebase
+  ff = only
