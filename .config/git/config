@@ -11,7 +11,7 @@
 [alias]
   e = !vim $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
   ad = !git add $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
-  df = !ydiff -s -w0 $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
+  df = !git diff $(git status -s | grep -e ' M' -e 'MM' | awk '{print $2}' | fzf)
   st = status -s
   pl = !git pull origin $(git symbolic-ref --short HEAD)
   ps = !git push origin $(git symbolic-ref --short HEAD)
@@ -32,3 +32,12 @@
   rebase = false  # merge (the default strategy)
   rebase = true   # rebase
   ff = only
+[pager]
+  diff = delta
+  log = delta
+  reflog = delta
+  show = delta
+[delta]
+  side-by-side = true
+  line-numbers-left-format = ""
+  line-numbers-right-format = "│ "
