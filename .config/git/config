@@ -39,5 +39,3 @@
   show = delta
 [delta]
   side-by-side = true
-  line-numbers-left-format = ""
-  line-numbers-right-format = "│ "
