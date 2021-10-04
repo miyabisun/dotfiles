@@ -1,0 +1,6 @@
+{
+  "initializationOptions": {
+    "source-paths": ["src", "test"],
+    "macro-defs": ["are"]
+  }
+}

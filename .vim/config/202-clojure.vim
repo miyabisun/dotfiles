@@ -5,5 +5,5 @@ function! s:isClojure()
 endfunction
 augroup clojureSyntax
   autocmd!
-  autocmd BufRead,BufNewFile * if s:isClojure() | set filetype=clojure | en
+  autocmd BufRead,BufNewFile * if s:isClojure() | let g:LanguageClientSettingsPath="~/.vim/config/202-clojure-lsp-settings.json" | en
 augroup END
