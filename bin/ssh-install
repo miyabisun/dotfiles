@@ -4,6 +4,19 @@ cd "$script_dir/../"
 
 # copy config files.
 mkdir -p ~/.ssh/conf.d
-if [ ! -e ~/.ssh/conf.d/config ]; then
-  cp .ssh/conf.d/config ~/.ssh/conf.d/
+if [ ! -e ~/.ssh/config ]; then
+  cp .ssh/config ~/.ssh/
+fi
+
+# copy ssh-config files.
+if [ ! -e ~/private ]; then
+  mkdir ~/private
+fi
+if [ ! -e ~/private/ssh-config ]; then
+  git clone https://miyabisun@bitbucket.org/miyabisun/ssh-config.git ~/private/ssh-config
+  if [ $? -eq 0 ]; then
+    bash ~/private/ssh-config/bin/install
+  else
+    rm -rf ~/private/ssh-config
+  fi
 fi
