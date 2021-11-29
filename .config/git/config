@@ -23,9 +23,9 @@
   amend = commit --amend -m
   fpull = !git pull && git submodule foreach git pull origin master
   full-clean = !git checkout . && git clean -fdx
-  assume = update-index --assume-unchanged
-  noassume = update-index --no-assume-unchanged
-  assumed = !git ls-files -v | grep "^h" | awk '{print $2}'
+  skip = update-index --skip-worktree
+  noskip = update-index --no-skip-worktree
+  skipped = !git ls-files -v | grep "^S" | awk '{print $2}'
 [ghq]
   root = ~/src
 [pull]
