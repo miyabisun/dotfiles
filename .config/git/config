@@ -9,9 +9,9 @@
 [fetch]
   prune = true
 [alias]
-  e = !vim $(git status -s | grep -e ' M' -e 'MM' | fzf | awk '{print $2}')
-  ad = !git add $(git status -s | grep -e ' M' -e 'MM' | fzf | awk '{print $2}')
-  df = !git diff $(git status -s | grep -e ' M' -e 'MM' | fzf | awk '{print $2}')
+  e = !vim $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' -e '^??'| fzf | awk '{print $2}')
+  ad = !git add $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' -e '^??' -e '^ D'| fzf | awk '{print $2}')
+  df = !git diff $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' | fzf | awk '{print $2}')
   st = status -s
   pl = !git pull origin $(git symbolic-ref --short HEAD)
   ps = !git push origin $(git symbolic-ref --short HEAD)
