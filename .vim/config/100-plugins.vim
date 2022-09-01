@@ -43,7 +43,7 @@ Plug 'miyabisun/lslint.vim', { 'for': 'ls' }
 " Plug 'wavded/vim-stylus', { 'for': 'stylus' }
 " Plug 'fatih/vim-go', { 'for': 'go', 'do': ':GoInstallBinaries' }
 " Plug 'stephpy/vim-yaml', { 'for': 'yaml' }
-" Plug 'guns/vim-sexp',    { 'for': 'clojure' }
-" Plug 'liquidz/vim-iced', { 'for': 'clojure' }
+Plug 'guns/vim-sexp',    { 'for': 'clojure' }
+Plug 'liquidz/vim-iced', { 'for': 'clojure' }
 
 call plug#end()
