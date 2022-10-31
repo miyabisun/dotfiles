@@ -14,12 +14,9 @@ done
 
 for d in .config/??*
 do
-  mkdir -p "$HOME/$d"
-  for f in "$d"/??*
-  do
-    ln -sfv "$(pwd)/$f" "$HOME/$f"
-  done
+  ln -sfv "$(pwd)/$d" "$HOME/.config"
 done
 
 mkdir -p "$HOME/.vim"
 ln -sfv "$(pwd)/.vim/config" "$HOME/.vim/config"
+ln -sfv "$(pwd)/.vim/vimrc" "$HOME/.vim/vimrc"
