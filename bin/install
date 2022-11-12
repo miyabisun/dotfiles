@@ -18,5 +18,5 @@ do
 done
 
 mkdir -p "$HOME/.vim"
-ln -sfv "$(pwd)/.vim/config" "$HOME/.vim/config"
-ln -sfv "$(pwd)/.vim/vimrc" "$HOME/.vim/vimrc"
+ln -sfv "$(pwd)/.vim/config" "$HOME/.vim"
+ln -sfv "$(pwd)/.vim/vimrc" "$HOME/.vim"
