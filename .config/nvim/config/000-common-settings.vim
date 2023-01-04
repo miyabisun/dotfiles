@@ -1,0 +1,19 @@
+set nocompatible
+
+syntax on
+set nu
+set ruler
+set incsearch
+set hidden
+set hlsearch
+set smartcase
+set ignorecase
+set nobackup
+set noswapfile
+set hlsearch
+set autoread
+set diffopt+=vertical
+set noundofile
+set backspace=indent,eol,start
+set ttyfast
+set background=dark
