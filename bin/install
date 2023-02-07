@@ -2,17 +2,13 @@
 script_dir="$(cd "$(dirname "${BASH_SOURCE:-${(%):-%N}}")"; pwd)"
 cd "$script_dir/../"
 
-for f in .??*
+files=(".editorconfig" ".tmux.conf")
+for f in ${files[@]}
 do
-  [ "$f" == ".config" ] && continue
-  [ "$f" == ".git" ] && continue
-  [ "$f" == ".ssh" ] && continue
-  [ "$f" == ".vim" ] && continue
-  [ "$f" == ".DS_Store" ] && continue
   ln -sfv "$(pwd)/$f" "$HOME/$f"
 done
 
-for d in .config/??*
+for d in config/??*
 do
   ln -sfv "$(pwd)/$d" "$HOME/.config"
 done
