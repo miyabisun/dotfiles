@@ -40,6 +40,7 @@ Plug 'jaawerth/fennel-nvim'
 Plug 'bakpakin/fennel.vim'
 Plug 'gkz/vim-ls', { 'for': 'ls' }
 Plug 'miyabisun/lslint.vim', { 'for': 'ls' }
+Plug 'rust-lang/rust.vim'
 " Plug 'plasticboy/vim-markdown', { 'for': 'markdown' }
 " Plug 'kannokanno/previm', { 'for': 'markdown' }
 " Plug 'othree/yajs.vim', { 'for': 'javascript' }
