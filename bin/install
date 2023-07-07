@@ -4,19 +4,19 @@ cd "$script_dir/../"
 
 function link () {
   from="$(pwd)/$1"
-  to="$HOME/$2"
+  to="${2:-$HOME}"
   ln -sfv "$from" "$to"
 }
 
-link ".editorconfig" ""
-link ".tmux.conf" ""
+link ".editorconfig"
+link ".tmux.conf"
 
 mkdir -p "$HOME/.vim"
-link ".vim/config" ".vim"
-link ".vim/vimrc" ".vim"
+link ".vim/config" "$HOME/.vim"
+link ".vim/vimrc" "$HOME/.vim"
 
 mkdir -p "$HOME/.config"
-link "config/git" ".config"
-link "config/nvim" ".config"
-link "config/tmux" ".config"
-link "config/.deepl.json" ".config"
+link "config/git" "$HOME/.config"
+link "config/nvim" "$HOME/.config"
+link "config/tmux" "$HOME/.config"
+link "config/.deepl.json" "$HOME/.config"
