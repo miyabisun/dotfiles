@@ -17,6 +17,9 @@ local options = {
   winblend = 20,
   pumblend = 20,
   termguicolors = true,
+
+  -- 左端の欄(sign)を常に確保してガタガタを防止
+  signcolumn = "yes",
 }
 for k, v in pairs(options) do
   vim.opt[k] = v
