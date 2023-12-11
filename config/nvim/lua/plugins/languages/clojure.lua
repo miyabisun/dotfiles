@@ -1,3 +1,0 @@
-return {
-  -- {'PaterJason/cmp-conjure'},
-}
