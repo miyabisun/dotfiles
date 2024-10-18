@@ -20,6 +20,12 @@ local options = {
 
   -- 左端の欄(sign)を常に確保してガタガタを防止
   signcolumn = "yes",
+
+  -- マウス操作を禁止
+  mouse = "",
+
+  -- Status Lineを統合
+  laststatus = 3,
 }
 for k, v in pairs(options) do
   vim.opt[k] = v

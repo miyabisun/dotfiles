@@ -10,6 +10,7 @@ local nnoremaps = {
   zK = "<C-w>K",
   zL = "<C-w>L",
   zH = "<C-w>H",
+  ["z="] = "<C-w>=",
 
   -- netrw
   ze = ":Explore<cr>",
