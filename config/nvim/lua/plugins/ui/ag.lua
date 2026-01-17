@@ -1,3 +1,0 @@
-return {
-  "numkil/ag.nvim"
-}
