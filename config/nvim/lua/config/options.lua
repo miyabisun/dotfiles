@@ -3,7 +3,7 @@
 
 vim.opt.number = true          -- Print line number
 vim.opt.relativenumber = false -- Disable relative line numbers
-vim.opt.clipboard = "unnamedplus" -- Sync with system clipboard
+vim.opt.clipboard = ""           -- Do not sync with system clipboard
 vim.opt.smartindent = true     -- Insert indents automatically
 vim.opt.tabstop = 2            -- Number of spaces that a <Tab> in the file counts for
 vim.opt.softtabstop = 2        -- Number of spaces that a <Tab> counts for while performing editing operations
@@ -24,3 +24,5 @@ vim.opt.undofile = false       -- Disable undo file (persistent undo)
 -- Marker (Shada) configuration implies standard behavior,
 -- but verifying shadafile is enabled (it is by default).
 -- If specific marker behavior is needed, we can tune vim.opt.shada
+
+
