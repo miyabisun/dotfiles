@@ -5,26 +5,38 @@
   autoCRLF = false
   safecrlf = true
   whitespace = cr-at-eol
-  editor = vim -c \"set fenc=utf-8\"
+  editor = nvim -c \"set fenc=utf-8\"
 [fetch]
   prune = true
 [alias]
-  e = !vim $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' -e '^??'| fzf | awk '{print $2}')
   ad = !git add $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' -e '^??' -e '^ D'| fzf | awk '{print $2}')
-  df = !git diff $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' | fzf | awk '{print $2}')
-  st = status -s
-  pl = !git pull origin $(git symbolic-ref --short HEAD)
-  ps = !git push origin $(git symbolic-ref --short HEAD)
-  psf = !git push --force-with-lease origin $(git symbolic-ref --short HEAD)
-  diffw = diff --word-diff
   alias = !git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort
+  amend = commit --amend
+  b = branch
+  back = !git checkout $(git checkout | fzf | awk '{print $2}')
+  bd = !git branch -d $(git branch | grep -e '^  ' | fzf | awk '{print $1}')
+  bD = !git branch -D $(git branch | grep -e '^  ' | fzf | awk '{print $1}')
+  c = checkout
   conflicts = !git ls-files -u | cut -f 2 | sort -u
-  logg = log --stat --decorate=short --pretty=format:'%C(yellow)%h %Cgreen%cr %Cblue%cn%Cred%d %Creset%s %C(cyan)%b'
-  amend = commit --amend -m
+  cb = switch -c
+  current-branch = !git branch | grep -e '^\\* ' | sed -e 's/^\\* //g'
+  df = !git diff $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' | fzf | awk '{print $2}')
+  dfw = !git diff --word-diff $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' | fzf | awk '{print $2}')
+  diffw = diff --word-diff
+  e = !nvim $(git status -s | grep -e '^ M' -e '^MM' -e '^UU' -e '^??'| fzf | awk '{print $2}')
   fpull = !git pull && git submodule foreach git pull origin master
   full-clean = !git checkout . && git clean -fdx
-  skip = update-index --skip-worktree
+  logg = log --stat --decorate=short --pretty=format:'%C(yellow)%h %Cgreen%cr %Cblue%cn%Cred%d %Creset%s %C(cyan)%b'
   noskip = update-index --no-skip-worktree
+  pf = !git pull && git fetch
+  pl = !git pull origin $(git symbolic-ref --short HEAD)
+  plf = !git fetch && git reset --hard origin/$(git current-branch)
+  ps = !git push origin $(git symbolic-ref --short HEAD)
+  psf = !git push --force-with-lease origin $(git symbolic-ref --short HEAD)
+  pst = push origin --tags
+  s = !git switch $(git branch | grep -e '^  ' | fzf | awk '{print $1}')
+  st = status -s
+  skip = update-index --skip-worktree
   skipped = !git ls-files -v | grep "^S" | awk '{print $2}'
   to-private = !git config --local user.email "miyabi.ooh@gmail.com" && git config --local user.name "miyabisun"
   to-formal = !git config --local user.email "mohata@xcoo.jp" && git config --local user.name "mohata"
@@ -42,8 +54,10 @@
   branch = false
 [delta]
   side-by-side = true
+[commit]
+	gpgsign = true
 [filter "lfs"]
-  clean = git-lfs clean -- %f
-  smudge = git-lfs smudge -- %f
-  process = git-lfs filter-process
-  required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
