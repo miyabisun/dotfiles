@@ -39,6 +39,7 @@
   log = delta
   reflog = delta
   show = delta
+  branch = false
 [delta]
   side-by-side = true
 [filter "lfs"]
