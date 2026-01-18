@@ -1,0 +1,6 @@
+[user]
+  name = mohata
+  email = mohata@xcoo.jp
+	signingkey = 42536DDEB83BA6B459536D28FDF7A65B9311F139
+[commit]
+	gpgsign = true

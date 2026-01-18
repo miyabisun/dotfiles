@@ -1,6 +1,8 @@
 [user]
   name = miyabisun
   email = miyabi.ooh@gmail.com
+[includeIf "gitdir:/Users/mohata/"]
+  path = ~/.config/git/config-work
 [core]
   autoCRLF = false
   safecrlf = true
@@ -54,8 +56,6 @@
   branch = false
 [delta]
   side-by-side = true
-[commit]
-	gpgsign = true
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
