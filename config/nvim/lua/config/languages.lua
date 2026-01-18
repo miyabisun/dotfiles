@@ -14,6 +14,7 @@ vim.filetype.add({
         end
       end,
     },
+    [".*/git/config"] = "gitconfig", -- Detect git config files in XDG paths
   },
 })
 
