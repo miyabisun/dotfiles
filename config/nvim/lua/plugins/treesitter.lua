@@ -15,6 +15,9 @@ return {
           "markdown_inline",
           "clojure",
           "typescript", -- Add typescript parser
+          "yaml",
+          "javascript",
+          "json",
         },
         sync_install = false,
         highlight = { enable = true },
