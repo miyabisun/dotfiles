@@ -37,16 +37,19 @@ This repository includes several utility scripts in the `bin/` directory to help
 These scripts integrate with Bitwarden CLI (`bw`) to manage secrets and SSH keys.
 
 ### Secrets Management
-- **`bin/update-secrets`**: Fetches secrets from Bitwarden "CLI" folder and saves them to `~/.config/.secrets`.
-- **`bin/create-secret <key> <value>`**: Creates a new secret in Bitwarden "CLI" folder and updates local secrets.
+- **`bin/bw/update-secrets`**: Fetches secrets from Bitwarden "CLI" folder and saves them to `~/.config/.secrets`.
+- **`bin/bw/create-secret <key> <value>`**: Creates a new secret in Bitwarden "CLI" folder and updates local secrets.
+- **`bin/bw/remove-secret <name>`**: Removes a secret from Bitwarden "CLI" folder.
+- **`bin/bw/list-secrets`**: Lists available secrets in Bitwarden "CLI" folder.
 
 ### SSH Key Management
-- **`bin/list-ssh-key`**: Lists available SSH keys in Bitwarden "SSH Keys" folder.
-- **`bin/save-ssh-key [name] [filename]`**: Saves a local SSH key to Bitwarden "SSH Keys" folder.
+- **`bin/bw/list-ssh-keys`**: Lists available SSH keys in Bitwarden "SSH Keys" folder.
+- **`bin/bw/save-ssh-key [name] [filename]`**: Saves a local SSH key to Bitwarden "SSH Keys" folder.
   - Defaults: `name`="default", `filename`="id_rsa".
-- **`bin/load-ssh-key [name] [filename]`**: Loads an SSH key from Bitwarden to `~/.ssh/`.
+- **`bin/bw/load-ssh-key [name] [filename]`**: Loads an SSH key from Bitwarden to `~/.ssh/`.
 
 ### SSH Config Management
-- **`bin/save-ssh-config`**: Interactively selects an SSH config file from `~/.ssh/conf.d/` and saves it to Bitwarden "SSH Config" folder.
+- **`bin/bw/save-ssh-config`**: Interactively selects an SSH config file from `~/.ssh/conf.d/` and saves it to Bitwarden "SSH Config" folder.
+- **`bin/bw/load-ssh-configs`**: Restores all SSH configs from Bitwarden to `~/.ssh/conf.d/`.
 
 
