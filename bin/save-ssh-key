@@ -1,0 +1,86 @@
+#!/bin/bash
+set -e
+
+NAME="${1:-default}"
+KEY_FILENAME="${2:-id_rsa}"
+PRIVATE_KEY_PATH="$HOME/.ssh/$KEY_FILENAME"
+PUBLIC_KEY_PATH="$HOME/.ssh/$KEY_FILENAME.pub"
+
+if ! command -v bw &> /dev/null; then
+    echo "Error: 'bw' command not found."
+    echo "Please install Bitwarden CLI: https://bitwarden.com/help/cli/"
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo "Error: 'jq' command not found."
+    echo "Please install jq."
+    exit 1
+fi
+
+if [ ! -f "$PRIVATE_KEY_PATH" ]; then
+    echo "Error: Private key not found at $PRIVATE_KEY_PATH"
+    exit 1
+fi
+
+if [ ! -f "$PUBLIC_KEY_PATH" ]; then
+    echo "Error: Public key not found at $PUBLIC_KEY_PATH"
+    exit 1
+fi
+
+# Check if vault is unlocked
+STATUS=$(bw status | jq -r .status)
+if [ "$STATUS" != "unlocked" ]; then
+    echo "Error: Bitwarden vault is locked. Run 'bw login' or 'bw unlock'."
+    exit 1
+fi
+
+# Find folder ID for "SSH Keys"
+FOLDER_ID=$(bw list folders --search "SSH Keys" | jq -r '.[] | select(.name == "SSH Keys") | .id' | head -n 1)
+
+if [ -z "$FOLDER_ID" ] || [ "$FOLDER_ID" == "null" ]; then
+    echo "Error: Folder 'SSH Keys' not found in Bitwarden. Please create it first."
+    exit 1
+fi
+
+# Check for existing items with the same name in the folder and delete them
+EXISTING_IDS=$(bw list items --folderid "$FOLDER_ID" | jq -r --arg name "$NAME" '.[] | select(.name == $name) | .id')
+
+if [ -n "$EXISTING_IDS" ]; then
+    echo "Found existing item(s) with name '$NAME' in 'SSH Keys'. Deleting..."
+    echo "$EXISTING_IDS" | while read -r id; do
+        if [ -n "$id" ]; then
+            bw delete item "$id" > /dev/null
+            echo "Deleted item ID: $id"
+        fi
+    done
+fi
+
+echo "Reading local keys..."
+PRIVATE_CONTENT=$(cat "$PRIVATE_KEY_PATH")
+PUBLIC_CONTENT=$(cat "$PUBLIC_KEY_PATH")
+
+echo "Saving keys to Bitwarden item '$NAME'..."
+
+# Create JSON payload
+# Type 2 is Secure Note
+# Field Type 1 is Hidden
+ITEM=$(jq -n \
+  --arg name "$NAME" \
+  --arg folderId "$FOLDER_ID" \
+  --arg private "$PRIVATE_CONTENT" \
+  --arg public "$PUBLIC_CONTENT" \
+  '{
+    type: 2,
+    name: $name,
+    folderId: $folderId,
+    secureNote: { type: 0 },
+    fields: [
+      { name: "private_key", value: $private, type: 1 },
+      { name: "public_key", value: $public, type: 1 }
+    ]
+  }')
+
+echo "$ITEM" | bw encode | bw create item > /dev/null
+
+echo "Done. Saved '$NAME' to 'SSH Keys' folder."

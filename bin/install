@@ -11,12 +11,34 @@ function link () {
 link ".editorconfig"
 link ".tmux.conf"
 
-mkdir -p "$HOME/.vim"
-link ".vim/config" "$HOME/.vim"
-link ".vim/vimrc" "$HOME/.vim"
+mkdir -p "$HOME/.ssh/conf.d"
+link "ssh/config" "$HOME/.ssh"
 
 mkdir -p "$HOME/.config"
 link "config/git" "$HOME/.config"
 link "config/nvim" "$HOME/.config"
 link "config/tmux" "$HOME/.config"
 link "config/.deepl.json" "$HOME/.config"
+
+
+START_MARK="# DOTFILES_START"
+END_MARK="# DOTFILES_END"
+
+for rcfile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+  if [ -f "$rcfile" ]; then
+    if ! grep -q "$START_MARK" "$rcfile"; then
+      echo "Adding dotfiles config to $rcfile..."
+      cat <<EOT >> "$rcfile"
+
+$START_MARK
+if [ -f ~/.config/.secrets ]; then
+  source ~/.config/.secrets
+fi
+$END_MARK
+EOT
+    else
+      echo "Dotfiles config already present in $rcfile."
+    fi
+  fi
+done
+
