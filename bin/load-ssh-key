@@ -1,0 +1,71 @@
+#!/bin/bash
+set -e
+
+NAME="${1:-default}"
+KEY_FILENAME="${2:-id_rsa}"
+PRIVATE_KEY_PATH="$HOME/.ssh/$KEY_FILENAME"
+PUBLIC_KEY_PATH="$HOME/.ssh/$KEY_FILENAME.pub"
+
+if ! command -v bw &> /dev/null; then
+    echo "Error: 'bw' command not found."
+    echo "Please install Bitwarden CLI: https://bitwarden.com/help/cli/"
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo "Error: 'jq' command not found."
+    echo "Please install jq."
+    exit 1
+fi
+
+# Check if vault is unlocked
+STATUS=$(bw status | jq -r .status)
+if [ "$STATUS" != "unlocked" ]; then
+    echo "Error: Bitwarden vault is locked. Run 'bw login' or 'bw unlock'."
+    exit 1
+fi
+
+# Find folder ID for "SSH Keys"
+FOLDER_ID=$(bw list folders --search "SSH Keys" | jq -r '.[] | select(.name == "SSH Keys") | .id' | head -n 1)
+
+if [ -z "$FOLDER_ID" ] || [ "$FOLDER_ID" == "null" ]; then
+    echo "Error: Folder 'SSH Keys' not found in Bitwarden."
+    exit 1
+fi
+
+echo "Searching for item '$NAME' in 'SSH Keys'..."
+ITEM_JSON=$(bw list items --folderid "$FOLDER_ID" | jq --arg name "$NAME" '.[] | select(.name == $name)')
+
+if [ -z "$ITEM_JSON" ]; then
+    echo "Error: Item '$NAME' not found in 'SSH Keys' folder."
+    exit 1
+fi
+
+echo "Item found. Extracting keys..."
+
+PRIVATE_KEY=$(echo "$ITEM_JSON" | jq -r '.fields[] | select(.name == "private_key") | .value')
+PUBLIC_KEY=$(echo "$ITEM_JSON" | jq -r '.fields[] | select(.name == "public_key") | .value')
+
+if [ -z "$PRIVATE_KEY" ] || [ "$PRIVATE_KEY" == "null" ]; then
+    echo "Error: 'private_key' field not found in item."
+    exit 1
+fi
+
+if [ -z "$PUBLIC_KEY" ] || [ "$PUBLIC_KEY" == "null" ]; then
+    echo "Error: 'public_key' field not found in item."
+    exit 1
+fi
+
+echo "Ensuring ~/.ssh directory exists..."
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+echo "Saving private key to $PRIVATE_KEY_PATH"
+echo "$PRIVATE_KEY" > "$PRIVATE_KEY_PATH"
+chmod 600 "$PRIVATE_KEY_PATH"
+
+echo "Saving public key to $PUBLIC_KEY_PATH"
+echo "$PUBLIC_KEY" > "$PUBLIC_KEY_PATH"
+chmod 644 "$PUBLIC_KEY_PATH"
+
+echo "Done."
