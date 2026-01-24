@@ -17,7 +17,7 @@ The `bin/install` script sets up symbolic links for the following configuration 
 
 ### Root Directory
 - `~/.editorconfig` -> `.editorconfig`
-- `~/.tmux.conf` -> `.tmux.conf`
+
 
 ### SSH Directory
 - `~/.ssh/config` -> `ssh/config`

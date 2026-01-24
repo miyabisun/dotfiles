@@ -9,7 +9,7 @@ function link () {
 }
 
 link ".editorconfig"
-link ".tmux.conf"
+
 
 mkdir -p "$HOME/.ssh/conf.d"
 link "ssh/config" "$HOME/.ssh"
