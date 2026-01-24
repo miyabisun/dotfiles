@@ -1,7 +1,0 @@
-#!/bin/bash
-script_dir="$(cd "$(dirname "${BASH_SOURCE:-${(%):-%N}}")"; pwd)"
-cd "$script_dir/../"
-
-# vim-plug
-#   https://github.com/junegunn/vim-plug
-curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
