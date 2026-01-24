@@ -1,5 +1,0 @@
-#!/bin/bash
-script_dir="$(cd "$(dirname "${BASH_SOURCE:-${(%):-%N}}")"; pwd)"
-
-brew install tmux
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm

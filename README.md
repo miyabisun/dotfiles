@@ -48,9 +48,5 @@ These scripts integrate with Bitwarden CLI (`bw`) to manage secrets and SSH keys
 
 ### SSH Config Management
 - **`bin/save-ssh-config`**: Interactively selects an SSH config file from `~/.ssh/conf.d/` and saves it to Bitwarden "SSH Config" folder.
-- **`bin/load-ssh-configs`**: Restores all SSH configs from Bitwarden to `~/.ssh/conf.d/`.
 
-## Other Scripts
-
-- **`bin/tmux-install`**: Setup script for Tmux.
 
