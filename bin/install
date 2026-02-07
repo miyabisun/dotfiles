@@ -20,6 +20,9 @@ link "config/nvim" "$HOME/.config"
 link "config/tmux" "$HOME/.config"
 link "config/.deepl.json" "$HOME/.config"
 
+mkdir -p "$HOME/.claude/plugins"
+link "claude/plugins/developer-role" "$HOME/.claude/plugins"
+
 
 START_MARK="# DOTFILES_START"
 END_MARK="# DOTFILES_END"
