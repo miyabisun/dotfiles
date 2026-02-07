@@ -16,6 +16,7 @@
   amend = commit --amend
   b = branch
   back = !git checkout $(git checkout | fzf | awk '{print $2}')
+  bare-clone = clone --bare -c remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
   bd = !git branch -d $(git branch | grep -e '^  ' | fzf | awk '{print $1}')
   bD = !git branch -D $(git branch | grep -e '^  ' | fzf | awk '{print $1}')
   c = checkout
@@ -37,6 +38,7 @@
   psf = !git push --force-with-lease origin $(git symbolic-ref --short HEAD)
   pst = push origin --tags
   s = !git switch $(git branch | grep -e '^  ' | fzf | awk '{print $1}')
+  setup-worktree = "!f() { \\\n    url=$1; \\\n    dir=${2:-$(basename \"$url\" .git)}; \\\n    git clone --bare \"$url\" \"$dir\" -c remote.origin.fetch=\"+refs/heads/*:refs/remotes/origin/*\" && \\\n    cd \"$dir\" && \\\n    git fetch && \\\n    # 自動判別ロジック: HEADが指しているブランチ名を取得\n    branch=$(git symbolic-ref --short HEAD) && \\\n    echo \"Default branch detected: $branch\" && \\\n    git worktree add \"$branch\" \"$branch\"; \\\n}; f"
   st = status -s
   skip = update-index --skip-worktree
   skipped = !git ls-files -v | grep "^S" | awk '{print $2}'
