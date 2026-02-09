@@ -1,8 +1,8 @@
 [user]
   name = miyabisun
   email = miyabi.ooh@gmail.com
-[includeIf "gitdir:/Users/mohata/"]
-  path = ~/.config/git/config-work
+[includeIf "hasconfig:remote.*.url:git@github.xcoo.jp:**/**"]
+  path = ~/.config/git/config-xcoo
 [core]
   autoCRLF = false
   safecrlf = true
@@ -42,8 +42,6 @@
   st = status -s
   skip = update-index --skip-worktree
   skipped = !git ls-files -v | grep "^S" | awk '{print $2}'
-  to-private = !git config --local user.email "miyabi.ooh@gmail.com" && git config --local user.name "miyabisun"
-  to-formal = !git config --local user.email "mohata@xcoo.jp" && git config --local user.name "mohata"
 [ghq]
   root = ~/src
 [pull]
