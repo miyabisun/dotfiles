@@ -1,7 +1,0 @@
-{
-  "name": "developer-role",
-  "description": "Defines a professional developer role with coding standards, implementation workflow, and quality guidelines for Claude Code",
-  "author": {
-    "name": "miyabi"
-  }
-}
