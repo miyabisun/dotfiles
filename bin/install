@@ -21,6 +21,7 @@ link "config/tmux" "$HOME/.config"
 link "config/.deepl.json" "$HOME/.config"
 
 link "claude/skills" "$HOME/.claude"
+link "claude/CLAUDE.md" "$HOME/.claude"
 
 
 START_MARK="# DOTFILES_START"
