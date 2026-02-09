@@ -12,6 +12,9 @@ vim.filetype.add({
         if vim.regex([[^#!.*civet]]):match_str(content) then
           return "civet"
         end
+        if vim.regex([[^#!.*\<bb\>]]):match_str(content) then
+          return "clojure"
+        end
       end,
     },
     [".*/git/config"] = "gitconfig", -- Detect git config files in XDG paths
