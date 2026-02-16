@@ -20,8 +20,12 @@ link "config/nvim" "$HOME/.config"
 link "config/tmux" "$HOME/.config"
 link "config/.deepl.json" "$HOME/.config"
 
-link "claude/skills" "$HOME/.claude"
-link "claude/CLAUDE.md" "$HOME/.claude"
+mkdir -p "$HOME/.claude"
+link "agents/skills" "$HOME/.claude"
+link "agents/CLAUDE.md" "$HOME/.claude"
+
+mkdir -p "$HOME/.agents"
+link "agents/skills" "$HOME/.agents"
 
 
 START_MARK="# DOTFILES_START"
