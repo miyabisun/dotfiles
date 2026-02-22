@@ -15,6 +15,7 @@ vim.opt.termguicolors = true   -- True color support
 vim.opt.scrolloff = 8          -- Min number of lines to keep above and below the cursor
 vim.opt.signcolumn = "yes"     -- Always show the signcolumn
 vim.opt.cursorline = true      -- Highlight the current line
+vim.opt.mouse = ""             -- Disable mouse support
 
 -- Disable temporary files
 vim.opt.swapfile = false       -- Disable swap file
