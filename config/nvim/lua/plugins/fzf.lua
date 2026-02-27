@@ -11,6 +11,11 @@ return {
         file_icons = false,
         git_icons = false,
       },
+      winopts = {
+        preview = {
+          layout = "vertical", -- Preview below (top/bottom split)
+        },
+      },
     })
 
     -- Keymaps
