@@ -32,19 +32,22 @@ link "local/bin/emit-turn-end.sh" "$HOME/.local/bin"
 START_MARK="# DOTFILES_START"
 END_MARK="# DOTFILES_END"
 
+EXPORTS_LINE='[ -f "$HOME/.dotfiles/config/bash/exports.sh" ] && . "$HOME/.dotfiles/config/bash/exports.sh"'
+ZSH_LINE='[ -f "$HOME/.dotfiles/config/zsh/custom.zsh" ] && . "$HOME/.dotfiles/config/zsh/custom.zsh"'
+
 for rcfile in "$HOME/.bashrc" "$HOME/.zshrc"; do
   if [ -f "$rcfile" ]; then
     if ! grep -q "$START_MARK" "$rcfile"; then
       echo "Adding dotfiles config to $rcfile..."
-      cat <<EOT >> "$rcfile"
-
-$START_MARK
-if [ -f ~/.config/.secrets ]; then
-  source ~/.config/.secrets
-fi
-export PATH="\$HOME/.dotfiles/bin/bw:\$PATH"
-$END_MARK
-EOT
+      {
+        echo ""
+        echo "$START_MARK"
+        echo "$EXPORTS_LINE"
+        if [ "$rcfile" = "$HOME/.zshrc" ]; then
+          echo "$ZSH_LINE"
+        fi
+        echo "$END_MARK"
+      } >> "$rcfile"
     else
       echo "Dotfiles config already present in $rcfile."
     fi
