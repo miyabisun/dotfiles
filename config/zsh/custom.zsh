@@ -4,6 +4,45 @@
 # ==================================================
 
 # --------------------------------------------------
+# Prompt: fish-like minimal (override Powerlevel10k)
+# --------------------------------------------------
+typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir prompt_char)
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=()
+
+# Remove powerline separators and background fills
+typeset -g POWERLEVEL9K_LEFT_SEGMENT_SEPARATOR=''
+typeset -g POWERLEVEL9K_LEFT_SUBSEGMENT_SEPARATOR=' '
+typeset -g POWERLEVEL9K_RIGHT_SEGMENT_SEPARATOR=''
+typeset -g POWERLEVEL9K_RIGHT_SUBSEGMENT_SEPARATOR=''
+typeset -g POWERLEVEL9K_LEFT_PROMPT_LAST_SEGMENT_END_SYMBOL=''
+typeset -g POWERLEVEL9K_LEFT_PROMPT_FIRST_SEGMENT_START_SYMBOL=''
+
+# Dir: no background, blue text like fish
+typeset -g POWERLEVEL9K_DIR_BACKGROUND='none'
+typeset -g POWERLEVEL9K_DIR_FOREGROUND='blue'
+typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND='blue'
+typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND='blue'
+typeset -g POWERLEVEL9K_DIR_ANCHOR_BOLD=false
+typeset -g POWERLEVEL9K_DIR_NOT_WRITABLE_BACKGROUND='none'
+typeset -g POWERLEVEL9K_DIR_NOT_WRITABLE_FOREGROUND='blue'
+typeset -g POWERLEVEL9K_DIR_NON_EXISTENT_BACKGROUND='none'
+typeset -g POWERLEVEL9K_DIR_NON_EXISTENT_FOREGROUND='blue'
+typeset -g POWERLEVEL9K_DIR_VISUAL_IDENTIFIER_EXPANSION=''
+typeset -g POWERLEVEL9K_DIR_NOT_WRITABLE_VISUAL_IDENTIFIER_EXPANSION=''
+typeset -g POWERLEVEL9K_DIR_NON_EXISTENT_VISUAL_IDENTIFIER_EXPANSION=''
+
+# Prompt char: $ (green=ok, red=error)
+typeset -g POWERLEVEL9K_PROMPT_CHAR_BACKGROUND='none'
+typeset -g POWERLEVEL9K_DIR_LEFT_{LEFT,RIGHT}_WHITESPACE=
+typeset -g POWERLEVEL9K_DIR_RIGHT_{LEFT,RIGHT}_WHITESPACE=
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIINS_CONTENT_EXPANSION='$'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VICMD_CONTENT_EXPANSION='$'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIVIS_CONTENT_EXPANSION='$'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIOWR_CONTENT_EXPANSION='$'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND='green'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND='red'
+
+# --------------------------------------------------
 # Zsh plugins
 # Paths differ by OS/package manager, so we search
 # --------------------------------------------------
@@ -39,6 +78,14 @@ if (( $+widgets[history-substring-search-up] )); then
   bindkey '^[[A' history-substring-search-up
   bindkey '^[[B' history-substring-search-down
 fi
+
+# --------------------------------------------------
+# zsh-abbr (fish-like abbreviations)
+# --------------------------------------------------
+_dotfiles_dir="${${(%):-%x}:A:h:h:h}"
+_abbr_path="$_dotfiles_dir/config/zsh/plugins/zsh-abbr/zsh-abbr.zsh"
+[[ -f "$_abbr_path" ]] && source "$_abbr_path"
+unset _dotfiles_dir _abbr_path
 
 # --------------------------------------------------
 # Zsh-specific tool integrations

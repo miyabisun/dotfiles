@@ -34,6 +34,10 @@ export BUN_INSTALL="$HOME/.bun"
 # cargo / rust
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
+# Aliases (fish built-in equivalents)
+alias la='ls -lAh'
+alias ll='ls -lh'
+
 # fnm (Fast Node Manager)
 if command -v fnm > /dev/null 2>&1; then
   eval "$(fnm env --use-on-cd)"
