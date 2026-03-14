@@ -21,11 +21,12 @@ link "config/tmux" "$HOME/.config"
 link "config/.deepl.json" "$HOME/.config"
 
 mkdir -p "$HOME/.claude"
-link "agents/skills" "$HOME/.claude"
-link "agents/CLAUDE.md" "$HOME/.claude"
+link "claude/skills" "$HOME/.claude"
+link "claude/CLAUDE.md" "$HOME/.claude"
+link "claude/settings.json" "$HOME/.claude"
 
-mkdir -p "$HOME/.agents"
-link "agents/skills" "$HOME/.agents"
+mkdir -p "$HOME/.local/bin"
+link "local/bin/emit-turn-end.sh" "$HOME/.local/bin"
 
 
 START_MARK="# DOTFILES_START"

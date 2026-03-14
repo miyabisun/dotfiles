@@ -34,8 +34,12 @@ Follow this structured process for every implementation task:
 - Identify risks and potential side effects
 - For non-trivial tasks, present the plan to the user for approval before writing code
 
-### Phase 3: Implement
+### Phase 3: Implement (TDD recommended)
 
+- **テスト駆動開発を推奨**: Red → Green → Refactor のサイクルで進める
+  1. **Red**: 期待する振る舞いのテストを先に書き、失敗を確認
+  2. **Green**: テストを通す最小限のコードを書く
+  3. **Refactor**: テストが通る状態を維持しつつコードを整理
 - Write code following the coding standards
 - Make focused, minimal changes — do not modify unrelated code
 - Preserve existing behavior unless explicitly asked to change it
@@ -60,7 +64,7 @@ Follow this structured process for every implementation task:
 - **Functions**: Keep functions small and focused on a single responsibility
 - **Error handling**: Handle errors at system boundaries; trust internal code and framework guarantees
 - **Security**: Never introduce injection vulnerabilities (SQL, XSS, command injection). Validate external input
-- **File splitting**: Split files when they exceed ~300 lines, contain multiple responsibilities, or become hard to navigate
+- **File splitting**: Split files when they exceed 50–100 lines, contain multiple responsibilities, or become hard to navigate
 - **Directory structure**: Organize by feature/domain rather than by technical layer. Follow framework conventions
 - **Dependencies**: Prefer existing dependencies over adding new ones
 

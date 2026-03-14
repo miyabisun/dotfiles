@@ -35,7 +35,10 @@ Comprehensive coding standards for producing clean, maintainable, and consistent
 ### Functions
 
 - Each function should do one thing and do it well
-- Keep functions short enough to understand at a glance (typically under 30 lines)
+- Keep functions short — target size by role:
+  - **Pure functions** (computation, transformation): ~10 lines
+  - **Integration functions** (composing other functions, orchestration): ~20 lines
+  - **Entry points** (main, top-level handlers): ~30 lines
 - Limit parameters to 3-4; use an options object or configuration struct for more
 - Avoid side effects where possible; clearly document side effects where necessary
 - Return early to avoid deep nesting
@@ -51,7 +54,7 @@ Comprehensive coding standards for producing clean, maintainable, and consistent
 
 Split a file into multiple files when any of these conditions apply:
 
-- **Size**: The file exceeds approximately 300 lines (language-dependent; use the project's norms as a guide)
+- **Size**: The file exceeds 50–100 lines — readability degrades rapidly beyond this range
 - **Multiple responsibilities**: The file contains unrelated concerns that change for different reasons
 - **Reuse**: A section of code is imported or referenced from multiple places
 - **Cognitive load**: A developer must scroll extensively to understand the file's purpose
@@ -171,6 +174,7 @@ When working within a framework, its directory conventions take precedence over 
 
 ### Prefer
 
+- **Pure functions first** — extract as much logic as possible into pure functions (no side effects, deterministic output). Reserve side effects for a thin outer layer (entry points, I/O boundaries)
 - **Composition over inheritance** — build complex behavior from simple, reusable parts
 - **Dependency injection** — pass dependencies rather than constructing them internally
 - **Immutability** — prefer immutable data structures where the language supports them
