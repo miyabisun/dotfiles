@@ -1,0 +1,64 @@
+{
+  "enabledPlugins": {
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f Cargo.toml && cargo fmt --check 2>&1 && cargo clippy --quiet 2>&1 && cargo test --quiet 2>&1 || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f package.json && { npx --no vitest --version >/dev/null 2>&1 || { echo 'ERROR: vitest is not installed. Run: npm install -D vitest'; exit 1; }; npx --no vitest run --reporter=verbose 2>&1; } || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "vite_config=$(ls vite.config.* client/vite.config.* 2>/dev/null | head -1) && test -n \"$vite_config\" && { dir=$(dirname \"$vite_config\"); if [ \"$dir\" != \".\" ]; then cd \"$dir\"; fi; npx vite build 2>&1 | tail -5; } || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.local/bin/emit-turn-end.sh claude success"
+          }
+        ]
+      }
+    ]
+  },
+  "language": "Japanese",
+  "skipDangerousModePermissionPrompt": true
+}

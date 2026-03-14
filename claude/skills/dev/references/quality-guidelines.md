@@ -80,7 +80,8 @@ Never sacrifice a higher-priority quality for a lower one without explicit justi
 - Keep cyclomatic complexity low — extract complex conditionals into named functions
 - Avoid deep nesting — use early returns and guard clauses
 - Limit function parameters — use structured options for many arguments
-- Decompose large functions into smaller, well-named helpers
+- Decompose large functions into smaller, well-named helpers — target ~10 lines for pure functions, ~20 for integration functions, ~30 for entry points
+- When any code unit (function, class, file) exceeds its size target, consider whether it can be split — readability degrades rapidly with size
 
 ### Avoid Unnecessary Complexity
 
@@ -88,6 +89,8 @@ Never sacrifice a higher-priority quality for a lower one without explicit justi
 - **No speculative generality**: Do not add parameters, options, or extension points "just in case"
 - **No gold plating**: Implement exactly what is required, nothing more
 - **Three similar lines are better than a premature abstraction**: Wait for the pattern to emerge before extracting
+- **Do not over-apply DRY**: Duplicated code is acceptable when the contexts differ or when unifying would couple unrelated concerns
+- **No backward-compatibility shims**: Do not add re-exports, renamed unused variables, or compatibility wrappers — prefer a clean, simple design that reflects the ideal state
 
 ### Technical Debt
 
@@ -122,8 +125,14 @@ Never sacrifice a higher-priority quality for a lower one without explicit justi
 
 ## Testing Standards
 
+### Test Structure
+
+- Every source file with pure functions should have a corresponding test file with the same name (e.g., `calc.ts` → `calc.test.ts`)
+- Co-locate test files alongside the source files they test
+
 ### What to Test
 
+- Pure functions first — these are the easiest to test and contain the core logic
 - Public API and behavior, not internal implementation
 - Happy paths and common use cases
 - Edge cases and boundary conditions

@@ -174,7 +174,7 @@ Common anti-patterns, code smells, and issues to watch for during code review. O
 
 ### Mega File
 
-**Symptom**: A single file with 500+ lines containing multiple unrelated components, functions, or classes.
+**Symptom**: A single file exceeding 100 lines, or containing multiple unrelated components, functions, or classes.
 
 **Risk**: Hard to navigate, understand, and modify. Merge conflicts become frequent.
 

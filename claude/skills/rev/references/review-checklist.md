@@ -70,22 +70,26 @@ Detailed checklists for each review dimension. Use these as a systematic guide w
 ### Readability
 
 - [ ] Names clearly communicate intent (variables, functions, classes)
-- [ ] Functions do one thing and are short enough to understand at a glance
+- [ ] Functions do one thing and are short enough to understand at a glance (~10 lines for pure functions, ~20 for integration functions, ~30 for entry points)
+- [ ] Any code unit (function, class, file) exceeding its size target is a candidate for splitting
 - [ ] Control flow is straightforward (minimal nesting, early returns)
 - [ ] Comments explain "why", not "what"
 - [ ] No dead code, commented-out code, or leftover debug statements
 
 ### Structure
 
+- [ ] Logic is actively extracted into pure functions — side effects are confined to a thin outer layer (entry points, I/O boundaries)
 - [ ] Code is organized into cohesive modules with clear responsibilities
 - [ ] Public API is separated from internal implementation
 - [ ] Dependencies flow in one direction (no circular dependencies)
 - [ ] Abstractions exist only where there are multiple implementations or clear need
+- [ ] DRY is not over-applied — duplicated code is acceptable when the contexts differ or when premature unification would couple unrelated concerns
+- [ ] Backward-compatibility shims (re-exports, renamed unused variables, compatibility wrappers) are avoided — prefer a clean, simple design that reflects the ideal state
 
 ### File and Directory Structure
 
 - [ ] Files have a single, clear responsibility
-- [ ] File size is reasonable (generally under ~300 lines; language-dependent)
+- [ ] File size is reasonable (50–100 lines; readability degrades rapidly beyond this range)
 - [ ] Related files are colocated (tests near code, types near usage)
 - [ ] Directory hierarchy reflects the domain structure, not just technical layers
 - [ ] Directory nesting is kept to 3-4 levels
@@ -157,6 +161,11 @@ When the project uses a framework, identify it from its manifest/config files, t
 - [ ] File placement is consistent with existing structure
 - [ ] API design matches existing APIs in the project
 - [ ] Test organization follows the project's testing conventions
+
+### Tests
+
+- [ ] Pure functions have corresponding test files with the same name
+- [ ] Tests are not tautological — they must verify meaningful behavior, not simply restate the implementation (e.g., asserting `add(1, 2) == 3` is valid; asserting `add(a, b) == a + b` is a tautology)
 
 ### Documentation
 
