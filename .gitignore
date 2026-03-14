@@ -1,2 +1,5 @@
 # tmux plugins managed by tpm
 config/tmux/plugins/
+
+# per-machine colorscheme choice
+config/nvim/colorscheme.txt

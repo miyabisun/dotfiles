@@ -28,5 +28,23 @@ return {
     map("n", "<leader>sg", fzf.live_grep, { desc = "[S]earch by [G]rep" })
     map("n", "<leader>sb", fzf.buffers, { desc = "[S]earch [B]uffers" })
     map("n", "<leader>sh", fzf.help_tags, { desc = "[S]earch [H]elp" })
+
+    -- :Theme command — pick and persist colorscheme
+    local scheme_path = vim.fn.stdpath("config") .. "/colorscheme.txt"
+    vim.api.nvim_create_user_command("Theme", function()
+      fzf.colorschemes({
+        actions = {
+          ["default"] = function(selected)
+            local scheme = selected[1]
+            vim.cmd.colorscheme(scheme)
+            local f = io.open(scheme_path, "w")
+            if f then
+              f:write(scheme .. "\n")
+              f:close()
+            end
+          end,
+        },
+      })
+    end, { desc = "Pick and persist colorscheme" })
   end,
 }

@@ -32,5 +32,8 @@ map("n", "z<C-l>", function() require("smart-splits").swap_buf_right() end, { de
 map("n", "zv", "<C-w>v", { desc = "Split window vertically" })
 map("n", "zs", "<C-w>s", { desc = "Split window horizontally" })
 
+-- zt: Theme picker
+map("n", "zt", "<cmd>Theme<cr>", { desc = "Pick colorscheme" })
+
 -- Diagnostics
 map("n", "gl", vim.diagnostic.open_float, { desc = "Show line diagnostics" })
