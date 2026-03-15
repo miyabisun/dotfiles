@@ -1,6 +1,6 @@
 # Prompt: fish-like minimal
 # If Powerlevel10k is not available, use a plain zsh prompt
-if ! (( ${+functions[prompt_powerlevel10k_setup]} )); then
+if [[ -z "$POWERLEVEL9K_CONFIG_FILE" ]]; then
   setopt prompt_subst
   autoload -Uz vcs_info
   precmd() { vcs_info }
