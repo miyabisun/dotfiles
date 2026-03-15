@@ -18,9 +18,11 @@ _prepend_path() {
   esac
 }
 
-[ -d "$HOME/.dotfiles/bin/bw" ] && _prepend_path "$HOME/.dotfiles/bin/bw"
-[ -d "$HOME/go/bin" ]           && _prepend_path "$HOME/go/bin"
-[ -d "$HOME/.bun/bin" ]         && _prepend_path "$HOME/.bun/bin"
+[ -d "$HOME/.local/bin" ]         && _prepend_path "$HOME/.local/bin"
+[ -d "$HOME/.local/share/fnm" ]   && _prepend_path "$HOME/.local/share/fnm"
+[ -d "$HOME/.dotfiles/bin/bw" ]   && _prepend_path "$HOME/.dotfiles/bin/bw"
+[ -d "$HOME/go/bin" ]             && _prepend_path "$HOME/go/bin"
+[ -d "$HOME/.bun/bin" ]           && _prepend_path "$HOME/.bun/bin"
 
 unset -f _prepend_path
 
