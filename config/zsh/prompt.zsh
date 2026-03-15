@@ -1,4 +1,16 @@
-# Prompt: fish-like minimal (override Powerlevel10k)
+# Prompt: fish-like minimal
+# If Powerlevel10k is not available, use a plain zsh prompt
+if ! (( ${+functions[prompt_powerlevel10k_setup]} )); then
+  setopt prompt_subst
+  autoload -Uz vcs_info
+  precmd() { vcs_info }
+  zstyle ':vcs_info:git:*' formats ' (%b)'
+  PROMPT='%F{253}%~%f${vcs_info_msg_0_}%(?.%F{green}.%F{red}) $%f '
+  RPROMPT=''
+  return
+fi
+
+# Powerlevel10k overrides
 typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir vcs prompt_char)
 typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=()
 
