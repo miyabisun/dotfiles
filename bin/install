@@ -28,12 +28,15 @@ link "claude/settings.json" "$HOME/.claude"
 mkdir -p "$HOME/.local/bin"
 link "local/bin/emit-turn-end.sh" "$HOME/.local/bin"
 
+mkdir -p "$HOME/.config/sheldon"
+link "config/zsh/plugins.toml" "$HOME/.config/sheldon"
+command -v sheldon > /dev/null && sheldon lock
 
 START_MARK="# DOTFILES_START"
 END_MARK="# DOTFILES_END"
 
 EXPORTS_LINE='[ -f "$HOME/.dotfiles/config/bash/exports.sh" ] && . "$HOME/.dotfiles/config/bash/exports.sh"'
-ZSH_LINE='[ -f "$HOME/.dotfiles/config/zsh/custom.zsh" ] && . "$HOME/.dotfiles/config/zsh/custom.zsh"'
+ZSH_LINE='[ -f "$HOME/.dotfiles/config/zsh/init.zsh" ] && . "$HOME/.dotfiles/config/zsh/init.zsh"'
 
 for rcfile in "$HOME/.bashrc" "$HOME/.zshrc"; do
   if [ -f "$rcfile" ]; then
