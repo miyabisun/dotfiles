@@ -4,20 +4,17 @@ return {
     lazy = false, -- Force load at startup (No event, no lazy)
     priority = 1000, -- Ensure it loads early
     dependencies = {
-      -- Mason (Package Manager)
       {
         "williamboman/mason.nvim",
-        build = ":MasonUpdate",
         config = function()
-          require("mason").setup()
-        end,
-      },
-      -- Mason LSP Config (Installer Bridge)
-      {
-        "williamboman/mason-lspconfig.nvim",
-        config = function()
-          require("mason-lspconfig").setup({
-            ensure_installed = { "lua_ls", "clojure_lsp", "yamlls", "ts_ls", "jsonls" },
+          require("mason").setup({
+            ensure_installed = {
+              "lua-language-server",
+              "clojure-lsp",
+              "yaml-language-server",
+              "typescript-language-server",
+              "json-lsp",
+            },
           })
         end,
       },
