@@ -1,16 +1,18 @@
 # Prompt: fish-like minimal
-# If Powerlevel10k is not available, use a plain zsh prompt
-if [[ -z "$POWERLEVEL9K_CONFIG_FILE" ]]; then
+# Fallback: plain zsh prompt — not feature-equivalent to p10k,
+# but "good enough" until sheldon/p10k are installed.
+if ! command -v sheldon > /dev/null 2>&1; then
   setopt prompt_subst
   autoload -Uz vcs_info
   precmd() { vcs_info }
   zstyle ':vcs_info:git:*' formats ' (%b)'
-  PROMPT='%F{yellow}%m%f %F{green}%~%f%F{white}${vcs_info_msg_0_}%f%(?.%F{green}.%F{red}) $%f '
+  PROMPT='%F{yellow}%m%f %F{green}%(5~|%-1~/…/%2~|%~)%f%F{white}${vcs_info_msg_0_}%f%(?.%F{green}.%F{red}) $%f '
   RPROMPT=''
   return
 fi
 
 # Powerlevel10k overrides
+typeset -g POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
 typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs prompt_char)
 
 # Context: hostname in yellow
@@ -31,7 +33,9 @@ typeset -g POWERLEVEL9K_RIGHT_SUBSEGMENT_SEPARATOR=''
 typeset -g POWERLEVEL9K_LEFT_PROMPT_LAST_SEGMENT_END_SYMBOL=''
 typeset -g POWERLEVEL9K_LEFT_PROMPT_FIRST_SEGMENT_START_SYMBOL=''
 
-# Dir: no background, green text
+# Dir: no background, green text, truncate long paths
+typeset -g POWERLEVEL9K_SHORTEN_STRATEGY='truncate_to_first_charclass'
+typeset -g POWERLEVEL9K_SHORTEN_DELIMITER=''
 typeset -g POWERLEVEL9K_DIR_BACKGROUND='none'
 typeset -g POWERLEVEL9K_DIR_FOREGROUND='green'
 typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND='green'
@@ -60,9 +64,11 @@ typeset -g POWERLEVEL9K_VCS_RIGHT_{LEFT,RIGHT}_WHITESPACE=
 
 # Prompt char: $ (green=ok, red=error)
 typeset -g POWERLEVEL9K_PROMPT_CHAR_BACKGROUND='none'
-typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIINS_CONTENT_EXPANSION=' $'
-typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VICMD_CONTENT_EXPANSION=' $'
-typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIVIS_CONTENT_EXPANSION=' $'
-typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIOWR_CONTENT_EXPANSION=' $'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIINS_CONTENT_EXPANSION='$'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VICMD_CONTENT_EXPANSION='$'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIVIS_CONTENT_EXPANSION='$'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_{OK,ERROR}_VIOWR_CONTENT_EXPANSION='$'
 typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND='green'
 typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND='red'
+typeset -g POWERLEVEL9K_PROMPT_CHAR_LEFT_LEFT_WHITESPACE=' '
+typeset -g POWERLEVEL9K_PROMPT_CHAR_LEFT_RIGHT_WHITESPACE=''
