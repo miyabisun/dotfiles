@@ -17,6 +17,10 @@ vim.opt.signcolumn = "yes"     -- Always show the signcolumn
 vim.opt.cursorline = true      -- Highlight the current line
 vim.opt.mouse = ""             -- Disable mouse support
 
+-- Use ripgrep for :grep
+vim.opt.grepprg = "rg --vimgrep --smart-case"
+vim.opt.grepformat = "%f:%l:%c:%m"
+
 -- Disable temporary files
 vim.opt.swapfile = false       -- Disable swap file
 vim.opt.backup = false         -- Disable backup file
