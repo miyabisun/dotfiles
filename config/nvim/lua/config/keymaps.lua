@@ -11,8 +11,14 @@ map("n", "ze", "<cmd>Ex<cr>", { desc = "Go back to explorer" })
 
 -- zp: Fzf Project Files
 map("n", "zp", "<cmd>FzfLua files<cr>", { desc = "Fzf Project Files" })
--- z/: Fzf Live Grep (Full Text Search)
-map("n", "z/", "<cmd>FzfLua live_grep<cr>", { desc = "Fzf Live Grep" })
+-- z/: Grep → Quickfix (Full Text Search)
+map("n", "z/", function()
+  vim.ui.input({ prompt = "Grep: " }, function(pattern)
+    if not pattern or pattern == "" then return end
+    vim.cmd("silent grep! " .. vim.fn.shellescape(pattern))
+    vim.cmd("botright copen")
+  end)
+end, { desc = "Grep → Quickfix" })
 
 -- z + hjkl: Window navigation
 map("n", "zh", "<C-w>h", { desc = "Go to left window" })
