@@ -9,3 +9,4 @@ nashorn_code_cache/*
 .clj-kondo/*
 
 .claude/
+.nrepl-port
