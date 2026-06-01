@@ -23,6 +23,7 @@ else
 fi
 
 source "$_zsh_dir/keybindings.zsh"
+source "$_zsh_dir/abbreviations.zsh"
 source "$_zsh_dir/tools.zsh"
 
 unset _zsh_dir
