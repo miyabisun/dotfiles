@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# Sync Claude Code config from dotfiles to Windows home directory.
+# Usage: bin/windows-install [windows_user]
+#   windows_user: Windows username (default: miyabi)
+#
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE:-${(%):-%N}}")"; pwd)"
+dotfiles_dir="$script_dir/.."
+claude_src="$dotfiles_dir/claude"
+
+win_user="${1:-miyabi}"
+win_home="/mnt/c/Users/$win_user"
+win_claude="$win_home/.claude"
+
+if [ ! -d "$win_home" ]; then
+  echo "Error: Windows home directory not found: $win_home" >&2
+  exit 1
+fi
+
+mkdir -p "$win_claude"
+
+# Copy CLAUDE.md
+cp -v "$claude_src/CLAUDE.md" "$win_claude/CLAUDE.md"
+
+# Copy settings.json
+cp -v "$claude_src/settings.json" "$win_claude/settings.json"
+
+# Sync skills directory (mirror source, remove stale files)
+if [ -d "$win_claude/skills" ]; then
+  rm -rf "$win_claude/skills"
+fi
+cp -rv "$claude_src/skills" "$win_claude/skills"
+
+echo ""
+echo "Done. Claude Code config synced to $win_claude"
