@@ -1,4 +1,16 @@
 {
+  "permissions": {
+    "deny": [
+      "Bash(bw:*)",
+      "Read(~/.config/.secrets*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Write(**/.env)",
+      "Write(**/.env.*)"
+    ]
+  },
   "enabledPlugins": {
     "rust-analyzer-lsp@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
