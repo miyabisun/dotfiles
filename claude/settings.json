@@ -96,6 +96,7 @@
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "skipAutoPermissionPrompt": true,
+  "theme": "dark-daltonized",
   "mcpServers": {
     "obscura": {
       "type": "stdio",
