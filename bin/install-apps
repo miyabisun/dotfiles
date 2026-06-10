@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Install Rust-based CLI tools (git-delta, Obscura) across Manjaro / Ubuntu(WSL) / macOS.
+# Requirements: git, cargo (rustup). Run after bin/install for PATH setup.
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# git-delta — syntax-highlighting pager for git diff/log/show
+# ---------------------------------------------------------------------------
+install_delta() {
+  if command -v delta >/dev/null 2>&1; then
+    echo "==> git-delta already installed ($(delta --version))"
+    return
+  fi
+
+  echo "==> Installing git-delta..."
+  if command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm git-delta
+  elif command -v brew >/dev/null 2>&1; then
+    brew install git-delta
+  elif command -v apt-get >/dev/null 2>&1; then
+    cargo install git-delta
+  else
+    cargo install git-delta
+  fi
+  echo "==> git-delta installed ($(delta --version))"
+}
+
+# ---------------------------------------------------------------------------
+# Obscura — Rust headless browser with V8, used by Claude Code
+# Builds from source: not on crates.io, binaries differ per OS/arch.
+# First build compiles V8 (a few minutes); later builds are cached.
+# ---------------------------------------------------------------------------
+install_obscura() {
+  if command -v obscura >/dev/null 2>&1; then
+    echo "==> Obscura already installed ($HOME/.local/bin/obscura)"
+    return
+  fi
+
+  if ! command -v cargo >/dev/null 2>&1; then
+    cat <<'MSG'
+Rust toolchain (cargo) is required but not found.
+Install via rustup (Linux / macOS):
+
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+Then restart your shell and re-run this script.
+MSG
+    exit 1
+  fi
+
+  BUILD_DIR="$(mktemp -d)"
+  trap 'rm -rf "$BUILD_DIR"' EXIT
+
+  echo "==> Cloning Obscura..."
+  git clone --depth 1 https://github.com/h4ckf0r0day/obscura.git "$BUILD_DIR"
+
+  echo "==> Building (first build compiles V8, takes a few minutes)..."
+  ( cd "$BUILD_DIR" && cargo build --release )
+
+  DEST="$HOME/.local/bin"
+  mkdir -p "$DEST"
+  cp "$BUILD_DIR/target/release/obscura" "$BUILD_DIR/target/release/obscura-worker" "$DEST/"
+  echo "==> Installed to $DEST/obscura (+ obscura-worker)"
+  echo "    Make sure $DEST is on your PATH."
+}
+
+# ---------------------------------------------------------------------------
+
+install_delta
+install_obscura
