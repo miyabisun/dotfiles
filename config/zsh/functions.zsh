@@ -17,6 +17,7 @@ a() {
     local sessions
     sessions="$(tmux list-sessions -F '#S' 2> /dev/null)" || { echo "no tmux sessions" >&2; return 1; }
     [[ -n "$TMUX" ]] && sessions="$(grep -vxF "$(tmux display-message -p '#S')" <<< "$sessions")"
+    [[ -z "$sessions" ]] && { echo "no other sessions" >&2; return 1; }
     target="$(fzf --reverse --prompt="session> " \
       --preview 'tmux list-windows -t {} -F "#I: #W (#{pane_current_command})"; echo; tmux capture-pane -ep -t {}' \
       --preview-window=right,65% <<< "$sessions")" || return
