@@ -11,7 +11,7 @@
       "Write(**/.env.*)"
     ]
   },
-  "model": "sonnet[1m]",
+  "model": "claude-opus-4-7",
   "hooks": {
     "PreToolUse": [
       {
@@ -95,8 +95,8 @@
   "language": "Japanese",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
-  "skipAutoPermissionPrompt": true,
   "theme": "dark-daltonized",
+  "skipAutoPermissionPrompt": true,
   "mcpServers": {
     "obscura": {
       "type": "stdio",
