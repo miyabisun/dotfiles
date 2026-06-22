@@ -22,6 +22,9 @@ link "config/.deepl.json" "$HOME/.config"
 
 mkdir -p "$HOME/.claude"
 link "claude/skills" "$HOME/.claude"
+link "claude/agents" "$HOME/.claude"
+link "claude/workflows" "$HOME/.claude"
+link "claude/hooks" "$HOME/.claude"
 link "claude/CLAUDE.md" "$HOME/.claude"
 link "claude/settings.json" "$HOME/.claude"
 
