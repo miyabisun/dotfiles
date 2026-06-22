@@ -13,9 +13,11 @@ export const meta = {
 const LEADER_SCHEMA = {
   type: 'object',
   properties: {
-    proceed: {
-      type: 'boolean',
-      description: '要望が妥当なら true。プロダクトを汚す/頓珍漢なら false',
+    status: {
+      type: 'string',
+      enum: ['proceed', 'reject', 'clarify'],
+      description:
+        'proceed=要望が妥当で解釈に迷いがない / reject=プロダクトを汚す・頓珍漢 / clarify=曖昧・解釈が割れる・具体例と説明が矛盾しており聞き返す必要がある。少しでも曖昧さが残るなら proceed を選ばず clarify にする',
     },
     team: {
       type: 'string',
@@ -24,7 +26,7 @@ const LEADER_SCHEMA = {
     },
     plan: {
       type: 'string',
-      description: 'proceed=true 時、dev が迷わず実装できる具体的な実装方針・指示',
+      description: 'status=proceed 時、dev が迷わず実装できる具体的な実装方針・指示',
     },
     conditions: {
       type: 'string',
@@ -32,14 +34,24 @@ const LEADER_SCHEMA = {
     },
     reason: {
       type: 'string',
-      description: 'proceed=false 時の却下理由',
+      description: 'status=reject 時の却下理由',
     },
     alternative: {
       type: 'string',
-      description: 'proceed=false 時、目的の推測と代案',
+      description: 'status=reject 時、目的の推測と代案',
+    },
+    ambiguities: {
+      type: 'string',
+      description:
+        'status=clarify 時、どこがどう曖昧か。特に「具体例（ASCII図/サンプル）と散文の説明が矛盾している」場合は矛盾する2点を引用して示す',
+    },
+    questions: {
+      type: 'string',
+      description:
+        'status=clarify 時、ユーザーへの確認質問（箇条書き）。各質問にリーダー自身の推奨解釈とその根拠を添え、Yes/No か選択で即答できる形にする',
     },
   },
-  required: ['proceed'],
+  required: ['status'],
 }
 
 // 依頼内容（文字列 or { task } の両方を受ける）。
@@ -54,8 +66,12 @@ const lead = await agent(
 ${task}
 
 【判断基準】
-- proceed=false: プロダクトを汚す/一貫性を壊す/頓珍漢な要望。reason と代案(alternative)を示す。
-- proceed=true: 以下を決める:
+- status=reject: プロダクトを汚す/一貫性を壊す/頓珍漢な要望。reason と代案(alternative)を示す。
+- status=clarify: 要望が曖昧/解釈が割れる/具体例(ASCII図・サンプル)と散文の説明が矛盾している。
+    勝手に一つの解釈に倒して進めてはならない。ambiguities に曖昧な箇所(矛盾点は両方引用)を分析し、
+    questions にユーザーへの確認質問(各質問にあなたの推奨解釈と根拠を添え、Yes/No か選択で即答できる形)を書く。
+    推測で突き進むより1回聞き返す方が常に安い。少しでも曖昧さが残るなら proceed を選ばず clarify にせよ。
+- status=proceed: 要望が妥当で解釈に迷いがない。以下を決める:
   - team: 変更が必要なのは frontend のみか backend のみか both か
   - plan: dev が迷わず実装できる具体的な実装方針（対象ファイル・設計方針・守るべき既存パターン・テスト観点）
   - conditions: (team が frontend または both の時のみ) UI上の達成条件を箇条書きで明記する。
@@ -67,9 +83,19 @@ ${task}
   { agentType: 'leader', phase: '方針', schema: LEADER_SCHEMA, label: 'leader' },
 )
 
-if (!lead.proceed) {
+if (lead.status === 'reject') {
   log('リーダー却下: ' + (lead.reason || ''))
   return { approved: false, rejected: true, reason: lead.reason, alternative: lead.alternative }
+}
+
+if (lead.status === 'clarify') {
+  log('リーダー聞き返し: 仕様が曖昧なため確認が必要')
+  return {
+    approved: false,
+    needsClarification: true,
+    ambiguities: lead.ambiguities,
+    questions: lead.questions,
+  }
 }
 
 const plan = lead.plan || ''
