@@ -1,5 +1,8 @@
 {
   "permissions": {
+    "allow": [
+      "Read(**/.env.example)"
+    ],
     "deny": [
       "Bash(bw:*)",
       "Read(~/.config/.secrets*)",
