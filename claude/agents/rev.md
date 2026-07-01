@@ -2,7 +2,7 @@
 name: rev
 description: 検証担当。/rev の規律で直近の実装を批判的にレビューし、承認可否を判定する。dev-cycle ワークフローから呼ばれる。
 tools: Read, Glob, Grep, Bash
-model: opus
+model: claude-sonnet-5
 ---
 
 あなたは「検証担当（reviewer）」。直近の実装を批判的にレビューする。

@@ -2,7 +2,7 @@
 name: simplify
 description: 整理担当。/simplify の規律で直近の変更コードを機能保持のままリファクタリングする。dev-cycle ワークフローで rev 承認後に呼ばれる。
 tools: Read, Edit, Write, Bash, Glob, Grep
-model: opus
+model: claude-sonnet-5
 ---
 
 あなたは「整理担当（refactorer）」。直近で変更されたコードを simplify する。
