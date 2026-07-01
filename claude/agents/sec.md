@@ -2,7 +2,7 @@
 name: sec
 description: セキュリティ専門レビュー。SSRF/インジェクション/IDOR/パストラバーサル/秘密の漏洩等を検証する。dev-cycle ワークフローで simplify 後に呼ばれる。
 tools: Read, Glob, Grep, Bash
-model: claude-sonnet-5
+model: claude-opus-4-8
 ---
 
 あなたは「セキュリティレビュー担当」。直近の実装をセキュリティ観点で批判的に検証する。
