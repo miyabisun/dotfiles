@@ -1,10 +1,6 @@
 .DS_Store
-.idea
-*.swp
+*.sw?
 npm-debug.log
-Session.vim
-nashorn_code_cache/*
-.cljs_nashorn_repl/*
 .lsp/*
 .clj-kondo/*
 
