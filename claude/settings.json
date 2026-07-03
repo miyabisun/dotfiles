@@ -25,6 +25,28 @@
             "command": "bash ~/.dotfiles/claude/hooks/prefer-semble.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/claude/hooks/block-git-discard.sh",
+            "timeout": 10,
+            "statusMessage": "git 破棄コマンドチェック"
+          }
+        ]
+      },
+      {
+        "matcher": "Workflow",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/claude/hooks/guard-workflow-dirty-tree.sh",
+            "timeout": 10,
+            "statusMessage": "作業ツリーの未コミット変更チェック"
+          }
+        ]
       }
     ],
     "PostToolUse": [

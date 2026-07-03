@@ -2,28 +2,29 @@
 version: alpha
 name: Sumi
 description: >
-  Canonical template of the Sumi design system, shared by self-hosted
-  personal reader tools (5ch-viewer, novel-server, youtube-sub-feed,
-  comic-server). Neutral ink-and-paper chrome, one accent color per
-  project, functional color reserved for data semantics. Projects
+  Canonical template of the Sumi design system for self-hosted,
+  single-user reader tools. Neutral ink-and-paper chrome with two named
+  themes — Washi (和紙, light) and Sumi (墨, dark) — one accent color
+  per project, functional color reserved for data semantics. Projects
   consume this template via a docs/DESIGN.md that declares
-  "follows Sumi" and records only project-specific overrides.
+  "follows Sumi" and records only project-specific overrides
+  (accent, data colors, domain components).
 colors:
-  # --- Neutral chrome (light theme values; dark equivalents below) ---
+  # --- Neutral chrome: Washi theme (light). Unsuffixed tokens = Washi. ---
   surface: "#fafafa"
   surface-raised: "#ffffff"
   on-surface: "#222222"
-  muted: "#6f6f6f"
-  border: "#e6e6e3"
+  muted: "#4a4a4a"
+  border: "#c9c9c4"
   scrim: "rgba(0, 0, 0, 0.4)"
   # --- Per-project accent (template default: amber) ---
   accent: "#9a6a00"
   accent-subtle: "rgba(154, 106, 0, 0.12)"
   # --- Feedback ---
-  link: "#1f6f99"
-  danger: "#b3261e"
+  link: "#14506e"
+  danger: "#8f1d16"
   danger-subtle: "#fdeeee"
-  # --- Dark theme equivalents (suffix -dark) ---
+  # --- Sumi theme (dark) equivalents: suffix -dark ---
   surface-dark: "#191919"
   surface-raised-dark: "#232323"
   on-surface-dark: "#e6e6e6"
@@ -130,17 +131,40 @@ components:
 ## Overview
 
 Sumi (墨 — ink) is the shared visual language for a family of self-hosted,
-single-user reader tools: a 5ch thread viewer, a novel reader, a YouTube
-subscription feed, and a comic reader. They are dense, content-first
-utilities used daily on both a phone (one pane, gesture-driven) and a PC
-(two-pane, list + detail).
+single-user reader tools — apps whose whole job is displaying a feed or
+list of content and letting one person read it. They are dense,
+content-first utilities used daily on both a phone (one pane,
+gesture-driven) and a PC (two-pane, list + detail).
 
 The personality is **calm, quiet, and tool-like** — closer to a well-worn
-paper notebook than a consumer app. The content (thread posts, novel text,
-video thumbnails, comic pages) supplies all the visual interest; the UI
-chrome recedes into neutral ink-and-paper tones. Nothing in the chrome
-should compete with the content for attention: no gradients, no colorful
-icons, no decorative color.
+paper notebook than a consumer app. The content (text, thumbnails, pages)
+supplies all the visual interest; the UI chrome recedes into neutral
+ink-and-paper tones. Nothing in the chrome should compete with the content
+for attention: no gradients, no colorful icons, no decorative color.
+
+**The audience is one professional web engineer** who lives in the
+terminal and reads these apps daily alongside it. Two consequences: the
+UI may assume technical literacy (dense information, no onboarding, no
+hand-holding), and it should feel at home next to a terminal window.
+
+The ink-and-paper metaphor is literal: the system ships **two named
+themes with distinct jobs**.
+
+- **Sumi (墨) — dark, the primary theme.** The default for everyday
+  reading on ordinary screens. High contrast and high legibility, but
+  easy on the eyes: ink surfaces (#191919, deliberately never pure
+  black) with pale text. Design in Sumi first.
+- **Washi (和紙) — light, the e-paper theme.** Exists out of necessity:
+  dark themes collapse on e-paper displays (colors render too faint).
+  Washi therefore optimizes for **maximum contrast** — near-white paper,
+  very dark foregrounds. Hue carries little information here: e-paper
+  cannot render saturated color reliably, so data colors should be dark
+  enough to read as ink first, with hue as a barely-there secondary cue.
+  Minimize motion (e-paper ghosting makes animation harmful).
+
+The system takes its name from Sumi, its signature theme. Every color
+token exists in both themes; apps switch by swapping CSS custom
+properties on a `data-theme` attribute.
 
 Color is a **carrier of meaning, not decoration**. Each project owns exactly
 one accent hue used sparingly for "you are here" and "this is the main
@@ -157,39 +181,54 @@ project file wins for its own domain, this template wins for the chrome.
 
 ## Colors
 
-The palette is neutral grays with a single per-project accent. Every color
-has a light and a dark value; the app themes by swapping CSS custom
-properties on a `data-theme` attribute, never by hardcoding hex values in
-components.
+The palette is neutral grays with a single per-project accent, defined
+once per theme: **Washi** (light; the unsuffixed tokens) and **Sumi**
+(dark; the `-dark` tokens). Values below are written as Washi / Sumi
+pairs. Components never hardcode hex values — they reference the CSS
+custom properties, and the `data-theme` attribute decides which theme's
+values are live.
 
 - **Surface (#fafafa / #191919):** Page background. Slightly off-white /
   off-black so raised cards read as a layer.
 - **Surface Raised (#ffffff / #232323):** Cards, list rows, modals, nav bar.
-- **On-Surface (#222222 / #e6e6e6):** Primary text.
-- **Muted (#6f6f6f / #9a9a9a):** Secondary text, captions, metadata, inactive
-  tabs, quiet icons. AA-compliant on both surfaces.
-- **Border (#e6e6e3 / #333333):** Hairline 1px borders — the primary
-  separation tool in this flat system.
+- **On-Surface (#222222 / #e6e6e6):** Primary text. On Washi this is the
+  "maximum contrast" anchor (~15:1 against surface) — never lighten it.
+- **Muted (#4a4a4a / #9a9a9a):** Secondary text, captions, metadata, inactive
+  tabs, quiet icons. On Washi it must clear 7:1 (AAA) against surface —
+  e-paper grayscale quantization washes out mid-grays; on Sumi AA suffices.
+- **Border (#c9c9c4 / #333333):** Hairline 1px borders — the primary
+  separation tool in this flat system. The Washi value is dark enough for
+  a hairline to survive e-paper gray quantization while staying quiet.
 - **Accent (template default #9a6a00 / #e0a800):** The project's identity
   color. Used for: active tab indicator, primary action button, focus ring,
   selection highlight, pull-to-refresh "release" state. One accent per
-  screen region; if everything is highlighted, nothing is.
-- **Link (#1f6f99 / #7fdbff):** Hyperlinks and reference anchors only.
-- **Danger (#b3261e / #ff6b6b):** Destructive actions and error text, with
-  a subtle background tint (danger-subtle) for error banners.
+  screen region; if everything is highlighted, nothing is. Because the
+  primary button sets surface-raised (white) text on accent, a Washi accent
+  must keep white-on-accent ≥ 4.5:1; e-paper-focused projects should go
+  darker than this default.
+- **Link (#14506e / #7fdbff):** Hyperlinks and reference anchors only.
+  The Washi value is ink-dark blue, ≥7:1 against surface.
+- **Danger (#8f1d16 / #ff6b6b):** Destructive actions and error text, with
+  a subtle background tint (danger-subtle) for error banners. The Washi
+  value is ≥7:1 against surface.
 
-**Known per-project accents** (each project's docs/DESIGN.md is
-authoritative): 5ch-viewer amber `#9a6a00` / dark `#e0a800` (the template
-default), novel-server blue `#1464c8` / dark `#80c0ff`, youtube-sub-feed
-red `#d93025` / dark `#ea4335`, comic-server picks one hue the same way.
-Everything else stays identical so the tools feel like one family.
+**Per-project accent rule:** a project adopts this template wholesale and
+declares exactly one accent hue (as a Washi/Sumi pair) in its own
+docs/DESIGN.md — that file is the sole authority for the project's accent.
+Pick a hue that is distinguishable from sibling projects so each tool is
+tellable apart at a glance. When no override is declared, the template
+default (amber) applies. Everything else stays identical so the tools
+feel like one family.
 
 **Functional data colors** (unread markers, per-ID heat levels, star-rating
 bars, live/shorts badges…) are project-domain tokens layered on top and
 documented in each project's docs/DESIGN.md. They must: (1) never be used
-for chrome, (2) come in light+dark pairs, (3) stay readable against
-surface-raised. They are exempt from the one-accent rule because they
-encode data, not decoration.
+for chrome, (2) come in Washi+Sumi pairs, (3) stay readable against
+surface-raised in both themes. On Washi, design them as a **darkness ramp**:
+low relative luminance first (so they read as ink and survive grayscale),
+monotonic lightness steps between levels, hue only as a secondary cue.
+They are exempt from the one-accent rule because they encode data, not
+decoration.
 
 ## Typography
 
@@ -198,8 +237,8 @@ fast, self-hosted tools and Japanese text renders best in the OS font.
 
 - **Title (17px / 600):** Screen and thread titles, modal headers. Single
   line, ellipsized.
-- **Body (16px / 400 / 1.6):** Reader content (posts, novel text). Never
-  smaller — this is the reading surface.
+- **Body (16px / 400 / 1.6):** Reader content — the text the user came to
+  read. Never smaller: this is the reading surface.
 - **Body Small (14px / 400):** List-row subtitles, secondary content such as
   quoted posts inside modals.
 - **Label (15px / 500):** Buttons, tabs, menu actions.
@@ -306,7 +345,12 @@ Default size `1.2em`, aligned to the text baseline.
 - Do maintain WCAG AA (4.5:1) for all text in both themes; data colors on
   borders/bars are exempt but should stay distinguishable.
 - Don't animate anything except height/opacity transitions ≤150ms and the
-  loading spinner; these are utilitarian tools, not showcases.
+  loading spinner; these are utilitarian tools, not showcases. In Washi,
+  prefer no animation at all (e-paper ghosting).
+- Do design in Sumi first; verify Washi on e-paper terms (contrast over
+  hue), not as a cosmetic light variant.
+- Don't rely on hue to carry meaning in Washi — use darkness and weight;
+  hue is a secondary cue at best on e-paper.
 - Do keep gesture affordances (pull-to-refresh, swipe-back) visually quiet:
   muted text panels, accent only at the "release" threshold.
 - Don't restate template rules in a project's docs/DESIGN.md — record only

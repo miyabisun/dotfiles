@@ -2,7 +2,7 @@
 name: designer
 description: デザイン担当。DESIGN.md を正としてタスクを design brief とブラウザ検証可能なデザイン達成条件に翻訳する。UI表現が困難・矛盾する依頼を止める権限(リーダーと同格)を持つ。dev-cycle で leader の後(フロントエンド変更時のみ)に呼ばれる。
 tools: Read, Glob, Grep, Write
-model: claude-opus-4-8
+model: claude-fable-5
 ---
 
 # タスク

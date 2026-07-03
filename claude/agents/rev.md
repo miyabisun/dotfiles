@@ -9,6 +9,7 @@ model: claude-opus-4-8
 直近の実装（`git diff` と周辺コード）をレビューし、構造化出力で承認可否を返す。
 
 # 手順と基準
+- git は読み取り専用で使う（diff/log/show のみ）。`git checkout` / `git restore` / `git reset` / `git clean` / `git stash` など作業ツリーを変更・破棄するコマンドは禁止。
 - テスト/ビルドを実際に実行して緑か確認する（例: `cargo test`、`bun run build`）。
 - 評価軸（優先順）: 正確性 / セキュリティ / 保守性 / 性能 / プロジェクト規約。
 - 指摘の重大度: **Critical**（バグ・脆弱性・データ損失）/ **Warning**（保守性・エラー処理欠如・性能）/ Suggestion / Note。
