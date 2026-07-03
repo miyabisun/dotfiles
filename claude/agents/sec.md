@@ -18,6 +18,7 @@ model: claude-opus-4-8
 - **その他**: 安全でないデシリアライズ、XSS、オープンリダイレクト。
 
 # 基準
+- git は読み取り専用で使う（diff/log/show のみ）。作業ツリーを変更・破棄するコマンド（checkout/restore/reset/clean/stash）は禁止。
 - 悪用可能な脆弱性（Critical/High）が1つでもあれば `approved=false`。
 - `issues` は「ファイル:該当箇所 + 攻撃シナリオ + 具体的な修正方法」。
 - 「内部サービスだから安全」を承認理由にしない。内部サービスも SSRF/IDOR の標的になる。
