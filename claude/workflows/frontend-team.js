@@ -23,12 +23,14 @@ const REVIEW_SCHEMA = {
   required: ['approved', 'issues', 'summary'],
 }
 
-// args: { task, plan, conditions }
+// args: { task, plan, brief, conditions }
 // - task: 要望文
-// - plan: リーダーの実装方針
-// - conditions: リーダーが定義したUI達成条件（ui-checker に渡す箇条書き）
+// - plan: リーダーの実装方針（dev と rev に渡す）
+// - brief: デザイナーの design brief（dev と ui-checker に渡す）
+// - conditions: リーダー+デザイナーのUI達成条件（ui-checker に渡す箇条書き）
 const task = (args && args.task) || '(タスクが指定されていません)'
 const plan = (args && args.plan) || ''
+const brief = (args && args.brief) || ''
 const conditions = (args && args.conditions) || '（UI達成条件の指定なし — ビルドとE2Eテストのグリーンのみ確認）'
 
 const MAX_ROUNDS = 6
@@ -36,15 +38,16 @@ let feedback = ''
 let outcome = null
 
 for (let round = 1; round <= MAX_ROUNDS; round++) {
-  // ① 実装
+  // ① 実装（リーダーの plan とデザイナーの brief の両方に従う）
   await agent(
-    `タスク:\n${task}\n\n${plan ? `リーダーの実装方針（これに従うこと）:\n${plan}\n\n` : ''}${feedback ? `前回レビューの指摘（全て修正すること）:\n${feedback}` : ''}`,
+    `タスク:\n${task}\n\n${plan ? `リーダーの実装方針（これに従うこと）:\n${plan}\n\n` : ''}${brief ? `デザイナーの design brief（使用トークン・対象コンポーネント・禁止事項。これに従うこと）:\n${brief}\n\n` : ''}${feedback ? `前回レビューの指摘（全て修正すること）:\n${feedback}` : ''}`,
     { agentType: 'dev', phase: '実装', label: `dev #${round}` },
   )
 
-  // ② UIチェック（本格 — Chromium でブラウザを起動して達成条件を検証）
+  // ② UIチェック（本格 — Chromium でブラウザを起動して達成条件を検証。
+  //    デザイナーの brief を意図の文脈として渡す）
   const ui1 = await agent(
-    `以下のUI達成条件をブラウザで検証せよ。\n\n【達成条件】\n${conditions}\n\n【タスク概要】\n${task}`,
+    `以下のUI達成条件をブラウザで検証せよ。\n\n【達成条件】\n${conditions}\n\n${brief ? `【デザイナーの design brief（達成条件の解釈に迷ったらこの意図を基準にする）】\n${brief}\n\n` : ''}【タスク概要】\n${task}`,
     { agentType: 'ui-checker', phase: 'UIチェック', schema: REVIEW_SCHEMA, label: `ui-check #${round}` },
   )
   if (!ui1.approved) {
@@ -53,9 +56,9 @@ for (let round = 1; round <= MAX_ROUNDS; round++) {
     continue
   }
 
-  // ③ コードレビュー（論理・品質に特化）
+  // ③ コードレビュー（論理・品質に特化。リーダーの plan を判断基準として渡す）
   const r1 = await agent(
-    `直近の実装をレビューし、承認可否を判定せよ。UIの見た目・配置は別担当が確認済みのためコードの論理・品質に集中すること。\nタスク:\n${task}`,
+    `直近の実装をレビューし、承認可否を判定せよ。UIの見た目・配置は別担当が確認済みのためコードの論理・品質に集中すること。\nタスク:\n${task}${plan ? `\n\nリーダーの実装方針（実装がこの方針に沿っているかも確認する）:\n${plan}` : ''}`,
     { agentType: 'rev', phase: 'レビュー', schema: REVIEW_SCHEMA, label: `rev #${round}` },
   )
   if (!r1.approved) {
@@ -81,9 +84,9 @@ for (let round = 1; round <= MAX_ROUNDS; round++) {
     continue
   }
 
-  // ⑥ 再レビュー
+  // ⑥ 再レビュー（リーダーの plan を判断基準として渡す）
   const r2 = await agent(
-    `simplify 後の実装をレビューし、承認可否を判定せよ。simplify による退行(機能破壊/ビルド失敗)に特に注意。\nタスク:\n${task}`,
+    `simplify 後の実装をレビューし、承認可否を判定せよ。simplify による退行(機能破壊/ビルド失敗)に特に注意。\nタスク:\n${task}${plan ? `\n\nリーダーの実装方針（実装がこの方針に沿っているかも確認する）:\n${plan}` : ''}`,
     { agentType: 'rev', phase: '再レビュー', schema: REVIEW_SCHEMA, label: `rev2 #${round}` },
   )
   if (!r2.approved) {
