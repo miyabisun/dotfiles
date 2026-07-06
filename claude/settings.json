@@ -1,5 +1,9 @@
 {
   "permissions": {
+    "allow": [
+      "Workflow",
+      "Skill(dev-cycle)"
+    ],
     "deny": [
       "Bash(bw:*)",
       "Read(~/.config/.secrets*)",

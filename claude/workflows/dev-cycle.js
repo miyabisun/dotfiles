@@ -7,6 +7,7 @@ export const meta = {
     { title: 'デザイン' },
     { title: 'バックエンド' },
     { title: 'フロントエンド' },
+    { title: 'コミット' },
   ],
 }
 
@@ -177,12 +178,14 @@ ${conditions}`,
 }
 
 // バックエンドが必要な場合（both のときはバックエンド先行）
+let summary = ''
 if (team === 'backend' || team === 'both') {
   log('バックエンドチームに依頼')
   const backendResult = await workflow('backend-team', { task, plan })
   if (!backendResult?.approved) {
     return { approved: false, note: 'バックエンドチームが未承認', result: backendResult }
   }
+  summary = backendResult.summary || ''
 }
 
 // フロントエンドが必要な場合
@@ -192,7 +195,20 @@ if (team === 'frontend' || team === 'both') {
   if (!frontendResult?.approved) {
     return { approved: false, note: 'フロントエンドチームが未承認', result: frontendResult }
   }
-  return { approved: true, team, summary: frontendResult.summary }
+  summary = frontendResult.summary || summary
 }
 
-return { approved: true, team }
+// ② 検品承認後の自動コミット（ユーザー指示による標準運用）。
+// コミット規約と禁止事項は committer の役割定義（agents/committer.md）が持つ。
+const commit = await agent(
+  `検品承認済みの変更をコミットせよ。
+
+タスク:
+${task}
+
+検品サマリ:
+${summary}`,
+  { agentType: 'committer', phase: 'コミット', label: 'committer' },
+)
+
+return { approved: true, team, summary, commit }
