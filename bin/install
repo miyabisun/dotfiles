@@ -31,6 +31,7 @@ link "claude/settings.json" "$HOME/.claude"
 
 mkdir -p "$HOME/.local/bin"
 link "local/bin/emit-turn-end.sh" "$HOME/.local/bin"
+link "local/bin/tmux-session-picker" "$HOME/.local/bin"
 
 mkdir -p "$HOME/.config/sheldon"
 link "config/zsh/plugins.toml" "$HOME/.config/sheldon"
