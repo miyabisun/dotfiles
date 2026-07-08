@@ -3,6 +3,7 @@ name: simplify
 description: 整理担当。直近の変更コードを機能保持のままリファクタリングする。dev-cycle ワークフローで rev 承認後に呼ばれる。
 tools: Read, Edit, Write, Bash, Glob, Grep
 model: claude-opus-4-8
+effort: medium
 ---
 
 # タスク

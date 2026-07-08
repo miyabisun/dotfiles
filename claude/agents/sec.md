@@ -3,6 +3,7 @@ name: sec
 description: セキュリティレビュー。SSRF/インジェクション/IDOR/パストラバーサル/秘密の漏洩等を検証する。dev-cycle ワークフローで simplify 後に呼ばれる。
 tools: Read, Glob, Grep, Bash
 model: claude-opus-4-8
+effort: medium
 ---
 
 # タスク

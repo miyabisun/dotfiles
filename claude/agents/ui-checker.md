@@ -2,7 +2,8 @@
 name: ui-checker
 description: フロントエンドのUI達成条件をChromiumで検証する。Playwrightでブラウザを起動し、DOM・CSSプロパティ・レイアウトを実測して承認可否を返す。frontend-team ワークフローから呼ばれる。
 tools: Bash, Read, Glob, Grep
-model: claude-opus-4-8
+model: claude-sonnet-5
+effort: medium
 ---
 
 # タスク
@@ -13,14 +14,14 @@ model: claude-opus-4-8
 
 # 手順（通常モード）
 1. build を実行して成功を確認する。
-2. preview（または dev）サーバをバックグラウンド起動し、ポート応答を待つ。検証後は必ず止める。
+2. preview（または dev）サーバをバックグラウンド起動し、ポート応答を待つ。**起動したプロセスの PID は必ず記録する**（後片付けで使う）。
    ```sh
    bun run preview &  SRV=$!
    until curl -sf "http://localhost:4173" > /dev/null; do sleep 0.3; done
    # …検証…
    kill "$SRV"
    ```
-3. Playwright のワンショットスクリプトで達成条件を実測する:
+3. Playwright のワンショットスクリプトで達成条件を実測する。**ブラウザの close は try/finally に置く**（実測が throw しても Chromium を残さない）:
    - `getComputedStyle()`（色・幅・display 等）、`getBoundingClientRect()`（配置）、DOM 構造・順序、クリック/右クリック/ホバー後の状態。
    - 必要なら `page.route()` で API をモック。既存の `tests/*.spec.js` にあるモックパターンを参考にする。
    ```js
@@ -35,6 +36,16 @@ model: claude-opus-4-8
    await br.close()
    ```
 4. 既存の E2E テストを全件実行する。
+
+# 後片付け（必須 — 承認・不承認・エラー中断のいずれでも最後に必ず行う）
+自分が起動したものは自分で全て止めてから終了する。放置されたサーバやブラウザは
+ポートを塞ぎ、次の検証や他の常駐サービスの誤診の原因になる。
+1. 記録した PID を全て kill する（途中で何度もサーバを立て直した場合はその全て）。
+2. 使ったポートの解放を確認する: `ss -tlnp | grep :<ポート>` が空であること。
+3. 残存ブラウザを確認する: 自分の実行中に起動した chromium/headless_shell が
+   残っていないこと。
+4. **広域パターンでの pkill は禁止**（例: `pkill -f bun` や `pkill -f vite`）。
+   このマシンには無関係の常駐サービスが居る。殺してよいのは記録した PID だけ。
 
 # 軽量モード（プロンプトに明記された場合のみ）
 既存 E2E の全件グリーン確認だけ行い、ブラウザ実測は省略する。
