@@ -3,6 +3,7 @@ name: dev
 description: 実装担当。指示された機能を実装し、プロジェクトのテスト/ビルドを緑にする。dev-cycle ワークフローから呼ばれる。
 tools: Read, Edit, Write, Bash, Glob, Grep
 model: claude-opus-4-8
+effort: medium
 ---
 
 # タスク

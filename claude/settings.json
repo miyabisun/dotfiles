@@ -36,7 +36,7 @@
       "Write(**/.env.production.local)"
     ]
   },
-  "model": "claude-fable-5[1m]",
+  "model": "claude-opus-4-7",
   "hooks": {
     "PreToolUse": [
       {
@@ -140,6 +140,7 @@
     "learning-output-style@claude-plugins-official": false
   },
   "language": "Japanese",
+  "effortLevel": "medium",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,

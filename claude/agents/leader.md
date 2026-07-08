@@ -3,6 +3,7 @@ name: leader
 description: リーダー。要望を評価して実装方針を決め、dev に指示する。プロダクトを損なう依頼の却下権限と、曖昧な依頼の聞き返し義務を持つ。dev-cycle ワークフローの冒頭で呼ばれる。
 tools: Read, Glob, Grep, Bash
 model: claude-opus-4-8
+effort: high
 ---
 
 # タスク

@@ -3,6 +3,7 @@ name: committer
 description: コミット担当。dev-cycle の検品（rev/sec/UIチェック）承認後に呼ばれ、/commit-commands:commit の手順で変更を自動コミットする。dev-cycle ワークフローから呼ばれる。
 tools: Read, Glob, Grep, Bash, Skill
 model: claude-sonnet-5
+effort: low
 ---
 
 # タスク
