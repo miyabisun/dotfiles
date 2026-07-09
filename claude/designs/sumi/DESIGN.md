@@ -4,11 +4,12 @@ name: Sumi
 description: >
   Canonical template of the Sumi design system for self-hosted,
   single-user reader tools. Neutral ink-and-paper chrome with two named
-  themes — Washi (和紙, light) and Sumi (墨, dark) — one accent color
-  per project, functional color reserved for data semantics. Projects
-  consume this template via a docs/DESIGN.md that declares
-  "follows Sumi" and records only project-specific overrides
-  (accent, data colors, domain components).
+  themes — Washi (和紙, light) and Sumi (墨, dark) — up to two accent
+  colors per project (a required primary and an optional secondary,
+  each carrying a distinct persistent role), functional color reserved
+  for data semantics. Projects consume this template via a
+  docs/DESIGN.md that declares "follows Sumi" and records only
+  project-specific overrides (accents, data colors, domain components).
 colors:
   # --- Neutral chrome: Washi theme (light). Unsuffixed tokens = Washi. ---
   surface: "#fafafa"
@@ -17,9 +18,14 @@ colors:
   muted: "#4a4a4a"
   border: "#c9c9c4"
   scrim: "rgba(0, 0, 0, 0.4)"
-  # --- Per-project accent (template default: amber) ---
+  # --- Per-project primary accent (template default: amber) ---
   accent: "#9a6a00"
   accent-subtle: "rgba(154, 106, 0, 0.12)"
+  # --- Per-project secondary accent (optional; no template default) ---
+  # Projects that need a second persistent role (subscribed state,
+  # on/online status, character-identity emphasis) declare secondary +
+  # secondary-subtle as a Washi/Sumi pair with the same structure as
+  # accent. Omit entirely if the project only needs one accent.
   # --- Feedback ---
   link: "#14506e"
   danger: "#8f1d16"
@@ -33,6 +39,8 @@ colors:
   scrim-dark: "rgba(0, 0, 0, 0.6)"
   accent-dark: "#e0a800"
   accent-subtle-dark: "rgba(224, 168, 0, 0.15)"
+  # secondary-dark / secondary-subtle-dark: declared per-project alongside
+  # the Washi values above. No template default.
   link-dark: "#7fdbff"
   danger-dark: "#ff6b6b"
   danger-subtle-dark: "#3a1a1a"
@@ -166,10 +174,15 @@ The system takes its name from Sumi, its signature theme. Every color
 token exists in both themes; apps switch by swapping CSS custom
 properties on a `data-theme` attribute.
 
-Color is a **carrier of meaning, not decoration**. Each project owns exactly
-one accent hue used sparingly for "you are here" and "this is the main
-action". Additional colors appear only when they encode data (unread state,
-rating levels, ID frequency) and are defined per project on top of this base.
+Color is a **carrier of meaning, not decoration**. Each project owns **one
+to two accent hues** — a required **primary** used sparingly for "you are
+here" and "this is the main action", and an optional **secondary** used
+for a distinct, persistent role the project needs to surface (subscribed
+state, online status, character-identity emphasis). If both are declared,
+they must not overlap in role: primary marks the *foreground of intent*,
+secondary marks a *background of state*. Additional colors appear only
+when they encode data (unread state, rating levels, ID frequency) and are
+defined per project on top of these accents.
 
 **How projects consume this template:** this file
 (`~/.claude/designs/sumi/DESIGN.md`) is the canonical original and the only
@@ -199,13 +212,22 @@ values are live.
 - **Border (#c9c9c4 / #333333):** Hairline 1px borders — the primary
   separation tool in this flat system. The Washi value is dark enough for
   a hairline to survive e-paper gray quantization while staying quiet.
-- **Accent (template default #9a6a00 / #e0a800):** The project's identity
-  color. Used for: active tab indicator, primary action button, focus ring,
-  selection highlight, pull-to-refresh "release" state. One accent per
-  screen region; if everything is highlighted, nothing is. Because the
-  primary button sets surface-raised (white) text on accent, a Washi accent
-  must keep white-on-accent ≥ 4.5:1; e-paper-focused projects should go
-  darker than this default.
+- **Accent (primary; template default #9a6a00 / #e0a800):** The project's
+  identity color. Used for: active tab indicator, primary action button,
+  focus ring, selection highlight, pull-to-refresh "release" state. One
+  primary accent per screen region; if everything is highlighted, nothing
+  is. Because the primary button sets surface-raised (white) text on
+  accent, a Washi primary must keep white-on-accent ≥ 4.5:1; e-paper-focused
+  projects should go darker than this default.
+- **Secondary (optional; no template default):** A second identity color
+  reserved for a *distinct persistent role* the project needs to surface
+  independently of the primary — subscribed / on-air / connected state,
+  character-identity emphasis (mascot color), or a domain "alive" indicator.
+  A project may declare it via `secondary` + `secondary-subtle` (Washi/Sumi
+  pairs). When declared, it may color chrome (icon-buttons, badges, toggle
+  ON states) but never the same regions primary already owns — the two must
+  read as different jobs, not as decoration piled on decoration. Contrast
+  requirements match primary. Omit the tokens entirely if unused.
 - **Link (#14506e / #7fdbff):** Hyperlinks and reference anchors only.
   The Washi value is ink-dark blue, ≥7:1 against surface.
 - **Danger (#8f1d16 / #ff6b6b):** Destructive actions and error text, with
@@ -213,12 +235,15 @@ values are live.
   value is ≥7:1 against surface.
 
 **Per-project accent rule:** a project adopts this template wholesale and
-declares exactly one accent hue (as a Washi/Sumi pair) in its own
-docs/DESIGN.md — that file is the sole authority for the project's accent.
-Pick a hue that is distinguishable from sibling projects so each tool is
-tellable apart at a glance. When no override is declared, the template
-default (amber) applies. Everything else stays identical so the tools
-feel like one family.
+declares its primary accent (as a Washi/Sumi pair) in its own
+docs/DESIGN.md — that file is the sole authority for the project's
+accents. Optionally, the project may also declare a secondary accent
+alongside it, together with the role secondary carries in this project;
+without an explicit role secondary must not be declared. Pick primary so
+sibling projects are tellable apart at a glance; pick secondary so it is
+distinguishable from primary within the same project. When no override is
+declared, the template default (amber, primary only) applies. Everything
+else stays identical so the tools feel like one family.
 
 **Functional data colors** (unread markers, per-ID heat levels, star-rating
 bars, live/shorts badges…) are project-domain tokens layered on top and
@@ -227,7 +252,7 @@ for chrome, (2) come in Washi+Sumi pairs, (3) stay readable against
 surface-raised in both themes. On Washi, design them as a **darkness ramp**:
 low relative luminance first (so they read as ink and survive grayscale),
 monotonic lightness steps between levels, hue only as a secondary cue.
-They are exempt from the one-accent rule because they encode data, not
+They are exempt from the accent rules because they encode data, not
 decoration.
 
 ## Typography
