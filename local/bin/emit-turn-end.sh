@@ -21,11 +21,11 @@ if [[ -n "${MOCA_URL:-}" ]]; then
         fi
     fi
     if [[ -z "${VIEWING}" ]]; then
-        if [[ "${STATUS}" == "success" ]]; then
-            MSG="${SESSION:+${SESSION}の}${AGENT}が完了しました"
-        else
-            MSG="${SESSION:+${SESSION}の}${AGENT}が${STATUS}で終了しました"
-        fi
+        case "${STATUS}" in
+            success) MSG="${SESSION:+${SESSION}の}${AGENT}が完了しました" ;;
+            waiting) MSG="${SESSION:+${SESSION}の}${AGENT}が確認を求めています" ;;
+            *)       MSG="${SESSION:+${SESSION}の}${AGENT}が${STATUS}で終了しました" ;;
+        esac
         curl -fsS -m 5 -X POST -H 'Content-Type: text/plain' \
             --data "${MSG}" "${MOCA_URL%/}/notify" >/dev/null 2>&1 &
     fi

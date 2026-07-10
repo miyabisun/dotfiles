@@ -36,7 +36,7 @@
       "Write(**/.env.production.local)"
     ]
   },
-  "model": "claude-opus-4-7",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -115,6 +115,16 @@
           {
             "type": "command",
             "command": "bash ~/.local/bin/emit-turn-end.sh claude success"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.local/bin/emit-turn-end.sh claude waiting"
           }
         ]
       }
