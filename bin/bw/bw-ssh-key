@@ -1,0 +1,94 @@
+#!/bin/bash
+# Bitwarden の "SSH Keys" フォルダで SSH 鍵ペアを管理する
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+FOLDER="SSH Keys"
+
+usage() {
+    cat <<'EOF'
+Usage: bw-ssh-key <command> [args]
+
+Commands:
+  save [name] [filename]   ~/.ssh/<filename> の鍵ペアを保存 (default: default id_rsa)
+  load [name] [filename]   鍵ペアを ~/.ssh/<filename>(.pub) に復元
+  list                     保存済みの鍵名を一覧する
+  remove <name>            保存した鍵を削除する
+EOF
+    exit 1
+}
+
+cmd_save() {
+    local name="${1:-default}" filename="${2:-id_rsa}"
+    local private_path="$HOME/.ssh/$filename" public_path="$HOME/.ssh/$filename.pub"
+    for f in "$private_path" "$public_path"; do
+        if [ ! -f "$f" ]; then
+            echo "Error: key file not found at $f" >&2
+            exit 1
+        fi
+    done
+    local fid
+    fid=$(folder_id "$FOLDER")
+    delete_items_by_name "$fid" "$name"
+    jq -n \
+        --arg name "$name" \
+        --arg folderId "$fid" \
+        --arg private "$(cat "$private_path")" \
+        --arg public "$(cat "$public_path")" \
+        '{
+            type: 2,
+            name: $name,
+            folderId: $folderId,
+            secureNote: { type: 0 },
+            fields: [
+                { name: "private_key", value: $private, type: 1 },
+                { name: "public_key",  value: $public,  type: 0 }
+            ]
+        }' | create_item
+    echo "Saved '$name' to '$FOLDER' folder."
+}
+
+cmd_load() {
+    local name="${1:-default}" filename="${2:-id_rsa}"
+    local private_path="$HOME/.ssh/$filename" public_path="$HOME/.ssh/$filename.pub"
+    local item private public
+    item=$(find_item "$(folder_id "$FOLDER")" "$name")
+    private=$(echo "$item" | jq -r '.fields[] | select(.name == "private_key") | .value')
+    public=$(echo "$item" | jq -r '.fields[] | select(.name == "public_key") | .value')
+    if [ -z "$private" ] || [ "$private" = "null" ]; then
+        echo "Error: 'private_key' field not found in item '$name'." >&2
+        exit 1
+    fi
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
+    echo "$private" > "$private_path"
+    chmod 600 "$private_path"
+    echo "Saved private key to $private_path"
+    if [ -n "$public" ] && [ "$public" != "null" ]; then
+        echo "$public" > "$public_path"
+        chmod 644 "$public_path"
+        echo "Saved public key to $public_path"
+    fi
+}
+
+cmd_list() {
+    list_item_names "$(folder_id "$FOLDER")"
+}
+
+cmd_remove() {
+    local name="${1:-}"
+    [ -z "$name" ] && usage
+    local fid
+    fid=$(folder_id "$FOLDER")
+    find_item "$fid" "$name" > /dev/null
+    delete_items_by_name "$fid" "$name"
+    echo "Removed '$name'."
+}
+
+case "${1:-}" in
+    save|load|list|remove)
+        cmd="$1"; shift
+        require_unlocked
+        "cmd_$cmd" "$@"
+        ;;
+    *) usage ;;
+esac

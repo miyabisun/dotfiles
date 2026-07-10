@@ -1,0 +1,113 @@
+#!/bin/bash
+# Bitwarden の "Age Keys" フォルダで age の鍵 (identity/recipient) を管理する
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+FOLDER="Age Keys"
+DEFAULT_KEY_FILE="$HOME/.config/age/keys.txt"
+
+usage() {
+    cat <<'EOF'
+Usage: bw-age <command> [args]
+
+Commands:
+  create [name]       age-keygen で鍵を生成して保存する (ディスクには残さない)
+  save [name] [file]  既存の identity ファイルを保存 (default: ~/.config/age/keys.txt)
+  load [name] [file]  identity を <file> に復元する (default: ~/.config/age/keys.txt)
+  recipient [name]    公開鍵 (age1...) を表示する
+  list                保存済みの鍵名を一覧する
+  remove <name>       保存した鍵を削除する
+
+name の default は "default"
+EOF
+    exit 1
+}
+
+save_identity() { # <name> <identity_text> <recipient>
+    local fid
+    fid=$(folder_id "$FOLDER")
+    delete_items_by_name "$fid" "$1"
+    jq -n \
+        --arg name "$1" \
+        --arg folderId "$fid" \
+        --arg identity "$2" \
+        --arg recipient "$3" \
+        '{
+            type: 2,
+            name: $name,
+            folderId: $folderId,
+            secureNote: { type: 0 },
+            fields: [
+                { name: "identity",  value: $identity,  type: 1 },
+                { name: "recipient", value: $recipient, type: 0 }
+            ]
+        }' | create_item
+    echo "Saved '$1' to '$FOLDER' folder."
+    printf '%s\n' "$3"
+}
+
+cmd_create() {
+    require_deps age-keygen
+    local name="${1:-default}" identity recipient
+    identity=$(age-keygen 2> /dev/null)
+    recipient=$(echo "$identity" | sed -n 's/^# public key: //p')
+    save_identity "$name" "$identity" "$recipient"
+}
+
+cmd_save() {
+    require_deps age-keygen
+    local name="${1:-default}" file="${2:-$DEFAULT_KEY_FILE}" recipient
+    if [ ! -f "$file" ]; then
+        echo "Error: identity file not found at $file" >&2
+        exit 1
+    fi
+    recipient=$(age-keygen -y "$file")
+    save_identity "$name" "$(cat "$file")" "$recipient"
+}
+
+cmd_load() {
+    local name="${1:-default}" file="${2:-$DEFAULT_KEY_FILE}" item identity
+    item=$(find_item "$(folder_id "$FOLDER")" "$name")
+    identity=$(echo "$item" | jq -r '.fields[] | select(.name == "identity") | .value')
+    if [ -z "$identity" ] || [ "$identity" = "null" ]; then
+        echo "Error: 'identity' field not found in item '$name'." >&2
+        exit 1
+    fi
+    mkdir -p "$(dirname "$file")"
+    echo "$identity" > "$file"
+    chmod 600 "$file"
+    echo "Saved identity to $file"
+}
+
+cmd_recipient() {
+    local name="${1:-default}" item recipient
+    item=$(find_item "$(folder_id "$FOLDER")" "$name")
+    recipient=$(echo "$item" | jq -r '.fields[] | select(.name == "recipient") | .value')
+    if [ -z "$recipient" ] || [ "$recipient" = "null" ]; then
+        echo "Error: 'recipient' field not found in item '$name'." >&2
+        exit 1
+    fi
+    printf '%s\n' "$recipient"
+}
+
+cmd_list() {
+    list_item_names "$(folder_id "$FOLDER")"
+}
+
+cmd_remove() {
+    local name="${1:-}"
+    [ -z "$name" ] && usage
+    local fid
+    fid=$(folder_id "$FOLDER")
+    find_item "$fid" "$name" > /dev/null
+    delete_items_by_name "$fid" "$name"
+    echo "Removed '$name'."
+}
+
+case "${1:-}" in
+    create|save|load|recipient|list|remove)
+        cmd="$1"; shift
+        require_unlocked
+        "cmd_$cmd" "$@"
+        ;;
+    *) usage ;;
+esac
