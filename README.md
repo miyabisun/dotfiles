@@ -34,22 +34,18 @@ This repository includes several utility scripts in the `bin/` directory to help
 
 ## Bitwarden Integration
 
-These scripts integrate with Bitwarden CLI (`bw`) to manage secrets and SSH keys.
+Commands in `bin/bw/` integrate with Bitwarden CLI (`bw`) to manage secrets and keys.
+Each command is grouped by domain and takes a subcommand; run it with no arguments to see usage.
 
-### Secrets Management
-- **`bin/bw/update-secrets`**: Fetches secrets from Bitwarden "CLI" folder and saves them to `~/.config/.secrets`.
-- **`bin/bw/create-secret <key> <value>`**: Creates a new secret in Bitwarden "CLI" folder and updates local secrets.
-- **`bin/bw/remove-secret <name>`**: Removes a secret from Bitwarden "CLI" folder.
-- **`bin/bw/list-secrets`**: Lists available secrets in Bitwarden "CLI" folder.
+| Command | Bitwarden folder | Subcommands |
+|---|---|---|
+| `bw-secret` | CLI | `save <name> <value>` / `load` / `list` / `remove <name>` |
+| `bw-ssh-key` | SSH Keys | `save [name] [filename]` / `load [name] [filename]` / `list` / `remove <name>` |
+| `bw-ssh-config` | SSH Config | `save [name]` / `load` / `list` / `remove <name>` |
+| `bw-age` | Age Keys | `create [name]` / `save [name] [file]` / `load [name] [file]` / `recipient [name]` / `list` / `remove <name>` |
 
-### SSH Key Management
-- **`bin/bw/list-ssh-keys`**: Lists available SSH keys in Bitwarden "SSH Keys" folder.
-- **`bin/bw/save-ssh-key [name] [filename]`**: Saves a local SSH key to Bitwarden "SSH Keys" folder.
-  - Defaults: `name`="default", `filename`="id_rsa".
-- **`bin/bw/load-ssh-key [name] [filename]`**: Loads an SSH key from Bitwarden to `~/.ssh/`.
-
-### SSH Config Management
-- **`bin/bw/save-ssh-config`**: Interactively selects an SSH config file from `~/.ssh/conf.d/` and saves it to Bitwarden "SSH Config" folder.
-- **`bin/bw/load-ssh-configs`**: Restores all SSH configs from Bitwarden to `~/.ssh/conf.d/`.
+- `bw-secret load` writes all secrets to `~/.config/.secrets` as `export KEY="VALUE"` lines; `save`/`remove` refresh the file automatically.
+- `bw-age create` generates a key with `age-keygen` and stores it directly in Bitwarden without touching disk. `load` restores the identity to `~/.config/age/keys.txt` (0600) by default.
+- Shared plumbing (unlock check, folder lookup, upsert) lives in `bin/bw/lib.sh`.
 
 
