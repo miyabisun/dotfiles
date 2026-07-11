@@ -12,7 +12,7 @@ Usage: bw-age <command> [args]
 Commands:
   create [name]       age-keygen で鍵を生成して保存する (ディスクには残さない)
   save [name] [file]  既存の identity ファイルを保存 (default: ~/.config/age/keys.txt)
-  load [name] [file]  identity を <file> に復元する (default: ~/.config/age/keys.txt)
+  identity [name]     秘密鍵 (identity) を stdout に出す (ディスクに書かない)
   recipient [name]    公開鍵 (age1...) を表示する
   list                保存済みの鍵名を一覧する
   remove <name>       保存した鍵を削除する
@@ -64,18 +64,19 @@ cmd_save() {
     save_identity "$name" "$(cat "$file")" "$recipient"
 }
 
-cmd_load() {
-    local name="${1:-default}" file="${2:-$DEFAULT_KEY_FILE}" item identity
-    item=$(find_item "$(folder_id "$FOLDER")" "$name")
+get_identity() { # <name>
+    local item identity
+    item=$(find_item "$(folder_id "$FOLDER")" "$1")
     identity=$(echo "$item" | jq -r '.fields[] | select(.name == "identity") | .value')
     if [ -z "$identity" ] || [ "$identity" = "null" ]; then
-        echo "Error: 'identity' field not found in item '$name'." >&2
+        echo "Error: 'identity' field not found in item '$1'." >&2
         exit 1
     fi
-    mkdir -p "$(dirname "$file")"
-    echo "$identity" > "$file"
-    chmod 600 "$file"
-    echo "Saved identity to $file"
+    printf '%s\n' "$identity"
+}
+
+cmd_identity() {
+    get_identity "${1:-default}"
 }
 
 cmd_recipient() {
@@ -104,7 +105,7 @@ cmd_remove() {
 }
 
 case "${1:-}" in
-    create|save|load|recipient|list|remove)
+    create|save|identity|recipient|list|remove)
         cmd="$1"; shift
         require_unlocked
         "cmd_$cmd" "$@"
