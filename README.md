@@ -42,11 +42,11 @@ Each command is grouped by domain and takes a subcommand; run it with no argumen
 | `bw-secret` | CLI | `save <name> <value>` / `load` / `list` / `remove <name>` |
 | `bw-ssh-key` | SSH Keys | `save [name] [filename]` / `load [name] [filename]` / `list` / `remove <name>` |
 | `bw-ssh-config` | SSH Config | `save [name]` / `load` / `list` / `remove <name>` |
-| `bw-age` | Age Keys | `create [name]` / `save [name] [file]` / `load [name] [file]` / `recipient [name]` / `list` / `remove <name>` |
+| `bw-age` | Age Keys | `create [name]` / `save [name] [file]` / `identity [name]` / `recipient [name]` / `list` / `remove <name>` |
 | `bw-env` | Env Files | `save <name> [file]` / `load <name> [file]` / `get <name> <var>` / `list` / `remove <name>` |
 
 - `bw-secret load` writes all secrets to `~/.config/.secrets` as `export KEY="VALUE"` lines; `save`/`remove` refresh the file automatically.
-- `bw-age create` generates a key with `age-keygen` and stores it directly in Bitwarden without touching disk. `load` restores the identity to `~/.config/age/keys.txt` (0600) by default.
+- `bw-age create` generates a key with `age-keygen` and stores it directly in Bitwarden without touching disk. Decrypt without leaving the key on disk: `age -d -i <(bw-age identity <name>) file.age`.
 - `bw-env` backs up a project's whole `.env` file as one secure note. Unlike `bw-secret`, nothing is exported to the shell environment; `load` restores the file (0600) and `get` prints a single variable for scripting.
 - Shared plumbing (unlock check, folder lookup, upsert) lives in `bin/bw/lib.sh`.
 
