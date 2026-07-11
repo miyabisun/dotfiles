@@ -65,6 +65,26 @@ MSG
 }
 
 # ---------------------------------------------------------------------------
+# TAKT — outer agent orchestration (YAML workflows; Cursor/Claude as workers)
+# https://github.com/nrslib/takt
+# ---------------------------------------------------------------------------
+install_takt() {
+  if command -v takt >/dev/null 2>&1; then
+    echo "==> takt already installed ($(takt --version 2>/dev/null | head -1))"
+    return
+  fi
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "==> skip takt (npm not found)"
+    return
+  fi
+  echo "==> Installing takt (npm -g)..."
+  npm install -g takt
+  echo "==> takt installed ($(takt --version 2>/dev/null | head -1))"
+  echo "    Configure ~/.takt/config.yaml — see agent/takt/README.md"
+}
+
+# ---------------------------------------------------------------------------
 
 install_delta
 install_obscura
+install_takt

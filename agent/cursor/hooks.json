@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "./hooks/block-git-discard.sh",
+        "matcher": "git "
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "./hooks/prefer-semble.sh",
+        "matcher": "Grep|Glob"
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": "./hooks/guard-subagent-dirty-tree.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": "./hooks/stop-turn-end.sh"
+      }
+    ]
+  }
+}

@@ -8,7 +8,8 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE:-${(%):-%N}}")"; pwd)"
 dotfiles_dir="$script_dir/.."
-claude_src="$dotfiles_dir/claude"
+claude_src="$dotfiles_dir/agent/claude"
+skills_src="$dotfiles_dir/agent/common/skills"
 
 win_user="${1:-miyabi}"
 win_home="/mnt/c/Users/$win_user"
@@ -27,11 +28,11 @@ cp -v "$claude_src/CLAUDE.md" "$win_claude/CLAUDE.md"
 # Copy settings.json
 cp -v "$claude_src/settings.json" "$win_claude/settings.json"
 
-# Sync skills directory (mirror source, remove stale files)
+# Sync skills directory (shared common skills; mirror source, remove stale files)
 if [ -d "$win_claude/skills" ]; then
   rm -rf "$win_claude/skills"
 fi
-cp -rv "$claude_src/skills" "$win_claude/skills"
+cp -rv "$skills_src" "$win_claude/skills"
 
 echo ""
 echo "Done. Claude Code config synced to $win_claude"

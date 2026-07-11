@@ -1,0 +1,169 @@
+{
+  "permissions": {
+    "allow": [
+      "Workflow",
+      "Skill(dev-cycle)"
+    ],
+    "deny": [
+      "Bash(bw:*)",
+      "Read(~/.config/.secrets*)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.development)",
+      "Read(**/.env.development.local)",
+      "Read(**/.env.test)",
+      "Read(**/.env.test.local)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.production)",
+      "Read(**/.env.production.local)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.development)",
+      "Edit(**/.env.development.local)",
+      "Edit(**/.env.test)",
+      "Edit(**/.env.test.local)",
+      "Edit(**/.env.staging)",
+      "Edit(**/.env.production)",
+      "Edit(**/.env.production.local)",
+      "Write(**/.env)",
+      "Write(**/.env.local)",
+      "Write(**/.env.development)",
+      "Write(**/.env.development.local)",
+      "Write(**/.env.test)",
+      "Write(**/.env.test.local)",
+      "Write(**/.env.staging)",
+      "Write(**/.env.production)",
+      "Write(**/.env.production.local)"
+    ]
+  },
+  "model": "claude-fable-5[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/agent/claude/hooks/prefer-semble.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/agent/claude/hooks/block-git-discard.sh",
+            "timeout": 10,
+            "statusMessage": "git 破棄コマンドチェック"
+          }
+        ]
+      },
+      {
+        "matcher": "Workflow",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/agent/claude/hooks/guard-workflow-dirty-tree.sh",
+            "timeout": 10,
+            "statusMessage": "作業ツリーの未コミット変更チェック"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f Cargo.toml && cargo fmt --check 2>&1 && cargo clippy --quiet 2>&1 && cargo test --quiet 2>&1 || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f package.json && { npx --no vitest --version >/dev/null 2>&1 || { echo 'ERROR: vitest is not installed. Run: npm install -D vitest'; exit 1; }; npx --no vitest run --reporter=verbose 2>&1; } || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "vite_config=$(ls vite.config.* client/vite.config.* 2>/dev/null | head -1) && test -n \"$vite_config\" && { dir=$(dirname \"$vite_config\"); if [ \"$dir\" != \".\" ]; then cd \"$dir\"; fi; npx vite build 2>&1 | tail -5; } || true"
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/agent/claude/hooks/webfetch-fallback.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.local/bin/emit-turn-end.sh claude success"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/agent/claude/hooks/notify-waiting.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": false,
+    "learning-output-style@claude-plugins-official": false
+  },
+  "language": "Japanese",
+  "effortLevel": "medium",
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark-daltonized",
+  "skipAutoPermissionPrompt": true,
+  "mcpServers": {
+    "obscura": {
+      "type": "stdio",
+      "command": "obscura",
+      "args": [
+        "mcp"
+      ],
+      "env": {}
+    }
+  }
+}
