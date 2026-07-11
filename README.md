@@ -28,6 +28,38 @@ The `bin/install` script sets up symbolic links for the following configuration 
 - `~/.config/nvim` -> `config/nvim`
 - `~/.config/tmux` -> `config/tmux`
 
+### Agent Tools
+
+All agent config lives under `agent/`:
+
+```
+agent/
+├── common/   # shared: agents, designs, skills, rules, bin
+├── claude/   # Claude Code only (hooks, workflows, settings)
+├── cursor/   # Cursor only (rules, hooks)
+└── takt/     # TAKT adoption notes
+```
+
+See `agent/README.md` for details.
+
+#### Claude Code (`~/.claude`)
+- `~/.claude/skills` -> `agent/common/skills`
+- `~/.claude/agents` -> `agent/common/agents`
+- `~/.claude/designs` -> `agent/common/designs`
+- `~/.claude/CLAUDE.md` -> `agent/claude/CLAUDE.md` -> `agent/common/rules/GLOBAL.md`
+- `~/.claude/workflows`, `hooks`, `settings.json` -> `agent/claude/*`
+
+#### Cursor (`~/.cursor`)
+- `~/.cursor/skills` -> `agent/common/skills`
+- `~/.cursor/agents` -> `agent/common/agents`
+- `~/.cursor/designs` -> `agent/common/designs`
+- `~/.cursor/rules` -> `agent/cursor/rules`
+- `~/.cursor/hooks`, `hooks.json` -> `agent/cursor/hooks*`
+
+#### `~/.local/bin`
+- `emit-turn-end.sh` -> `agent/common/bin/emit-turn-end.sh`
+- `tmux-session-picker` -> `config/tmux/bin/tmux-session-picker`
+
 # Utilities
 
 This repository includes several utility scripts in the `bin/` directory to help manage specific configurations.
