@@ -18,6 +18,7 @@ npm install -g takt          # CLI on PATH via fnm/npm
 # ~/.takt/config.yaml (summary)
 language: ja
 provider: cursor
+model: grok-4.5-fast-xhigh
 cursor_cli_path: /home/miyabi/.local/bin/cursor-agent
 ```
 
