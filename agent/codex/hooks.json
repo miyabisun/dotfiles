@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.dotfiles/agent/codex/hooks/block-git-discard.sh",
+            "timeout": 10,
+            "statusMessage": "git 破棄コマンドチェック"
+          }
+        ]
+      }
+    ]
+  }
+}

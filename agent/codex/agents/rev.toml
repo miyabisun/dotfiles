@@ -1,0 +1,5 @@
+developer_instructions = """
+Before starting the assigned task, read the complete role definition at
+~/.agents/agents/rev.md and follow it as your role-specific instructions.
+Always respond in Japanese unless the requested artifact requires another language.
+"""
