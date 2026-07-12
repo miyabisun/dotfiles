@@ -1,0 +1,6 @@
+interface:
+  display_name: "Deliver"
+  short_description: "要求を検証済みローカルコミットとして安全に完成させる"
+  default_prompt: "Use $deliver to complete this task as a verified local commit."
+policy:
+  allow_implicit_invocation: false

@@ -22,19 +22,28 @@ This skill's invocation **is** explicit permission to commit, tag, and push — 
 
 1. Detect current version and existing tags (see §2–3).
 2. **No `v*` tags at all (first release)** → do **not** bump. Tag the current version as-is, then jump to §6 (skip §4–5 version edits).
-3. **Tags exist** → read `git log <latest-tag>..HEAD --oneline` and choose:
+3. **Tags exist** → inspect subjects and relevant diffs in
+   `git log <latest-tag>..HEAD`; do not infer from the type token alone. Choose:
 
 | Level | When |
 |---|---|
 | **major** | Breaking: `feat!:` / `BREAKING CHANGE` / incompatible API or data format |
-| **minor** | New features: `feat:` without breaking changes |
-| **patch** | Only `fix:` / `chore:` / `docs:` / `refactor:` (no new features) |
+| **minor** | The release genuinely adds a user capability, option, workflow, command, endpoint, or supported use case |
+| **patch** | Corrections, presentation adjustments, maintenance, tests, docs, performance, or refactors without a new capability |
 
-**0.x rule**: while major is `0`, never bump to major for breakages — use **minor** instead (0.x → 1.0.0 only on explicit user request). So in 0.x: breaking or feat → minor, else → patch.
+Commit types are evidence, not authority. If a commit is labeled `feat` but only
+corrects existing behavior or adjusts CSS/color/spacing/copy, treat it as patch
+and note the misclassification. Conversely, an actual new capability remains a
+minor candidate even if its commit was mislabeled `fix` or `chore`.
+
+**0.x rule**: while major is `0`, never bump to major for breakages — use
+**minor** instead (0.x → 1.0.0 only on explicit user request). So in 0.x:
+breaking or an actual new capability → minor, else → patch.
 
 Show the chosen level and 2–3 lines of rationale (cite commits) before continuing.
 
-**Tie-break**: prefer **patch** over minor when unsure. For major (after 1.0.0), ask the user if the evidence is weak.
+**Tie-break**: prefer **patch** over minor when unsure. A visible change is not
+by itself a feature. For major (after 1.0.0), ask the user if the evidence is weak.
 
 ### `major` / `minor` / `patch`
 

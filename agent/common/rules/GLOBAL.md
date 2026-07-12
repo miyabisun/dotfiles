@@ -1,4 +1,4 @@
-# Claude Code Global Rules
+# Global Rules
 
 ## Language
 

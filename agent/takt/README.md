@@ -1,8 +1,8 @@
 # TAKT (https://github.com/nrslib/takt)
 
-TAKT is the **enforcement layer** outside Cursor / Claude Code.
-Skills and agents under `agent/` remain the knowledge; TAKT owns phase
-transitions so agents cannot silently skip review and declare "done".
+TAKT is an optional external state-machine orchestrator outside agent tools.
+Use it when a job requires deterministic phase transitions rather than
+`deliver`'s outcome-driven autonomy.
 
 ## Setup (this machine)
 
@@ -46,9 +46,7 @@ takt workflow doctor backend-mini
 
 | Our asset (`agent/`) | TAKT concept |
 |---|---|
-| `common/skills/dev-cycle` | Top workflow (or `dual` / custom YAML) |
-| `common/skills/backend-team` | `backend` / `backend-mini` workflow |
-| `common/skills/frontend-team` | `frontend` / `frontend-mini` workflow |
+| `common/skills/deliver` | Acceptance criteria and evidence gate semantics |
 | `common/agents/strategist` | persona + instruction (test-first / contract) |
 | `common/agents/strategy-rev` | review step / testing-reviewer facet |
 | `common/agents/dev` | `coder` persona |

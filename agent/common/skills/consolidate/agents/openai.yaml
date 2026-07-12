@@ -1,0 +1,6 @@
+interface:
+  display_name: "Consolidate"
+  short_description: "大規模な重複実装を安全に統合して検証済みコミットへ導く"
+  default_prompt: "Use $consolidate to safely consolidate duplication in this area."
+policy:
+  allow_implicit_invocation: false
