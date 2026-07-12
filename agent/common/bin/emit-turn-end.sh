@@ -18,16 +18,24 @@ if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
     fi
 fi
 
-# MOCA_URL があれば /notify に完了通知を投げる (moca-server が喋る。失敗は無視)
-# 目の前で完了が見えているなら喋らせない
-if [[ -n "${MOCA_URL:-}" && -z "${VIEWING}" ]]; then
-    case "${STATUS}" in
-        success) MSG="${SESSION:+${SESSION}の}${AGENT}が完了しました" ;;
-        waiting) MSG="${SESSION:+${SESSION}の}${AGENT}が確認を求めています" ;;
-        *)       MSG="${SESSION:+${SESSION}の}${AGENT}が${STATUS}で終了しました" ;;
-    esac
+# MOCA_URL があれば /notify に通知する (moca-server が喋る。失敗は無視)
+# 目の前で見ている場合も反応は残し、セッション名・agent名だけ省略する
+if [[ -n "${MOCA_URL:-}" ]]; then
+    if [[ -n "${VIEWING}" ]]; then
+        case "${STATUS}" in
+            success) MSG="完了しました" ;;
+            waiting) MSG="確認させてください" ;;
+            *)       MSG="${STATUS}で終了しました" ;;
+        esac
+    else
+        case "${STATUS}" in
+            success) MSG="${SESSION:+${SESSION}の}${AGENT}が完了しました" ;;
+            waiting) MSG="${SESSION:+${SESSION}の}${AGENT}が確認を求めています" ;;
+            *)       MSG="${SESSION:+${SESSION}の}${AGENT}が${STATUS}で終了しました" ;;
+        esac
+    fi
     curl -fsS -m 5 -X POST -H 'Content-Type: text/plain' \
-        --data "${MSG}" "${MOCA_URL%/}/notify" >/dev/null 2>&1 &
+        --data "${MSG}" "${MOCA_URL%/}/notify" >/dev/null 2>&1 || true
 fi
 
 # tmux 外なら以降は何もできない
@@ -40,16 +48,5 @@ fi
 # 見に行ったときに tmux.conf のフックで行う
 if [[ -n "${TMUX_PANE:-}" && -z "${VIEWING}" ]]; then
     tmux set-option -t "${TMUX_PANE}" @agent_bell 1 2>/dev/null || true
+    tmux set-option -w -t "${TMUX_PANE}" @agent_bell 1 2>/dev/null || true
 fi
-
-# pane の TTY に直接 BEL を書く (音とウィンドウ強調用)
-if [[ -n "${TMUX_PANE:-}" ]]; then
-    PANE_TTY="$(tmux display-message -p -t "${TMUX_PANE}" '#{pane_tty}' 2>/dev/null || true)"
-    if [[ -n "${PANE_TTY}" && -w "${PANE_TTY}" ]]; then
-        printf '\a' > "${PANE_TTY}"
-        exit 0
-    fi
-fi
-
-# fallback
-printf '\a'

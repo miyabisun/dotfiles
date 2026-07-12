@@ -41,6 +41,14 @@ agent/
 | `~/.codex/AGENTS.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
+Agent completion and approval-waiting events call
+`~/.local/bin/emit-turn-end.sh`. In tmux this raises a silent `@agent_bell`
+session/window marker;
+when `MOCA_URL` is set, it also asks MOCA to announce the event. The full
+session/agent name is used in the background; the currently viewed session gets
+a short announcement such as `完了しました`. Codex uses `notify` for completion
+and a `PermissionRequest` hook for approval waiting.
+
 ## Agents (`common/agents`)
 
 Role definitions shared by Claude Code and Cursor. Frontmatter keeps only

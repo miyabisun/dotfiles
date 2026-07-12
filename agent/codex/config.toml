@@ -1,5 +1,5 @@
-# Personal Codex defaults. Authentication, history, trust decisions, and other
-# machine-local state intentionally stay outside this repository.
+# Personal Codex defaults. Authentication, history, and runtime databases
+# intentionally stay outside this repository.
 model_reasoning_effort = "medium"
 personality = "friendly"
 approval_policy = "on-request"
@@ -65,9 +65,20 @@ args = ["mcp"]
 required = false
 
 [tui]
-notifications = true
-notification_condition = "unfocused"
-notification_method = "bel"
+# Completion and approval notifications use emit-turn-end.sh so tmux's
+# @agent_bell and MOCA_URL share one path without duplicate TUI BELs.
+notifications = false
 
 [sandbox_workspace_write]
 network_access = false
+
+[projects."/home/miyabi/.dotfiles"]
+trust_level = "trusted"
+
+[hooks.state]
+
+[hooks.state."/home/miyabi/.codex/hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:9c1fa12f661374d9ff23e08aceb9d9189f2e71a931b4a381809af7db81615746"
+
+[hooks.state."/home/miyabi/.codex/hooks.json:permission_request:0:0"]
+trusted_hash = "sha256:ab5cb7b85e36ae8bee960c1397b2cd0e497b7ee88a4f17cc5cc6ae71f98d114a"

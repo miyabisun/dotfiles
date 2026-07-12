@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # fzf session switcher (C-b C-b popup).
-# Sessions containing a bell window (= agent waiting for input, see
+# Sessions containing an agent notification (see
 # emit-turn-end.sh) are highlighted with the status-line bell colours.
 set -euo pipefail
 export PATH="$HOME/.fzf/bin:$PATH"
 
 cur="$(tmux display-message -p '#S')"
-s="$(tmux list-sessions -F '#{?#{||:#{m:*!*,#{session_alerts}},#{@agent_bell}},1,0}#S' \
+s="$(tmux list-sessions -F '#{?#{@agent_bell},1,0}#S' \
   | awk -v cur="$cur" '{
       flag = substr($0, 1, 1); name = substr($0, 2)
       if (name == cur) next
