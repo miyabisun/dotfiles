@@ -12,7 +12,6 @@ agent/
 │   └── skills/      # Agent Skills (SKILL.md)
 ├── claude/          # Claude Code only
 │   ├── hooks/
-│   ├── workflows/
 │   ├── settings.json
 │   ├── CLAUDE.md → ../common/rules/GLOBAL.md
 │   ├── agents → ../common/agents
@@ -22,6 +21,10 @@ agent/
 │   ├── rules/       # .mdc alwaysApply rules
 │   ├── hooks/ + hooks.json
 │   └── agents → ../common/agents
+├── codex/           # Codex CLI only
+│   ├── agents/      # Codex subagent TOML role adapters
+│   ├── hooks/ + hooks.json
+│   └── config.toml
 └── takt/            # TAKT adoption notes (enforcement outside the IDE)
 ```
 
@@ -32,15 +35,18 @@ agent/
 | `~/.claude/skills`, `~/.cursor/skills` | `agent/common/skills` |
 | `~/.claude/agents`, `~/.cursor/agents` | `agent/common/agents` |
 | `~/.claude/designs`, `~/.cursor/designs` | `agent/common/designs` |
-| `~/.claude/*` (hooks, workflows, …) | `agent/claude/*` |
+| `~/.claude/*` (hooks, settings, …) | `agent/claude/*` |
 | `~/.cursor/*` (rules, hooks, …) | `agent/cursor/*` |
+| `~/.codex/config.toml`, `~/.codex/hooks.json` | `agent/codex/*` |
+| `~/.codex/AGENTS.md` | `agent/common/rules/GLOBAL.md` |
+| `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
 ## Agents (`common/agents`)
 
 Role definitions shared by Claude Code and Cursor. Frontmatter keeps only
 `name` / `description` so Cursor inherits the parent chat model (`model`
 defaults to `inherit`). Claude-specific `model` / `effort` / `tools` are
-intentionally omitted — assign those in Claude workflows/settings if needed.
+intentionally omitted.
 
 Google-style `DESIGN.md` templates live once here. Projects only keep a thin
 `docs/DESIGN.md` that declares which template they follow plus project-specific
@@ -49,16 +55,17 @@ tokens. Do not copy the full template into every app.
 ## Adding a new skill
 
 1. Create `agent/common/skills/<name>/SKILL.md`
-2. Existing symlinks pick it up for both tools
+2. Existing symlinks pick it up for Claude Code, Cursor, and Codex
 
 Notable skills:
 
+- `deliver` — outcome-driven implementation, evidence gates, local commit
+- `consolidate` — semantic DRY inventory, safe unification, verified commit
+- `commit` — atomic staging and concise Conventional Commit messages
 - `bump-tag` — semver bump, tag, push
-- `backend-team` — strategist → strategy-rev → dev → rev → fix → simplify → sec
-- `frontend-team` — same plus QA (`ui-checker` evidence) and UI re-verify
-- `dev-cycle` — leader → designer? → backend-team and/or frontend-team → committer
 
-Agent split (producer ≠ approver):
+`deliver` selects only the capabilities justified by risk. Agent split
+(producer ≠ approver):
 
 - `strategist` / `strategy-rev` — contracts & tests; strategy-rev holds the gate
 - `dev` / `rev` — implement; rev holds the gate (no self-approval)
@@ -70,7 +77,8 @@ Agent split (producer ≠ approver):
 2. Symlink `agent/common/skills` (and adapt rules format if needed)
 3. Add install steps to `bin/install`
 
-## TAKT (external enforcement)
+## TAKT (external orchestration)
 
-Skills cannot force phase order. For that, use [TAKT](https://github.com/nrslib/takt)
-as an outer orchestrator (Cursor/Claude as workers). See [takt/README.md](takt/README.md).
+Use [TAKT](https://github.com/nrslib/takt) only when an external deterministic
+state machine is preferable to `deliver`'s outcome-driven autonomy. See
+[takt/README.md](takt/README.md).

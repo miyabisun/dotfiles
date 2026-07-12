@@ -1,0 +1,6 @@
+interface:
+  display_name: "Commit"
+  short_description: "変更を短く読みやすいConventional Commitとして記録する"
+  default_prompt: "Use $commit to create a concise local commit for these changes."
+policy:
+  allow_implicit_invocation: false

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse(Bash) hook: block git commands that discard working-tree changes
 # or untracked files (checkout ./--/-f, restore(worktree), reset --hard,
-# clean, stash). Motivated by an incident where a dev-cycle subagent ran
+# clean, stash). Motivated by an incident where an autonomous subagent ran
 # `git checkout .` + clean and destroyed uncommitted restyle work (2026-07-03).
 # Applies to every Bash tool call, including subagents.
 # NOTE: the heredoc occupies stdin for python, so the hook JSON is captured

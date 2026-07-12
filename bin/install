@@ -24,7 +24,6 @@ mkdir -p "$HOME/.claude"
 link "agent/common/skills" "$HOME/.claude"
 link "agent/common/agents" "$HOME/.claude"
 link "agent/common/designs" "$HOME/.claude"
-link "agent/claude/workflows" "$HOME/.claude"
 link "agent/claude/hooks" "$HOME/.claude"
 link "agent/claude/CLAUDE.md" "$HOME/.claude"
 link "agent/claude/settings.json" "$HOME/.claude"
@@ -36,6 +35,17 @@ link "agent/common/designs" "$HOME/.cursor"
 link "agent/cursor/rules" "$HOME/.cursor"
 link "agent/cursor/hooks" "$HOME/.cursor"
 ln -sfv "$(pwd)/agent/cursor/hooks.json" "$HOME/.cursor/hooks.json"
+
+mkdir -p "$HOME/.codex"
+link "agent/codex/config.toml" "$HOME/.codex"
+link "agent/codex/hooks.json" "$HOME/.codex"
+link "agent/codex/agents" "$HOME/.codex"
+link "agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md"
+
+mkdir -p "$HOME/.agents"
+link "agent/common/skills" "$HOME/.agents"
+link "agent/common/agents" "$HOME/.agents"
+link "agent/common/designs" "$HOME/.agents"
 
 mkdir -p "$HOME/.local/bin"
 link "agent/common/bin/emit-turn-end.sh" "$HOME/.local/bin"
@@ -69,4 +79,3 @@ for rcfile in "$HOME/.bashrc" "$HOME/.zshrc"; do
     fi
   fi
 done
-
