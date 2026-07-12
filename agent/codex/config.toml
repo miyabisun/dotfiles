@@ -1,0 +1,73 @@
+# Personal Codex defaults. Authentication, history, trust decisions, and other
+# machine-local state intentionally stay outside this repository.
+model_reasoning_effort = "medium"
+personality = "friendly"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "live"
+notify = ["emit-turn-end.sh", "codex", "success"]
+
+[features]
+hooks = true
+multi_agent = true
+
+[agents]
+max_threads = 6
+max_depth = 2
+
+[agents.leader]
+description = "複雑な依頼を観測可能な達成条件、スコープ、リスクへ変換する。"
+config_file = "agents/leader.toml"
+
+[agents.designer]
+description = "UI/UX とデザインシステムの達成条件を定義する。"
+config_file = "agents/designer.toml"
+
+[agents.strategist]
+description = "複雑・高リスク変更の実装非依存な検証契約とテストを設計する。"
+config_file = "agents/strategist.toml"
+
+[agents.strategy_rev]
+description = "達成条件と検証契約が独立して合否判定できるか検査する。"
+config_file = "agents/strategy-rev.toml"
+
+[agents.dev]
+description = "達成条件を満たす最小の変更を実装し、検証証拠を返す。"
+config_file = "agents/dev.toml"
+
+[agents.rev]
+description = "依頼、達成条件、diff、証拠を照合してコミット可否を判定する。"
+config_file = "agents/rev.toml"
+
+[agents.debugger]
+description = "レビュー指摘をすべて修正し、回帰検証する。"
+config_file = "agents/debugger.toml"
+
+[agents.inspector]
+description = "指摘事項が漏れなく解消されたか検品する。"
+config_file = "agents/inspector.toml"
+
+[agents.sec]
+description = "変更のセキュリティリスクを検証する。"
+config_file = "agents/sec.toml"
+
+[agents.ui_checker]
+description = "UI を実測し、証拠付きで達成条件を検証する。"
+config_file = "agents/ui-checker.toml"
+
+[agents.committer]
+description = "合格済みdelivery ledgerの対象ファイルだけを1件コミットする。"
+config_file = "agents/committer.toml"
+
+[mcp_servers.obscura]
+command = "obscura"
+args = ["mcp"]
+required = false
+
+[tui]
+notifications = true
+notification_condition = "unfocused"
+notification_method = "bel"
+
+[sandbox_workspace_write]
+network_access = false
