@@ -1,4 +1,4 @@
-Include conf.d/*
+Include ~/.ssh/conf.d/*
 
 ServerAliveInterval 60
 ServerAliveCountMax 3
