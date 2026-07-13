@@ -40,13 +40,13 @@ agent/
 | `~/.codex/AGENTS.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
-Agent completion and approval-waiting events call
-`~/.local/bin/emit-turn-end.sh`. In tmux this raises a silent `@agent_bell`
-session/window marker;
+Agent completion events call `~/.local/bin/emit-turn-end.sh`. In tmux this
+raises a silent `@agent_bell` session/window marker;
 when `MOCA_URL` is set, it also asks MOCA to announce the event. The full
 session/agent name is used in the background; the currently viewed session gets
-a short announcement such as `完了しました`. Codex uses `notify` for completion
-and a `PermissionRequest` hook for approval waiting.
+a short announcement such as `完了しました`. Codex uses `notify` for completion.
+Its notification wrapper identifies subagent rollout threads and suppresses
+their completion announcements, including automatic approval reviewers.
 
 ## Agents (`common/agents`)
 

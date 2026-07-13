@@ -1,18 +1,5 @@
 {
   "hooks": {
-    "PermissionRequest": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.dotfiles/agent/codex/hooks/notify-waiting.sh",
-            "timeout": 10,
-            "statusMessage": "確認待ちを通知"
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "^Bash$",
