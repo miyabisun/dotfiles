@@ -23,7 +23,7 @@ run_remote_installer() {
 }
 
 # ---------------------------------------------------------------------------
-# Agent CLIs — official standalone installers for macOS
+# Agent CLIs — official standalone installers for Linux and macOS
 # ---------------------------------------------------------------------------
 install_cursor() {
   if command -v cursor-agent >/dev/null 2>&1; then
@@ -48,11 +48,6 @@ install_codex() {
 }
 
 install_agent_clis() {
-  if [ "$(uname -s)" != "Darwin" ]; then
-    echo "==> skip Cursor/Codex CLIs (macOS only)"
-    return
-  fi
-
   install_cursor
   install_codex
 }
