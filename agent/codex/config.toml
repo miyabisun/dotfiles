@@ -75,14 +75,3 @@ notifications = false
 
 [sandbox_workspace_write]
 network_access = false
-
-[projects."/home/miyabi/.dotfiles"]
-trust_level = "trusted"
-
-[hooks.state]
-
-[hooks.state."/home/miyabi/.codex/hooks.json:pre_tool_use:0:0"]
-trusted_hash = "sha256:9c1fa12f661374d9ff23e08aceb9d9189f2e71a931b4a381809af7db81615746"
-
-[hooks.state."/home/miyabi/.codex/hooks.json:permission_request:0:0"]
-trusted_hash = "sha256:ab5cb7b85e36ae8bee960c1397b2cd0e497b7ee88a4f17cc5cc6ae71f98d114a"
