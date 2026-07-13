@@ -37,7 +37,20 @@ link "agent/cursor/hooks" "$HOME/.cursor"
 ln -sfv "$(pwd)/agent/cursor/hooks.json" "$HOME/.cursor/hooks.json"
 
 mkdir -p "$HOME/.codex"
-link "agent/codex/config.toml" "$HOME/.codex"
+codex_config="$HOME/.codex/config.toml"
+codex_config_source="$(pwd)/agent/codex/config.toml"
+
+# Migrate the legacy dotfiles symlink once, preserving its current contents as
+# machine-local state. New installations receive an independent initial copy.
+if [ -L "$codex_config" ] && [ "$(readlink "$codex_config")" = "$codex_config_source" ]; then
+  codex_config_tmp="${codex_config}.tmp.$$"
+  cp -L "$codex_config" "$codex_config_tmp"
+  unlink "$codex_config"
+  mv "$codex_config_tmp" "$codex_config"
+elif [ ! -e "$codex_config" ] && [ ! -L "$codex_config" ]; then
+  cp "$codex_config_source" "$codex_config"
+fi
+
 link "agent/codex/hooks.json" "$HOME/.codex"
 link "agent/codex/agents" "$HOME/.codex"
 link "agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md"
