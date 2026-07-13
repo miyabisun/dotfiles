@@ -6,7 +6,7 @@ approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 sandbox_mode = "workspace-write"
 web_search = "live"
-notify = ["emit-turn-end.sh", "codex", "success"]
+notify = ["notify-turn-end.sh"]
 
 [features]
 hooks = true
