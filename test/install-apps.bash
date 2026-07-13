@@ -24,12 +24,6 @@ STUB
 make_stub delta
 make_stub obscura
 
-cat >"$fake_bin/uname" <<'STUB'
-#!/usr/bin/env bash
-echo "${INSTALL_APPS_TEST_UNAME:-Darwin}"
-STUB
-chmod +x "$fake_bin/uname"
-
 cat >"$fake_bin/curl" <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -112,17 +106,19 @@ grep -F "Codex CLI already installed" "$test_root/second-run.out" >/dev/null
 
 linux_home="$test_root/linux-home"
 linux_tmp="$test_root/linux-tmp"
-mkdir -p "$linux_home" "$linux_tmp"
+mkdir -p "$linux_home/.local/bin" "$linux_tmp"
 PATH="$fake_bin:/usr/bin:/bin" \
   HOME="$linux_home" \
   INSTALL_APPS_TEST_LOG="$test_root/linux-curl.log" \
   INSTALL_APPS_TEST_ARGS_LOG="$test_root/linux-curl-args.log" \
-  INSTALL_APPS_TEST_UNAME="Linux" \
   TMPDIR="$linux_tmp" \
   bash "$repo_root/bin/install-apps" >"$test_root/linux.out"
 
-test ! -e "$test_root/linux-curl.log"
-grep -F "skip Cursor/Codex CLIs (macOS only)" "$test_root/linux.out" >/dev/null
+grep -Fx "https://cursor.com/install" "$test_root/linux-curl.log" >/dev/null
+grep -Fx "https://chatgpt.com/codex/install.sh" "$test_root/linux-curl.log" >/dev/null
+test -x "$linux_home/.local/bin/cursor-agent"
+test -x "$linux_home/.local/bin/codex"
+test -z "$(find "$linux_tmp" -mindepth 1 -print -quit)"
 
 failure_home="$test_root/failure-home"
 failure_tmp="$test_root/failure-tmp"
@@ -158,4 +154,4 @@ fi
 grep -F "Failed to install Cursor CLI" "$test_root/run-failure.out" >/dev/null
 test -z "$(find "$run_failure_tmp" -mindepth 1 -print -quit)"
 
-echo "install-apps macOS agent CLI test: pass"
+echo "install-apps Linux/macOS agent CLI test: pass"
