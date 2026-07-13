@@ -6,5 +6,4 @@ npm-debug.log
 
 .claude/
 .codex/
-.takt/
 .nrepl-port

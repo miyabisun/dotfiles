@@ -1,7 +1,61 @@
 #!/usr/bin/env bash
-# Install Rust-based CLI tools (git-delta, Obscura) across Manjaro / Ubuntu(WSL) / macOS.
+# Install CLI tools across Manjaro / Ubuntu(WSL) / macOS.
 # Requirements: git, cargo (rustup). Run after bin/install for PATH setup.
 set -euo pipefail
+
+run_remote_installer() {
+  local name="$1"
+  local url="$2"
+  local installer
+  local status
+
+  installer="$(mktemp)"
+  if curl --proto '=https' --tlsv1.2 -fsSL "$url" -o "$installer" && bash "$installer"; then
+    rm -f "$installer"
+    return
+  else
+    status=$?
+  fi
+
+  rm -f "$installer"
+  echo "==> Failed to install $name" >&2
+  return "$status"
+}
+
+# ---------------------------------------------------------------------------
+# Agent CLIs — official standalone installers for macOS
+# ---------------------------------------------------------------------------
+install_cursor() {
+  if command -v cursor-agent >/dev/null 2>&1; then
+    echo "==> Cursor CLI already installed ($(cursor-agent --version 2>/dev/null | head -1))"
+    return
+  fi
+
+  echo "==> Installing Cursor CLI..."
+  run_remote_installer "Cursor CLI" "https://cursor.com/install"
+  echo "==> Cursor CLI installed"
+}
+
+install_codex() {
+  if command -v codex >/dev/null 2>&1; then
+    echo "==> Codex CLI already installed ($(codex --version 2>/dev/null | head -1))"
+    return
+  fi
+
+  echo "==> Installing Codex CLI..."
+  run_remote_installer "Codex CLI" "https://chatgpt.com/codex/install.sh"
+  echo "==> Codex CLI installed"
+}
+
+install_agent_clis() {
+  if [ "$(uname -s)" != "Darwin" ]; then
+    echo "==> skip Cursor/Codex CLIs (macOS only)"
+    return
+  fi
+
+  install_cursor
+  install_codex
+}
 
 # ---------------------------------------------------------------------------
 # git-delta — syntax-highlighting pager for git diff/log/show
@@ -65,26 +119,7 @@ MSG
 }
 
 # ---------------------------------------------------------------------------
-# TAKT — outer agent orchestration (YAML workflows; Cursor/Claude as workers)
-# https://github.com/nrslib/takt
-# ---------------------------------------------------------------------------
-install_takt() {
-  if command -v takt >/dev/null 2>&1; then
-    echo "==> takt already installed ($(takt --version 2>/dev/null | head -1))"
-    return
-  fi
-  if ! command -v npm >/dev/null 2>&1; then
-    echo "==> skip takt (npm not found)"
-    return
-  fi
-  echo "==> Installing takt (npm -g)..."
-  npm install -g takt
-  echo "==> takt installed ($(takt --version 2>/dev/null | head -1))"
-  echo "    Configure ~/.takt/config.yaml — see agent/takt/README.md"
-}
 
-# ---------------------------------------------------------------------------
-
+install_agent_clis
 install_delta
 install_obscura
-install_takt

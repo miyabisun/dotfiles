@@ -21,11 +21,10 @@ agent/
 │   ├── rules/       # .mdc alwaysApply rules
 │   ├── hooks/ + hooks.json
 │   └── agents → ../common/agents
-├── codex/           # Codex CLI only
-│   ├── agents/      # Codex subagent TOML role adapters
-│   ├── hooks/ + hooks.json
-│   └── config.toml
-└── takt/            # TAKT adoption notes (enforcement outside the IDE)
+└── codex/           # Codex CLI only
+    ├── agents/      # Codex subagent TOML role adapters
+    ├── hooks/ + hooks.json
+    └── config.toml
 ```
 
 `bin/install` symlinks:
@@ -84,9 +83,3 @@ Notable skills:
 1. Create `agent/<tool>/` with tool-specific config
 2. Symlink `agent/common/skills` (and adapt rules format if needed)
 3. Add install steps to `bin/install`
-
-## TAKT (external orchestration)
-
-Use [TAKT](https://github.com/nrslib/takt) only when an external deterministic
-state machine is preferable to `deliver`'s outcome-driven autonomy. See
-[takt/README.md](takt/README.md).

@@ -37,7 +37,7 @@ agent/
 ├── common/   # shared: agents, designs, skills, rules, bin
 ├── claude/   # Claude Code only (hooks, workflows, settings)
 ├── cursor/   # Cursor only (rules, hooks)
-└── takt/     # TAKT adoption notes
+└── codex/    # Codex CLI only (hooks, config)
 ```
 
 See `agent/README.md` for details.
@@ -81,5 +81,3 @@ Each command is grouped by domain and takes a subcommand; run it with no argumen
 - `bw-age create` generates a key with `age-keygen` and stores it directly in Bitwarden without touching disk. Decrypt without leaving the key on disk: `age -d -i <(bw-age identity <name>) file.age`.
 - `bw-env` backs up a project's whole `.env` file as one secure note. Unlike `bw-secret`, nothing is exported to the shell environment; `load` restores the file (0600) and `get` prints a single variable for scripting.
 - Shared plumbing (unlock check, folder lookup, upsert) lives in `bin/bw/lib.sh`.
-
-
