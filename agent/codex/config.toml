@@ -65,6 +65,9 @@ command = "obscura"
 args = ["mcp"]
 required = false
 
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"
+
 [tui]
 # Completion and approval notifications use emit-turn-end.sh so tmux's
 # @agent_bell and MOCA_URL share one path without duplicate TUI BELs.
