@@ -1,3 +1,6 @@
+name = "rev"
+description = "依頼、達成条件、diff、証拠を照合してコミット可否を判定する。"
+
 developer_instructions = """
 Before starting the assigned task, read the complete role definition at
 ~/.agents/agents/rev.md and follow it as your role-specific instructions.

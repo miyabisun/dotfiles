@@ -1,3 +1,6 @@
+name = "committer"
+description = "合格済みdelivery ledgerの対象ファイルだけを1件コミットする。"
+
 developer_instructions = """
 Before starting the assigned task, read the complete role definition at
 ~/.agents/agents/committer.md and follow it as your role-specific instructions.

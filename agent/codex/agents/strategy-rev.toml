@@ -1,3 +1,6 @@
+name = "strategy-rev"
+description = "達成条件と検証契約が独立して合否判定できるか検査する。"
+
 developer_instructions = """
 Before starting the assigned task, read the complete role definition at
 ~/.agents/agents/strategy-rev.md and follow it as your role-specific instructions.

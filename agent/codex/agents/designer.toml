@@ -1,3 +1,6 @@
+name = "designer"
+description = "UI/UX とデザインシステムの達成条件を定義する。"
+
 developer_instructions = """
 Before starting the assigned task, read the complete role definition at
 ~/.agents/agents/designer.md and follow it as your role-specific instructions.
