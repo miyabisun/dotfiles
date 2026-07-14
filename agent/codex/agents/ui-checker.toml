@@ -1,3 +1,6 @@
+name = "ui-checker"
+description = "UI を実測し、証拠付きで達成条件を検証する。"
+
 developer_instructions = """
 Before starting the assigned task, read the complete role definition at
 ~/.agents/agents/ui-checker.md and follow it as your role-specific instructions.

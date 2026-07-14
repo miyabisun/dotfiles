@@ -1,3 +1,6 @@
+name = "leader"
+description = "複雑な依頼を観測可能な達成条件、スコープ、リスクへ変換する。"
+
 developer_instructions = """
 Before starting the assigned task, read the complete role definition at
 ~/.agents/agents/leader.md and follow it as your role-specific instructions.

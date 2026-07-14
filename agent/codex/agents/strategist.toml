@@ -1,3 +1,6 @@
+name = "strategist"
+description = "複雑・高リスク変更の実装非依存な検証契約とテストを設計する。"
+
 developer_instructions = """
 Before starting the assigned task, read the complete role definition at
 ~/.agents/agents/strategist.md and follow it as your role-specific instructions.
