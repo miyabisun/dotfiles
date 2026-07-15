@@ -8,6 +8,7 @@
   safecrlf = true
   whitespace = cr-at-eol
   editor = nvim -c \"set fenc=utf-8\"
+  sshCommand = ssh -F \"$HOME/.ssh/config\"
 [fetch]
   prune = true
 [alias]
