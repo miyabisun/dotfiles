@@ -8,6 +8,9 @@
     "deny": [
       "Bash(bw:*)",
       "Read(~/.config/.secrets*)",
+      "Read(~/.config/cloudflare/**)",
+      "Edit(~/.config/cloudflare/**)",
+      "Write(~/.config/cloudflare/**)",
       "Read(**/.env)",
       "Read(**/.env.local)",
       "Read(**/.env.development)",
