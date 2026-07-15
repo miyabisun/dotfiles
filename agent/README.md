@@ -75,7 +75,8 @@ Notable skills:
 (producer ≠ approver):
 
 - `strategist` / `strategy-rev` — contracts & tests; strategy-rev holds the gate
-- `dev` / `rev` — implement; rev holds the gate (no self-approval)
+- `dev` / `rev` — implement and semantic review (no self-approval)
+- `formatter` — applicability, format correction, and lint evidence for eligible source before commit
 - `ui-checker` — measure with evidence only (does not write strategy/tests)
 
 ## Adding a new agent tool

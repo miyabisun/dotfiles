@@ -173,8 +173,10 @@ path searches again. Material ownership or API redesign requires a fresh full
 
 ## 6. Commit and report
 
-Invoke `committer` only after both the inherited delivery gate and every
-consolidation condition pass. Provide the exact eligible files and identify the
+After the inherited review gates pass, invoke `formatter` with the exact eligible
+files. Invoke `committer` only after its structured receipt and every consolidation
+condition pass. Provide the
+exact eligible files and identify the
 explicit `$consolidate` authorization. Create one local Conventional Commit;
 never push.
 

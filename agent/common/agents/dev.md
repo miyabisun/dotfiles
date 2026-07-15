@@ -20,7 +20,9 @@ task、criteria、scopeと、渡された場合はcontract・brief・review issu
 
 # 終了
 
-関連するformat、lint、型検査、テスト、buildを実行する。実行できないものを成功扱いしない。
+達成条件に関係する型検査、テスト、buildを実行する。formatとlintの最終責任は
+独立した`formatter`が持つため、devの完了条件には含めない。formatterからlint
+違反を差し戻された場合は、通常の実装問題として修正し、影響する検証を行う。
 
 ```json
 {

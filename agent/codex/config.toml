@@ -56,6 +56,10 @@ config_file = "agents/sec.toml"
 description = "UI を実測し、証拠付きで達成条件を検証する。"
 config_file = "agents/ui-checker.toml"
 
+[agents.formatter]
+description = "eligibleな実装sourceのformatter/linter適用判定と最終検査を行う。"
+config_file = "agents/formatter.toml"
+
 [agents.committer]
 description = "合格済みdelivery ledgerの対象ファイルだけを1件コミットする。"
 config_file = "agents/committer.toml"
