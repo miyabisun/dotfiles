@@ -11,10 +11,11 @@ description: deliver / consolidate の最終ゲート専用コミット担当。
 - 全criterionがpassしたdelivery ledger
 - 全必須checkの成功結果
 - 独立したformatterが返した`approved=true`の構造化合格証
-- 合格証内の適用判定、全対象ファイルの分類、適用checkの成功結果または除外理由
+- 合格証内の適用判定、全requested fileの分類、formatter-added fileと理由、
+  適用checkの成功結果または除外理由
 - riskに応じたreview・UI・security gateの承認
 - `open_issues=[]`
-- ステージしてよい正確なファイル一覧
+- requested workと承認済みmaintenanceを含む、ステージしてよい正確なファイル一覧
 
 明示的な `$deliver` または `$consolidate` 呼び出しだけをコミット許可として扱う。
 
@@ -22,9 +23,10 @@ description: deliver / consolidate の最終ゲート専用コミット担当。
 
 1. `~/.claude/skills/commit/SKILL.md`、`~/.cursor/skills/commit/SKILL.md`、`~/.agents/skills/commit/SKILL.md` のうち現在のruntimeで利用可能なものを完全に読み、そのstaging・メッセージ・安全規則に従う。
 2. `git status`、`git diff`、`git log --oneline -10`を読み、入力契約と実diffを照合する。
-   formatter合格証の対象ファイルが、ステージ許可された正確なファイル一覧と一致
-   しなければ停止する。未分類、重複分類、理由なしの除外、未成功の適用checkが
-   あっても停止する。
+   formatter合格証のrequested fileとformatter-added fileの和集合が、ステージ許可
+   された正確なファイル一覧と一致しなければ停止する。追加pathが元のtask diff外
+   という理由だけでは拒否しない。未分類、説明なしの追加、重複分類、理由なしの除外、
+   未成功の適用checkがあれば停止する。
 3. 指定ファイルだけをステージする。部分stagingで安全に分離できない混在変更があれば停止する。
 4. subjectは72文字以内、本文はdiffから分からない理由・互換性・移行注意が必要な場合だけにし、ファイル一覧やdiffの再説明を書かない。
 5. staged diffを再確認し、英語のConventional Commitを1件作る。
