@@ -42,8 +42,21 @@ Identify:
 
 - the coherent change authorized by the user;
 - pre-staged changes and whether they belong;
-- unrelated, generated, secret, environment, or suspicious files;
+- unrelated, generated, ignored, secret-bearing, or suspicious files;
 - whether one commit can tell one truthful story.
+
+If `git status` exposes a file that appears to contain private local configuration or secrets
+(for example a runtime `.env`, credential file, or private key), stop the commit attempt before
+staging it and inspect whether the file is tracked:
+
+- If it is untracked, ask whether its path or an appropriate pattern should be added to
+  `.gitignore`. Do not resume the commit until the user decides.
+- If it is already tracked, explain that `.gitignore` alone will not untrack it and ask how the
+  user wants to handle it.
+
+Treat explicit public templates such as `.env.example`, `.env.sample`, and `.env.template` as
+documentation, not private runtime configuration. They are eligible when their full contents
+have been inspected and contain no secrets.
 
 Never use `git add .`, `git add -A`, or an equivalent broad staging command
 when unrelated changes exist. Stage exact paths or safe hunks. Do not modify
@@ -165,6 +178,9 @@ the exact ambiguity or blocker, and the remaining working-tree state.
 ## Hard rules
 
 - Preserve unrelated user changes and pre-existing staged work.
-- Never commit `.env*`, credentials, tokens, private keys, or detected secrets.
+- Respect repository ignore rules; never force-add a file to bypass them.
+- Judge commit eligibility from the requested scope, repository policy, and file contents, not
+  from filename patterns alone.
+- Never commit detected credentials, tokens, private keys, or other secrets.
 - Never use checkout, restore, destructive reset, clean, or stash.
 - Never push, merge, deploy, release, amend, rebase, or rewrite history.
