@@ -16,7 +16,9 @@ Optimize for change locality and clear ownership, not deleted line count.
 
 Before acting, read `../deliver/SKILL.md` completely. Apply its delivery ledger,
 risk classification, evidence integrity, review gates, scope protection, commit
-gate, failure output, and hard rules. This skill specializes those rules below.
+gate, formatter applicability/classification rules, structured formatter receipt,
+failure output, and hard rules. This skill specializes those rules below and must
+not weaken or replace the inherited formatter gate.
 An explicit `$consolidate` invocation grants the same single-local-commit
 authorization as `$deliver`; it grants nothing beyond that.
 
@@ -173,12 +175,16 @@ path searches again. Material ownership or API redesign requires a fresh full
 
 ## 6. Commit and report
 
-After the inherited review gates pass, invoke `formatter` with the exact eligible
-files. Invoke `committer` only after its structured receipt and every consolidation
-condition pass. Provide the
-exact eligible files and identify the
-explicit `$consolidate` authorization. Create one local Conventional Commit;
-never push.
+After the inherited review gates pass, run the exact formatter and closure gate
+defined by `deliver`. Do not restate or narrow it here. Mechanical formatter
+output elsewhere in an affected first-party implementation workspace is bounded
+maintenance, not an automatic reason to stop consolidation.
+
+Pass the original structured formatter receipt—not a parent summary—to `committer`.
+Invoke `committer` only after that receipt and every consolidation condition pass.
+Provide the requested files, disclosed maintenance files, and the explicit
+`$consolidate` authorization.
+Create one local Conventional Commit; never push.
 
 Extend the delivery receipt with:
 
@@ -189,6 +195,7 @@ Extend the delivery receipt with:
   "retired_paths": [],
   "preservation_evidence": [],
   "architecture_evidence": [],
+  "formatter": {"result": "approved", "applicability": "checked|not_applicable"},
   "commit": "<hash> <subject>"
 }
 ```

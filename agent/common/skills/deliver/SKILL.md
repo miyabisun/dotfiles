@@ -22,9 +22,10 @@ route. Phases and subagents are tools, not completion criteria.
 
 Free text alone means `task`.
 
-Invoking this skill explicitly authorizes one new local commit containing only
-the delivered task. It never authorizes push, merge, deploy, release, amend,
-history rewriting, or discarding working-tree changes.
+Invoking this skill explicitly authorizes one new local commit containing the
+delivered task and bounded maintenance required to leave the affected code in
+a verified repository-conformant state. It never authorizes push, merge,
+deploy, release, amend, history rewriting, or discarding working-tree changes.
 
 ## Definition of delivered
 
@@ -37,9 +38,11 @@ Do not commit until all applicable statements are true:
 5. Tests exercise production behavior rather than restating the implementation.
 6. Every applicable acceptance criterion has recorded evidence.
 7. No unresolved blocking review, QA, security, test, build, formatter, or lint finding remains.
-8. The diff is task-scoped and does not absorb unrelated pre-existing work.
-9. A fresh independent `formatter` receipt accounts for every eligible file and
-   records successful applicable checks or a justified `not_applicable` result.
+8. The diff contains only the requested outcome and disclosed bounded maintenance;
+   it does not absorb unrelated feature work or user-owned changes.
+9. A fresh independent `formatter` receipt accounts for requested files and any
+   formatter-added implementation files, with successful applicable checks or a
+   justified `not_applicable` result.
 
 Documentation-only or metadata-only changes do not require invented product
 tests. Validate their syntax, links, generated output, or consumer behavior as
@@ -60,7 +63,8 @@ Maintain a compact delivery ledger in the parent context:
   "risk": "low|standard|high",
   "open_issues": [],
   "scope": ["paths or components"],
-  "formatter": {"result": "pending", "applicability": "pending", "eligible_files": []}
+  "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
+  "formatter": {"result": "pending", "applicability": "pending", "requested_files": [], "added_files": []}
 }
 ```
 
@@ -75,6 +79,9 @@ criteria, scope, verification commands, and important failure modes.
 - Reuse explicit user criteria unchanged unless they conflict or cannot be tested.
 - Include concrete input/output examples when they remove ambiguity.
 - Inspect referenced files, fields, APIs, and scripts before assuming they exist.
+- Snapshot initial `git status` and relevant diffs before mutation; record
+  pre-existing user paths as protected so later formatter or maintenance work
+  cannot absorb them.
 - If materially different outcomes remain plausible, stop and ask a concise
   question. Do not spend agents or tokens implementing guesses.
 - For non-trivial behavior, prefer a failing regression test before the fix.
@@ -119,8 +126,34 @@ After each substantive attempt:
 
 Use repository-native commands discovered from manifests, CI, `AGENTS.md`, and
 project documentation. Do not substitute a made-up smoke test for an existing
-authoritative suite. If an authoritative check cannot run, exhaust safe local
-alternatives, then stop without committing and report the exact blocker.
+authoritative suite. If an authoritative check fails, treat the result as work
+to route and close, not as a reason to return immediately to the user.
+
+### 3a. Own closure
+
+`deliver` is the closure owner. Subagents are specialists, not authorities that
+can redefine scope or hand routine cleanup back to the user. When a check or
+specialist finds adjacent work, classify and route it:
+
+- Automatically include deterministic formatter output for first-party
+  implementation source in the affected formatter workspace.
+- Route bounded lint fixes through `dev` or the parent when they are conventional,
+  locally verifiable, and do not change public behavior, APIs, runtime
+  dependencies, data, security posture, or user-owned work.
+- When applicable source lacks formatter/linter tooling, route a conventional
+  implementation through `dev`; development-only dependencies, configuration,
+  scripts, and lockfile updates are bounded maintenance when the repository's
+  stack has a clear standard choice and the result is locally verifiable.
+- Record every added path and reason in `maintenance`, rerun affected checks,
+  and repeat the relevant review only when semantics changed.
+- Ask the user only when closure requires a materially different product choice,
+  ambiguous or broad runtime/toolchain policy, public compatibility change,
+  destructive or external action, secret handling, or modification of
+  overlapping user work.
+
+An agent response equivalent to “outside my responsibility” is an internal
+handoff, not a user-visible blocker. The parent must reassign or perform safe
+in-scope closure while a reliable local path remains.
 
 
 ### 4. Review only where it buys confidence
@@ -157,37 +190,46 @@ After implementation, fixes, and required semantic reviews are complete, invoke
 the independent `formatter` immediately before `committer`. The parent, `dev`,
 and `rev` do not substitute their own formatter/linter claims for this receipt.
 
-Give `formatter` the exact files eligible for commit. It must:
+Give `formatter` the requested commit files, protected pre-existing user paths,
+and the affected formatter workspaces. It must:
 
-1. classify every eligible file as implementation source or excluded;
+1. classify every requested file as implementation source or excluded;
 2. exclude documentation, example/sample/template configuration, generated,
    vendor, third-party, lockfiles, and unsupported configuration by default;
-3. use formatter check/diff mode to prove a write command can only change
-   classified implementation source before running it;
-4. run formatter checks and linters only when their actual scan scope excludes
-   documentation, examples, and non-eligible files; and
-5. return exact commands/results plus every classification and reason.
+3. inspect formatter check/diff output before write mode and allow additional
+   paths only when they are first-party implementation source in an affected
+   formatter workspace and do not overlap protected user changes;
+4. apply that mechanical formatting instead of rejecting it merely because a
+   path was not in the original task diff;
+5. run read-only formatter checks and linters across affected first-party
+   implementation workspaces while excluding documentation, examples,
+   generated, and vendor files; and
+6. return exact commands/results, requested classifications, and every
+   formatter-added path with its reason.
 
 Documentation includes `README*`, `CHANGELOG*`, `LICENSE*`, `docs/**`, and
 `**/*.md`. Example configuration includes `*.example`, `*.sample`, `*.template`,
 and `.env.example`. Do not introduce tooling merely to format or lint these files.
 Only an explicit user request for documentation formatting overrides this rule.
 
-If every eligible file is excluded, accept an independent
+If every requested file is excluded, accept an independent
 `applicability=not_applicable` receipt that accounts for every path. If
-implementation source is applicable but authoritative tooling is absent, stop
-without committing; tooling bootstrap requires a separate explicitly authorized
-task.
+implementation source is applicable but authoritative tooling is absent,
+`formatter` reports it to the closure owner. `deliver` routes conventional,
+locally verifiable tooling bootstrap as bounded maintenance; it asks the user
+only when the choice changes dependency or repository policy materially.
 
 A lint violation is implementation work. `formatter` must not auto-fix it; return
-it to `dev` (or the parent implementation path), rerun affected checks and review,
-then invoke `formatter` again. A formatter or linter failure blocks delivery even
-when it predates the task or is outside the changed files. If resolving it exceeds
-the authorized scope, stop without committing and report the required cleanup.
+it to the closure owner, which routes a bounded fix to `dev` or the parent,
+records it as maintenance, reruns affected checks and review, then invokes
+`formatter` again. Pre-existing or initially out-of-diff findings are not by
+themselves blockers. Stop only when the closure policy above requires a user
+decision or no safe local path remains.
 
 Pass the receipt to `committer` without replacing it with a parent-authored
-summary. Missing classifications, applicable results, exclusion reasons, eligible
-files, or independent formatter approval block the commit.
+summary. Missing classifications, applicable results, exclusion reasons,
+requested files, formatter-added files, or independent formatter approval block
+the commit.
 
 ### 6. Commit through the gate
 
@@ -198,14 +240,14 @@ all criteria pass
 AND all checks pass
 AND all required independent gates approve
 AND open_issues is empty
-AND diff is task-scoped
+AND diff is requested work plus disclosed bounded maintenance
 AND formatter.approved is true
-AND formatter receipt accounts for every eligible file
+AND formatter receipt accounts for every requested and formatter-added file
 ```
 
-Give `committer` the task, scope, evidence summary, and exact files eligible for
-staging together with the formatter receipt. The explicit invocation of `deliver`
-is the commit authorization.
+Give `committer` the task, scope, maintenance ledger, evidence summary, and exact
+files eligible for staging together with the formatter receipt. The explicit
+invocation of `deliver` is the commit authorization.
 Create exactly one new Conventional Commit. Never push.
 
 If unrelated changes overlap files that must be committed and safe partial
@@ -223,7 +265,8 @@ On success, return a concise delivery receipt:
   "criteria": [{"requirement": "...", "evidence": "...", "pass": true}],
   "checks": [{"command": "...", "result": "pass"}],
   "reviews": [{"gate": "rev|ui|sec", "result": "approved|not-applicable"}],
-  "formatter": {"result": "approved", "applicability": "checked|not_applicable"}
+  "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
+  "formatter": {"result": "approved", "applicability": "checked|not_applicable", "added_files": []}
 }
 ```
 
@@ -233,6 +276,7 @@ issues, and the exact user decision or external change needed.
 ## Hard rules
 
 - Optimize for verified outcomes, not phase attendance.
+- Own safe local closure; do not expose routine internal handoffs as user blockers.
 - Never claim completion from an agent's prose alone; require evidence.
 - Never weaken, delete, skip, or rewrite valid tests merely to turn them green.
 - Never invoke `committer` without an independent `formatter` receipt accounting
