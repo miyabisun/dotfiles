@@ -38,8 +38,8 @@ Do not commit until all applicable statements are true:
 6. Every applicable acceptance criterion has recorded evidence.
 7. No unresolved blocking review, QA, security, test, build, or lint finding remains.
 8. The diff is task-scoped and does not absorb unrelated pre-existing work.
-9. Every repository-wide formatter check passes; Rust repositories always require
-   `cargo fmt --check`.
+9. Every repository-wide formatter and linter check passes; Rust repositories
+   always require `cargo fmt --check` and a repository-wide Clippy run.
 
 Documentation-only or metadata-only changes do not require invented product
 tests. Validate their syntax, links, generated output, or consumer behavior as
@@ -121,25 +121,29 @@ project documentation. Do not substitute a made-up smoke test for an existing
 authoritative suite. If an authoritative check cannot run, exhaust safe local
 alternatives, then stop without committing and report the exact blocker.
 
-#### Mandatory formatting gate
+#### Mandatory formatter and lint gates
 
-Run the repository-wide formatter check before review and commit whenever the
-repository has a formatter. For Rust repositories, always run:
+Run the repository-wide formatter and linter checks before review and commit
+whenever the repository provides them. Use the exact commands documented by CI,
+manifests, scripts, or repository instructions; never substitute a weaker or
+more narrowly scoped command. For Rust repositories without a documented
+stricter or repository-specific command, always run:
 
 ```bash
 cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
 ```
 
-Any formatter failure blocks delivery, including failures that predate the task
-or occur outside the files changed for it. Never waive the failure as baseline
-debt, replace the full check with a scoped formatter invocation, or report the
+Any formatter or linter failure blocks delivery, including failures that predate
+the task or occur outside the files changed for it. Never waive the failure as
+baseline debt, replace the full check with a scoped invocation, or report the
 task as delivered while it remains red.
 
-- If fixing the failure is within the authorized scope, format or correct it and
-  rerun the formatter plus any checks affected by the resulting diff.
+- If fixing the failure is within the authorized scope, correct it and rerun the
+  formatter, linter, and any checks affected by the resulting diff.
 - If fixing it would expand scope or absorb unrelated work, stop without
-  committing. Report the exact formatter failure and ask the user to authorize
-  the cleanup or resolve it separately.
+  committing. Report the exact formatter or linter failure and ask the user to
+  authorize the cleanup or resolve it separately.
 
 ### 4. Review only where it buys confidence
 
@@ -176,7 +180,7 @@ Before invoking `committer`, re-read the ledger and verify:
 ```text
 all criteria pass
 AND all checks pass
-AND repository-wide formatter checks pass
+AND repository-wide formatter and linter checks pass
 AND all required independent gates approve
 AND open_issues is empty
 AND diff is task-scoped
@@ -212,7 +216,8 @@ issues, and the exact user decision or external change needed.
 - Optimize for verified outcomes, not phase attendance.
 - Never claim completion from an agent's prose alone; require evidence.
 - Never weaken, delete, skip, or rewrite valid tests merely to turn them green.
-- Never commit a Rust delivery unless `cargo fmt --check` passes.
+- Never commit a Rust delivery unless `cargo fmt --check` and the repository-wide
+  Clippy or lint command pass.
 - Never use destructive working-tree commands (`checkout`, `restore`, destructive
   `reset`, `clean`, or `stash`) to manage agent work.
 - Preserve unrelated user changes.
