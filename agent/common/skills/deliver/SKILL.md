@@ -32,14 +32,14 @@ Do not commit until all applicable statements are true:
 
 1. The observable result satisfies the request and repository conventions.
 2. Acceptance criteria are concrete enough to return pass/fail.
-3. Relevant automated checks exist and have been executed successfully.
+3. Relevant behavior, type, test, and build checks exist and have succeeded.
 4. Behavior changes have meaningful regression coverage where practical.
 5. Tests exercise production behavior rather than restating the implementation.
 6. Every applicable acceptance criterion has recorded evidence.
-7. No unresolved blocking review, QA, security, test, build, or lint finding remains.
+7. No unresolved blocking review, QA, security, test, build, formatter, or lint finding remains.
 8. The diff is task-scoped and does not absorb unrelated pre-existing work.
-9. Every repository-wide formatter and linter check passes; Rust repositories
-   always require `cargo fmt --check` and a repository-wide Clippy run.
+9. A fresh independent `formatter` receipt accounts for every eligible file and
+   records successful applicable checks or a justified `not_applicable` result.
 
 Documentation-only or metadata-only changes do not require invented product
 tests. Validate their syntax, links, generated output, or consumer behavior as
@@ -59,7 +59,8 @@ Maintain a compact delivery ledger in the parent context:
   "checks": [{"command": "...", "result": "pending"}],
   "risk": "low|standard|high",
   "open_issues": [],
-  "scope": ["paths or components"]
+  "scope": ["paths or components"],
+  "formatter": {"result": "pending", "applicability": "pending", "eligible_files": []}
 }
 ```
 
@@ -86,9 +87,9 @@ Classify by the highest applicable risk:
 
 | Risk | Typical work | Minimum route |
 |---|---|---|
-| `low` | docs, comments, narrow config, mechanical rename | implement → focused validation → diff self-review |
-| `standard` | ordinary bug fix, feature, refactor, multi-file behavior | implement → relevant full checks → independent `rev` |
-| `high` | auth, permissions, secrets, destructive data, migration, payments, concurrency, public compatibility | contract specialist as useful → implement → full checks → independent `rev` + `sec` and domain evidence |
+| `low` | docs, comments, narrow config, mechanical rename | implement → focused validation → diff self-review → `formatter` → commit |
+| `standard` | ordinary bug fix, feature, refactor, multi-file behavior | implement → relevant checks → independent `rev` → `formatter` → commit |
+| `high` | auth, permissions, secrets, destructive data, migration, payments, concurrency, public compatibility | contract specialist as useful → implement → full behavior checks → independent `rev` + `sec` → `formatter` → commit |
 
 UI behavior additionally requires `ui-checker` evidence for observable visual
 and interaction criteria. Use `designer` only when visual/product decisions are
@@ -112,7 +113,7 @@ After each substantive attempt:
 
 1. Run the narrowest useful check for quick feedback.
 2. Fix failures caused by the task.
-3. Run the complete applicable project checks before review and commit.
+3. Run the complete applicable behavior, type, test, and build checks before review.
 4. Exercise every acceptance criterion and attach the observed result.
 5. Inspect `git diff` and `git status` for scope contamination.
 
@@ -121,29 +122,6 @@ project documentation. Do not substitute a made-up smoke test for an existing
 authoritative suite. If an authoritative check cannot run, exhaust safe local
 alternatives, then stop without committing and report the exact blocker.
 
-#### Mandatory formatter and lint gates
-
-Run the repository-wide formatter and linter checks before review and commit
-whenever the repository provides them. Use the exact commands documented by CI,
-manifests, scripts, or repository instructions; never substitute a weaker or
-more narrowly scoped command. For Rust repositories without a documented
-stricter or repository-specific command, always run:
-
-```bash
-cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-```
-
-Any formatter or linter failure blocks delivery, including failures that predate
-the task or occur outside the files changed for it. Never waive the failure as
-baseline debt, replace the full check with a scoped invocation, or report the
-task as delivered while it remains red.
-
-- If fixing the failure is within the authorized scope, correct it and rerun the
-  formatter, linter, and any checks affected by the resulting diff.
-- If fixing it would expand scope or absorb unrelated work, stop without
-  committing. Report the exact formatter or linter failure and ask the user to
-  authorize the cleanup or resolve it separately.
 
 ### 4. Review only where it buys confidence
 
@@ -173,21 +151,61 @@ Additional gates:
 Do not impose a fixed retry count while new evidence shows progress. Stop when
 the same blocking condition repeats and no safe in-scope action can advance it.
 
-### 5. Commit through the gate
+### 5. Normalize and lint through one accountable gate
+
+After implementation, fixes, and required semantic reviews are complete, invoke
+the independent `formatter` immediately before `committer`. The parent, `dev`,
+and `rev` do not substitute their own formatter/linter claims for this receipt.
+
+Give `formatter` the exact files eligible for commit. It must:
+
+1. classify every eligible file as implementation source or excluded;
+2. exclude documentation, example/sample/template configuration, generated,
+   vendor, third-party, lockfiles, and unsupported configuration by default;
+3. use formatter check/diff mode to prove a write command can only change
+   classified implementation source before running it;
+4. run formatter checks and linters only when their actual scan scope excludes
+   documentation, examples, and non-eligible files; and
+5. return exact commands/results plus every classification and reason.
+
+Documentation includes `README*`, `CHANGELOG*`, `LICENSE*`, `docs/**`, and
+`**/*.md`. Example configuration includes `*.example`, `*.sample`, `*.template`,
+and `.env.example`. Do not introduce tooling merely to format or lint these files.
+Only an explicit user request for documentation formatting overrides this rule.
+
+If every eligible file is excluded, accept an independent
+`applicability=not_applicable` receipt that accounts for every path. If
+implementation source is applicable but authoritative tooling is absent, stop
+without committing; tooling bootstrap requires a separate explicitly authorized
+task.
+
+A lint violation is implementation work. `formatter` must not auto-fix it; return
+it to `dev` (or the parent implementation path), rerun affected checks and review,
+then invoke `formatter` again. A formatter or linter failure blocks delivery even
+when it predates the task or is outside the changed files. If resolving it exceeds
+the authorized scope, stop without committing and report the required cleanup.
+
+Pass the receipt to `committer` without replacing it with a parent-authored
+summary. Missing classifications, applicable results, exclusion reasons, eligible
+files, or independent formatter approval block the commit.
+
+### 6. Commit through the gate
 
 Before invoking `committer`, re-read the ledger and verify:
 
 ```text
 all criteria pass
 AND all checks pass
-AND repository-wide formatter and linter checks pass
 AND all required independent gates approve
 AND open_issues is empty
 AND diff is task-scoped
+AND formatter.approved is true
+AND formatter receipt accounts for every eligible file
 ```
 
 Give `committer` the task, scope, evidence summary, and exact files eligible for
-staging. The explicit invocation of `deliver` is the commit authorization.
+staging together with the formatter receipt. The explicit invocation of `deliver`
+is the commit authorization.
 Create exactly one new Conventional Commit. Never push.
 
 If unrelated changes overlap files that must be committed and safe partial
@@ -204,7 +222,8 @@ On success, return a concise delivery receipt:
   "commit": "<hash> <subject>",
   "criteria": [{"requirement": "...", "evidence": "...", "pass": true}],
   "checks": [{"command": "...", "result": "pass"}],
-  "reviews": [{"gate": "rev|ui|sec", "result": "approved|not-applicable"}]
+  "reviews": [{"gate": "rev|ui|sec", "result": "approved|not-applicable"}],
+  "formatter": {"result": "approved", "applicability": "checked|not_applicable"}
 }
 ```
 
@@ -216,8 +235,8 @@ issues, and the exact user decision or external change needed.
 - Optimize for verified outcomes, not phase attendance.
 - Never claim completion from an agent's prose alone; require evidence.
 - Never weaken, delete, skip, or rewrite valid tests merely to turn them green.
-- Never commit a Rust delivery unless `cargo fmt --check` and the repository-wide
-  Clippy or lint command pass.
+- Never invoke `committer` without an independent `formatter` receipt accounting
+  for every eligible file and every applicable check.
 - Never use destructive working-tree commands (`checkout`, `restore`, destructive
   `reset`, `clean`, or `stash`) to manage agent work.
 - Preserve unrelated user changes.

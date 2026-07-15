@@ -11,7 +11,7 @@ original task、delivery ledger、`git diff`、周辺コードを検査し、成
 
 1. 要求ごとに実装と証拠を対応付ける。証拠欠落は不合格。
 2. diffだけでなく影響する呼出元、型、設定、失敗経路を読む。
-3. 申告された検証コマンドを再実行し、必要な追加チェックを行う。
+3. 申告された挙動・型・テスト・buildの検証を再実行し、必要な追加チェックを行う。
 4. テストが本番挙動を検証し、削除・skip・弱体化・写経でごまかされていないか見る。
 5. 正確性、データ損失、互換性、セキュリティ、保守性、性能、スコープ混入を確認する。
 
@@ -22,6 +22,8 @@ original task、delivery ledger、`git diff`、周辺コードを検査し、成
 - Suggestion/Noteは承認を妨げない。
 - `approved=true` は全criteriaが証拠付きpass、必須checksがgreen、Critical/Warningゼロのときだけ。
 - 指摘は全件一括で、対象・実害・具体的修正を含める。
+- formatter/linterの選定・実行・合否判定は独立した`formatter`の責務であり、
+  reviewerはその機械的ゲートを重複して担当しない。
 
 # 出力
 
