@@ -75,6 +75,27 @@ install_delta() {
 }
 
 # ---------------------------------------------------------------------------
+# rbw — Rust 製 Bitwarden CLI (bin/bw/* のバックエンド)
+# 常駐 agent が鍵を保持するため公式 bw (Node) より大幅に速い
+# ---------------------------------------------------------------------------
+install_rbw() {
+  if command -v rbw >/dev/null 2>&1; then
+    echo "==> rbw already installed ($(rbw --version))"
+    return
+  fi
+
+  echo "==> Installing rbw..."
+  if command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm rbw
+  elif command -v brew >/dev/null 2>&1; then
+    brew install rbw
+  else
+    cargo install rbw
+  fi
+  echo "==> rbw installed ($(rbw --version))"
+}
+
+# ---------------------------------------------------------------------------
 # Obscura — Rust headless browser with V8, used by Claude Code
 # Builds from source: not on crates.io, binaries differ per OS/arch.
 # First build compiles V8 (a few minutes); later builds are cached.
@@ -117,4 +138,5 @@ MSG
 
 install_agent_clis
 install_delta
+install_rbw
 install_obscura

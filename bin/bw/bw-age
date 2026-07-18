@@ -1,5 +1,6 @@
 #!/bin/bash
 # Bitwarden の "Age Keys" フォルダで age の鍵 (identity/recipient) を管理する
+# (password = recipient, notes = AGE-SECRET-KEY 行。'#' コメント行は保存しない)
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 FOLDER="Age Keys"
@@ -23,24 +24,9 @@ EOF
 }
 
 save_identity() { # <name> <identity_text> <recipient>
-    local fid
-    fid=$(folder_id "$FOLDER")
-    delete_items_by_name "$fid" "$1"
-    jq -n \
-        --arg name "$1" \
-        --arg folderId "$fid" \
-        --arg identity "$2" \
-        --arg recipient "$3" \
-        '{
-            type: 2,
-            name: $name,
-            folderId: $folderId,
-            secureNote: { type: 0 },
-            fields: [
-                { name: "identity",  value: $identity,  type: 1 },
-                { name: "recipient", value: $recipient, type: 0 }
-            ]
-        }' | create_item
+    delete_items_by_name "$FOLDER" "$1"
+    { printf '%s\n\n' "$3"; printf '%s\n' "$2" | grep -v '^#'; } \
+        | rbw_add_item "$FOLDER" "$1"
     echo "Saved '$1' to '$FOLDER' folder."
     printf '%s\n' "$3"
 }
@@ -64,43 +50,23 @@ cmd_save() {
     save_identity "$name" "$(cat "$file")" "$recipient"
 }
 
-get_identity() { # <name>
-    local item identity
-    item=$(find_item "$(folder_id "$FOLDER")" "$1")
-    identity=$(echo "$item" | jq -r '.fields[] | select(.name == "identity") | .value')
-    if [ -z "$identity" ] || [ "$identity" = "null" ]; then
-        echo "Error: 'identity' field not found in item '$1'." >&2
-        exit 1
-    fi
-    printf '%s\n' "$identity"
-}
-
 cmd_identity() {
-    get_identity "${1:-default}"
+    get_item_notes "$FOLDER" "${1:-default}"
 }
 
 cmd_recipient() {
-    local name="${1:-default}" item recipient
-    item=$(find_item "$(folder_id "$FOLDER")" "$name")
-    recipient=$(echo "$item" | jq -r '.fields[] | select(.name == "recipient") | .value')
-    if [ -z "$recipient" ] || [ "$recipient" = "null" ]; then
-        echo "Error: 'recipient' field not found in item '$name'." >&2
-        exit 1
-    fi
-    printf '%s\n' "$recipient"
+    rbw get --folder "$FOLDER" "${1:-default}" --field password
 }
 
 cmd_list() {
-    list_item_names "$(folder_id "$FOLDER")"
+    list_item_names "$FOLDER"
 }
 
 cmd_remove() {
     local name="${1:-}"
     [ -z "$name" ] && usage
-    local fid
-    fid=$(folder_id "$FOLDER")
-    find_item "$fid" "$name" > /dev/null
-    delete_items_by_name "$fid" "$name"
+    get_item_raw "$FOLDER" "$name" > /dev/null
+    delete_items_by_name "$FOLDER" "$name"
     echo "Removed '$name'."
 }
 
