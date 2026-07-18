@@ -1,5 +1,6 @@
 #!/bin/bash
 # Bitwarden の "Env Files" フォルダでプロジェクトの .env ファイルを管理する
+# (.env は '#' コメントを含み得るため base64 で notes に保存する)
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 FOLDER="Env Files"
@@ -12,6 +13,7 @@ Commands:
   save <name> [file]   .env ファイルを保存する (default: ./.env)
   load <name> [file]   .env ファイルを復元する (default: ./.env, 0600)
   get <name> <var>     保存した .env から1変数の値だけを stdout に出す
+  keys <name>          保存した .env の変数名一覧を stdout に出す
   list                 保存済みの .env 一覧
   remove <name>        保存した .env を削除する
 
@@ -21,14 +23,7 @@ EOF
 }
 
 get_content() { # <name>
-    local item content
-    item=$(find_item "$(folder_id "$FOLDER")" "$1")
-    content=$(echo "$item" | jq -r '.fields[] | select(.name == "content") | .value')
-    if [ -z "$content" ] || [ "$content" = "null" ]; then
-        echo "Error: 'content' field not found in item '$1'." >&2
-        exit 1
-    fi
-    printf '%s\n' "$content"
+    get_item_notes "$FOLDER" "$1" | base64 -d
 }
 
 cmd_save() {
@@ -38,22 +33,8 @@ cmd_save() {
         echo "Error: env file not found at $file" >&2
         exit 1
     fi
-    local fid
-    fid=$(folder_id "$FOLDER")
-    delete_items_by_name "$fid" "$name"
-    jq -n \
-        --arg name "$name" \
-        --arg folderId "$fid" \
-        --arg content "$(cat "$file")" \
-        '{
-            type: 2,
-            name: $name,
-            folderId: $folderId,
-            secureNote: { type: 0 },
-            fields: [
-                { name: "content", value: $content, type: 1 }
-            ]
-        }' | create_item
+    delete_items_by_name "$FOLDER" "$name"
+    { echo "-"; echo; base64 < "$file"; } | rbw_add_item "$FOLDER" "$name"
     echo "Saved '$name' to '$FOLDER' folder."
 }
 
@@ -76,22 +57,26 @@ cmd_get() {
     printf '%s\n' "$value"
 }
 
+cmd_keys() {
+    local name="${1:-}"
+    [ -z "$name" ] && usage
+    get_content "$name" | sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p'
+}
+
 cmd_list() {
-    list_item_names "$(folder_id "$FOLDER")"
+    list_item_names "$FOLDER"
 }
 
 cmd_remove() {
     local name="${1:-}"
     [ -z "$name" ] && usage
-    local fid
-    fid=$(folder_id "$FOLDER")
-    find_item "$fid" "$name" > /dev/null
-    delete_items_by_name "$fid" "$name"
+    get_item_raw "$FOLDER" "$name" > /dev/null
+    delete_items_by_name "$FOLDER" "$name"
     echo "Removed '$name'."
 }
 
 case "${1:-}" in
-    save|load|get|list|remove)
+    save|load|get|keys|list|remove)
         cmd="$1"; shift
         require_unlocked
         "cmd_$cmd" "$@"
