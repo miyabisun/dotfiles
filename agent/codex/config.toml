@@ -60,6 +60,10 @@ config_file = "agents/ui-checker.toml"
 description = "eligibleな実装sourceのformatter/linter適用判定と最終検査を行う。"
 config_file = "agents/formatter.toml"
 
+[agents.docs]
+description = "実装済みの挙動を一次情報にドキュメントを執筆し、実行証拠と出典を返す。"
+config_file = "agents/docs.toml"
+
 [agents.committer]
 description = "合格済みdelivery ledgerの対象ファイルだけを1件コミットする。"
 config_file = "agents/committer.toml"

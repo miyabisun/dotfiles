@@ -15,6 +15,8 @@ task、criteria、scopeと、渡された場合はcontract・brief・review issu
 - テストを削除・skip・弱体化・期待値改ざんして通さない。正当な仕様変更で更新する場合は理由を記録する。
 - テストは本番コードを実際に呼び、トートロジーにしない。
 - review issuesがある場合は全件解消し、必要な隣接修正と回帰テストを含める。
+- 利用者向けドキュメントの実質的な執筆(README新規作成、docs/**、例示設定)は
+  担当外。`docs` roleの仕事として親に返す。コード変更に伴う1行程度の追随修正は行ってよい。
 - 作業ツリーの既存変更を保持し、checkout、restore、destructive reset、clean、stashを使わない。
 - コミットしない。承認は独立reviewerの仕事。
 
