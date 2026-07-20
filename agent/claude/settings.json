@@ -151,16 +151,7 @@
     "claude-md-management@claude-plugins-official": true,
     "hookify@claude-plugins-official": true,
     "explanatory-output-style@claude-plugins-official": false,
-    "learning-output-style@claude-plugins-official": false,
-    "codex@openai-codex": true
-  },
-  "extraKnownMarketplaces": {
-    "openai-codex": {
-      "source": {
-        "source": "github",
-        "repo": "openai/codex-plugin-cc"
-      }
-    }
+    "learning-output-style@claude-plugins-official": false
   },
   "language": "Japanese",
   "effortLevel": "medium",
