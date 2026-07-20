@@ -45,6 +45,16 @@ mfa() {
   oathtool --totp --base32 "$secret" | copy && echo "mfa: copied TOTP for $entry"
 }
 
+# Codex には hook がないので、起動を agent-talk の待受登録で包む。
+# 終了 (Ctrl+D・クラッシュ含む) 後は必ず解除する。tmux 外では両方 no-op。
+codex() {
+  command -v agent-talk > /dev/null 2>&1 && agent-talk register codex
+  command codex "$@"
+  local rc=$?
+  command -v agent-talk > /dev/null 2>&1 && agent-talk unregister
+  return $rc
+}
+
 # tmux attach (outside) / switch (inside): pick a session with fzf, or pass a name
 a() {
   command -v tmux > /dev/null 2>&1 || { echo "tmux not found" >&2; return 1; }
