@@ -5,26 +5,31 @@ description: Talk to another interactive agent (claude or codex) running in its 
 
 # Agent Talk
 
-Exchange requests between interactive agent sessions via tmux. State lives in
-tmux pane options; message bodies live in files; `send-keys` only rings the
-doorbell. Registration is automatic (claude: SessionStart/SessionEnd hooks,
-codex: zsh wrapper), so a running agent is already listed in `agent-talk who`.
+Exchange requests between interactive agent sessions through the Rust
+`agent-talkd` broker. One daemon per tmux server owns registration, busy/idle
+state, and a durable queue; tmux pane options are compatibility mirrors.
+Message bodies live in files and `send-keys` only rings the doorbell. The TPM
+plugin starts the daemon, and registration is automatic (claude:
+SessionStart/SessionEnd hooks, codex: zsh wrapper), so a running agent is
+already listed in `agent-talk who`.
 
 Delivery is steer-safe between agents: `send` rings the doorbell immediately
 only when the target is idle. Busy/idle is tracked by both agents' hooks
-(UserPromptSubmit → busy, turn end → idle; a screen "esc to interrupt" check
-is only a fallback for unregistered panes). A busy target gets the doorbell
-queued, and the target's own turn-end hook delivers it the moment the target
-goes idle. State checks, queueing, and delivery are serialized by a per-pane
-lock, so agent-originated turns cannot be steered by another agent's request,
-concurrent senders cannot double-deliver, and no message is lost between
-checks. One narrow window remains best-effort: a human keystroke starts a
-turn before the busy hook fires, so a delivery racing that exact moment can
-still reach a just-started human turn. `send` reports which path was taken
+(UserPromptSubmit → busy, turn end → idle); unregistered panes are not
+addressable. A busy target gets the doorbell queued, and the target's own
+turn-end hook delivers it the moment the target goes idle. State checks,
+queueing, and delivery run through the daemon's
+single event loop, so agent-originated turns cannot be steered by another
+agent's request, concurrent senders cannot double-deliver, and no message is
+lost between checks. Queued messages are journaled before `send` reports
+success and survive daemon restarts. One narrow window remains best-effort: a
+human keystroke starts a turn before the busy hook fires, so a delivery racing
+that exact moment can still reach a just-started human turn. `send` reports
+which path was taken
 (`sent ->` or `queued (busy) ->`); both count as successfully dispatched and
 need no follow-up. If a queued request becomes undeliverable (the target
-exits or is replaced), the sender receives an `[agent-talk] 配達失敗` notice
-instead — silence never means the request is still pending forever.
+exits or is replaced), the daemon sends the sender an `[agent-talk] 配達失敗`
+notice instead — silence never means the request is still pending forever.
 
 ## Sending a request
 
@@ -77,6 +82,9 @@ Codex's workspace-write sandbox blocks the tmux server socket, so every
 Run `agent-talk` (and only it) outside the sandbox via the escalated /
 approved execution path. Do not widen the sandbox itself (e.g.
 `network_access`) for this.
+
+The installed command must be the Rust executable, not the retired shell
+script. Do not invoke it through `bash`.
 
 ## Notes
 

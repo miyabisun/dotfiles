@@ -72,8 +72,7 @@ fi
 
 # ターン完走時は idle 化し、busy 中に届いた agent-talk の呼び鈴があれば
 # ここで配達する (アイドルの瞬間に本人が配るので steer が起きない)。
-# あわせて宛先不在キューの回収 (gc: 送信元への失敗通知) も行う
+# 宛先不在キューは agent-talkd が tmux の pane 終了を検知して回収する。
 if [[ "${STATUS}" == "success" ]]; then
-    bash "${HOME}/.local/bin/agent-talk" turn-end 2>/dev/null || true
-    bash "${HOME}/.local/bin/agent-talk" gc 2>/dev/null || true
+    "${HOME}/.local/bin/agent-talk" turn-end 2>/dev/null || true
 fi
