@@ -83,6 +83,12 @@ Maintain a compact delivery ledger in the parent context:
   "open_issues": [],
   "scope": ["paths or components"],
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
+  "counterpart": {
+    "runtime": "claude|codex|none",
+    "pane": "%N|null",
+    "planning_review": {"message_id": "#N|null", "result": "pending|approved|unavailable"},
+    "implementation_review": {"message_id": "#N|null", "result": "pending|approved|fallback"}
+  },
   "formatter": {"result": "pending", "applicability": "pending", "requested_files": [], "added_files": []}
 }
 ```
@@ -107,6 +113,44 @@ criteria, scope, verification commands, and important failure modes.
 - A separate strategist is optional; use it only when the contract itself is
   difficult, cross-cutting, UI-heavy, externally integrated, or high risk.
 
+### 1a. Cross-check the plan with the counterpart
+
+Before implementation, use `agent-talk who` to look for the opposite interactive
+application in the current tmux session:
+
+- Claude Code's counterpart is Codex.
+- Codex's counterpart is Claude Code.
+
+An idle or busy registered pane both mean the counterpart exists. Absence means
+that no counterpart pane is registered in the current session; do not start one.
+Use agent-talk's same-window-then-same-session resolution order, record the
+selected pane ID in the ledger, and address that exact pane directly for every
+later request. If multiple equally eligible panes remain, show the candidates and
+ask the user which one to use; ambiguity is not absence.
+
+When a counterpart exists, send it the proposed contract, acceptance criteria,
+execution route, important risks, and unresolved questions for review. Require a
+structured result:
+
+```json
+{"approved": true, "issues": [], "summary": "..."}
+```
+
+Incorporate blocking findings before implementation. Because agent-talk replies
+arrive in a later turn, finish useful read-only preparation, report that delivery
+is waiting for the counterpart, and end the turn. Resume from the ledger when the
+reply prompt arrives. A counterpart review request received while this delivery
+is waiting may be handled normally; it does not count as starting implementation.
+
+Do not treat a delayed reply or a busy pane as absence. Fall back to the existing
+risk-based review route only when agent-talk reports delivery failure, the fixed
+pane disappears, or the user explicitly directs delivery to continue without the
+counterpart. Record the objective reason and fallback in the ledger and receipt.
+If agent-talk is unavailable or the current runtime has no defined counterpart,
+record `counterpart.runtime: none` with the reason and use the existing route.
+If no counterpart exists during planning, record that once and use the existing
+review route for the whole delivery.
+
 ### 2. Choose proportional execution
 
 Classify by the highest applicable risk:
@@ -116,6 +160,11 @@ Classify by the highest applicable risk:
 | `low` | docs, comments, narrow config, mechanical rename | implement → focused validation → diff self-review → `formatter` → commit |
 | `standard` | ordinary bug fix, feature, refactor, multi-file behavior | implement → relevant checks → independent `rev` → `formatter` → commit |
 | `high` | auth, permissions, secrets, destructive data, migration, payments, concurrency, public compatibility | contract specialist as useful → implement → full behavior checks → independent `rev` + `sec` → `formatter` → commit |
+
+When planning selected a counterpart, replace only the general semantic review
+in this table: replace low-risk diff self-review and standard/high-risk `rev`
+with the counterpart implementation review described below. Do not replace
+`strategy-rev`, `ui-checker`, `sec`, `formatter`, or `committer`.
 
 UI behavior additionally requires `ui-checker` evidence for observable visual
 and interaction criteria. Use `designer` only when visual/product decisions are
@@ -177,9 +226,13 @@ in-scope closure while a reliable local path remains.
 
 ### 4. Review only where it buys confidence
 
-For `standard` and `high` work, give `rev` the original request, acceptance
-criteria, relevant diff, and executed checks. The implementer must not act as
-the independent approver. Instruct `rev` to review beyond correctness for:
+When planning selected a counterpart, give the same fixed pane the original
+request, acceptance criteria, relevant diff, and executed checks after
+implementation. This counterpart review replaces low-risk diff self-review and
+standard/high-risk `rev`; the implementer must not act as the independent
+approver. Otherwise, preserve the risk-based route and give `rev` this material
+for standard and high work. In either case, instruct the reviewer to review
+beyond correctness for:
 internal consistency (the same operation implemented in more than one way,
 error codes or messages reused for unrelated conditions), proportionality
 (mechanism heavier than the requirement, unconsumed configuration or code),
@@ -195,6 +248,13 @@ Blocking issues must include target, harm, and a concrete fix. Send the fixed
 list to `debugger` or fix it in the parent, rerun affected checks, and use
 `inspector` to verify list closure. Request a fresh full `rev` only when fixes
 materially changed design or behavior beyond that list.
+
+Apply the same closure rule to counterpart findings: verify the fixed list
+locally, and request a fresh counterpart review only when the fixes materially
+changed design or behavior. Do not advance to `formatter` until the required
+counterpart review approves. If the fixed pane objectively becomes unavailable,
+use the fallback route recorded under section 1a rather than silently
+self-approving.
 
 Additional gates:
 
@@ -261,7 +321,7 @@ Before invoking `committer`, re-read the ledger and verify:
 ```text
 all criteria pass
 AND all checks pass
-AND all required independent gates approve
+AND all required independent gates, including counterpart review when selected, approve
 AND open_issues is empty
 AND diff is requested work plus disclosed bounded maintenance
 AND formatter.approved is true
@@ -287,7 +347,7 @@ On success, return a concise delivery receipt:
   "commit": "<hash> <subject>",
   "criteria": [{"requirement": "...", "evidence": "...", "pass": true}],
   "checks": [{"command": "...", "result": "pass"}],
-  "reviews": [{"gate": "rev|ui|sec", "result": "approved|not-applicable"}],
+  "reviews": [{"gate": "peer|rev|ui|sec", "result": "approved|not-applicable", "message_id": "#N|null"}],
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
   "formatter": {"result": "approved", "applicability": "checked|not_applicable", "added_files": []}
 }
@@ -300,6 +360,8 @@ issues, and the exact user decision or external change needed.
 
 - Optimize for verified outcomes, not phase attendance.
 - Own safe local closure; do not expose routine internal handoffs as user blockers.
+- When a counterpart was selected, do not implement before its planning review
+  or normalize and commit before its implementation review.
 - Never claim completion from an agent's prose alone; require evidence.
 - Never state spec identifiers, external URLs, or third-party API semantics
   from memory; verify them or mark them as unverified in the receipt.
