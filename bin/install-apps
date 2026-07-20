@@ -53,6 +53,63 @@ install_agent_clis() {
 }
 
 # ---------------------------------------------------------------------------
+# agent-talkd — tmux agent message broker
+# The repository is private, so release downloads require an authenticated gh.
+# ---------------------------------------------------------------------------
+install_agent_talk() (
+  version="v0.1.0"
+  repo="miyabi-sunny-side/agent-talkd"
+
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64)
+      archive="agent-talk-linux-x86_64.tar.gz"
+      expected_sha256="f8db795ac4e1d964e003a1e7e6f298cfd47a14175dcd5f22c653cdf55caa1ddd"
+      ;;
+    Darwin-arm64)
+      archive="agent-talk-macos-aarch64.tar.gz"
+      expected_sha256="391ba3e6b3d1578a3a8ebdb77a0df5cd6683f20591056f0e5e1fc0d87d324ea5"
+      ;;
+    *)
+      echo "==> agent-talkd does not support $(uname -s)-$(uname -m)" >&2
+      return 1
+      ;;
+  esac
+
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' EXIT
+
+  echo "==> Installing agent-talkd ${version}..."
+  if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1; then
+    echo "==> agent-talkd requires an authenticated GitHub CLI: gh auth login" >&2
+    return 1
+  fi
+  gh release download "$version" --repo "$repo" \
+    --pattern "$archive" --pattern "$archive.sha256" --dir "$tmpdir"
+
+  if [ "$(uname -s)" = Darwin ]; then
+    ( cd "$tmpdir" && shasum -a 256 -c "${archive}.sha256" )
+    actual_sha256="$(shasum -a 256 "$tmpdir/$archive" | awk '{ print $1 }')"
+  else
+    ( cd "$tmpdir" && sha256sum -c "${archive}.sha256" )
+    actual_sha256="$(sha256sum "$tmpdir/$archive" | awk '{ print $1 }')"
+  fi
+  if [ "$actual_sha256" != "$expected_sha256" ]; then
+    echo "==> agent-talkd checksum does not match the pinned ${version} asset" >&2
+    return 1
+  fi
+
+  tar -xzf "$tmpdir/$archive" -C "$tmpdir"
+  mkdir -p "$HOME/.local/bin"
+  # Retire the legacy dotfiles symlink without following it on either GNU or
+  # BSD install implementations.
+  if [ -L "$HOME/.local/bin/agent-talk" ]; then
+    unlink "$HOME/.local/bin/agent-talk"
+  fi
+  install -m755 "$tmpdir/agent-talk" "$HOME/.local/bin/agent-talk"
+  echo "==> agent-talkd ${version} installed"
+)
+
+# ---------------------------------------------------------------------------
 # git-delta — syntax-highlighting pager for git diff/log/show
 # ---------------------------------------------------------------------------
 install_delta() {
@@ -137,6 +194,7 @@ MSG
 # ---------------------------------------------------------------------------
 
 install_agent_clis
+install_agent_talk
 install_delta
 install_rbw
 install_obscura

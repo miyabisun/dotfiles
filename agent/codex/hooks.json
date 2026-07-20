@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.local/bin/agent-talk busy",
+            "command": "~/.local/bin/agent-talk busy",
             "timeout": 10,
             "statusMessage": "agent-talk busy 宣言"
           }

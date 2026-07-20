@@ -98,7 +98,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.local/bin/agent-talk busy"
+            "command": "~/.local/bin/agent-talk busy"
           }
         ]
       }
@@ -108,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.local/bin/agent-talk register claude"
+            "command": "~/.local/bin/agent-talk register claude"
           }
         ]
       }
@@ -118,7 +118,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.local/bin/agent-talk unregister"
+            "command": "~/.local/bin/agent-talk unregister"
           }
         ]
       }

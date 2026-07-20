@@ -65,7 +65,6 @@ link "agent/common/designs" "$HOME/.agents"
 
 mkdir -p "$HOME/.local/bin"
 link "agent/common/bin/emit-turn-end.sh" "$HOME/.local/bin"
-link "agent/common/bin/agent-talk" "$HOME/.local/bin"
 link "agent/codex/hooks/notify-turn-end.sh" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-session-picker" "$HOME/.local/bin"
 

@@ -6,7 +6,7 @@ All AI agent tooling lives under `agent/`.
 agent/
 ├── common/          # Shared across tools
 │   ├── agents/      # Subagent role defs (dev, rev, strategist, …)
-│   ├── bin/         # emit-turn-end.sh → ~/.local/bin
+│   ├── bin/         # Shared notification helpers → ~/.local/bin
 │   ├── designs/     # DESIGN.md templates (Sumi, Kinari, …)
 │   ├── rules/       # GLOBAL.md
 │   └── skills/      # Agent Skills (SKILL.md)
@@ -47,6 +47,12 @@ session/agent name is used in the background; the currently viewed session gets
 a short announcement such as `完了しました`. Codex uses `notify` for completion.
 Its notification wrapper identifies subagent rollout threads and suppresses
 their completion announcements, including automatic approval reviewers.
+
+Agent-to-agent messages use the Rust `agent-talk` CLI from
+[`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd).
+`bin/install-apps` installs the pinned release binary, while the TPM entry in
+`config/tmux/tmux.conf` starts its per-tmux-server daemon. Claude hooks and the
+Codex shell wrapper register each interactive pane automatically.
 
 ## Agents (`common/agents`)
 
