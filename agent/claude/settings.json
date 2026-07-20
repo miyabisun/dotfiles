@@ -93,6 +93,16 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.local/bin/agent-talk busy"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
