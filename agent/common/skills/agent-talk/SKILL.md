@@ -8,8 +8,9 @@ description: Talk to another interactive agent (claude or codex) running in its 
 Exchange requests between interactive agent sessions through the Rust
 `agent-talkd` broker. One daemon per tmux server owns registration, busy/idle
 state, and a durable queue; tmux pane options are compatibility mirrors.
-Message bodies live in files and `send-keys` only rings the doorbell. The TPM
-plugin starts the daemon, and registration is automatic (claude:
+Message bodies live in the broker journal and `send-keys` only rings the
+doorbell with a message ID. The TPM plugin starts the daemon, and registration
+is automatic (claude:
 SessionStart/SessionEnd hooks, codex: zsh wrapper), so a running agent is
 already listed in `agent-talk who`.
 
@@ -21,7 +22,7 @@ turn-end hook delivers it the moment the target goes idle. State checks,
 queueing, and delivery run through the daemon's
 single event loop, so agent-originated turns cannot be steered by another
 agent's request, concurrent senders cannot double-deliver, and no message is
-lost between checks. Queued messages are journaled before `send` reports
+lost between checks. All message bodies are journaled before `send` reports
 success and survive daemon restarts. One narrow window remains best-effort: a
 human keystroke starts a turn before the busy hook fires, so a delivery racing
 that exact moment can still reach a just-started human turn. `send` reports
@@ -38,8 +39,8 @@ notice instead — silence never means the request is still pending forever.
 2. Compose a self-contained brief — objective, exact question or task,
    relevant repository paths, constraints, requested answer format. The
    recipient shares your filesystem but NOT your conversation context.
-3. Send it (body via stdin; the tool writes the brief to a file and rings
-   the doorbell):
+3. Send it (body via stdin; the broker journals the brief and rings the
+   doorbell with its message ID):
 
    ```bash
    agent-talk send codex <<'EOF'
@@ -68,8 +69,10 @@ notice instead — silence never means the request is still pending forever.
 
 When a prompt starting with `[agent-talk]` arrives:
 
-1. Read the referenced file. It contains `from`, `reply` instructions, and
-   the brief.
+1. Run the exact `agent-talk read <id>` command shown in the prompt. Its
+   stdout contains `from`, `reply` instructions, and the brief. `read` is
+   non-destructive until journal checkpointing, so it may be retried if the
+   turn is interrupted.
 2. Do the work in your own session as usual.
 3. Reply as instructed in the `reply` line (normally
    `agent-talk send '%<pane-id>'` with the answer on stdin). If the
@@ -78,10 +81,10 @@ When a prompt starting with `[agent-talk]` arrives:
 ## Codex sandbox
 
 Codex's workspace-write sandbox blocks the tmux server socket, so every
-`agent-talk` command fails inside it with "tmux サーバーに接続できません".
-Run `agent-talk` (and only it) outside the sandbox via the escalated /
-approved execution path. Do not widen the sandbox itself (e.g.
-`network_access`) for this.
+`agent-talk` command, including `read`, fails inside it with
+"tmux サーバーに接続できません". Run `agent-talk` (and only it) outside the
+sandbox via the escalated / approved execution path. Do not widen the sandbox
+itself (e.g. `network_access`) for this.
 
 The installed command must be the Rust executable, not the retired shell
 script. Do not invoke it through `bash`.
