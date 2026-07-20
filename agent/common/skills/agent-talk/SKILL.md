@@ -1,6 +1,6 @@
 ---
 name: agent-talk
-description: Talk to another interactive agent (claude or codex) running in its own tmux pane. Use when the user asks to consult, delegate to, or request a review from the other agent by name (e.g. "codexに聞いて", "codexに実装してもらって", "claudeにレビューしてもらって"), or when an "[agent-talk]" message arrives in the prompt. Requires tmux. Not for headless one-shot consultation (use ask-claude for that).
+description: Talk to another interactive agent (claude or codex) running in its own tmux pane. Use when the user asks to consult, delegate to, or request a review from the other agent by name (e.g. "codexに聞いて", "codexに実装してもらって", "claudeにレビューしてもらって"), or when an "[agent-talk]" message arrives in the prompt. Requires tmux.
 ---
 
 # Agent Talk
