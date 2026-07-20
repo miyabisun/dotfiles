@@ -16,4 +16,14 @@ if [[ -n "${THREAD_ID}" ]] \
     exit 0
 fi
 
-exec bash "${CODEX_NOTIFY_EMITTER:-${HOME}/.local/bin/emit-turn-end.sh}" codex success
+# このターンを起動した入力が agent-talk の呼び鈴なら、完了通知の文言を変える。
+# input-messages は agent-turn-complete payload の文書化フィールド
+TALK=""
+if command -v jq > /dev/null 2>&1 && [[ -n "${PAYLOAD}" ]]; then
+    if jq -e '[."input-messages"[]? | select(startswith("[agent-talk]"))] | length > 0' \
+        <<< "${PAYLOAD}" > /dev/null 2>&1; then
+        TALK="talk"
+    fi
+fi
+
+exec bash "${CODEX_NOTIFY_EMITTER:-${HOME}/.local/bin/emit-turn-end.sh}" codex success ${TALK:+"${TALK}"}

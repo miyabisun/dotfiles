@@ -118,7 +118,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.local/bin/emit-turn-end.sh claude success"
+            "command": "bash ~/.dotfiles/agent/claude/hooks/stop-turn-end.sh"
           }
         ]
       }

@@ -18,18 +18,37 @@ if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
     fi
 fi
 
+# 第3引数 "talk" = agent-talk の呼び鈴で始まったターン。
+# 判定は呼び出し元 (claude: Stop フックが transcript の最終ユーザー入力を、
+# codex: notify-turn-end.sh が payload の input-messages を見る) が行う。
+# 呼び鈴の到着と実行中ターンの順序ずれがあるため、これは pane 状態では持たない
+TALK="${3:-}"
+
+# このターン内で agent-talk send した (=ボールを渡した) なら声は出さない。
+# チェーン最後の者だけが喋る。印は send 自身が同一ターン内で立てるので
+# 順序ずれはなく、ターン完走時に消費する
+SENT=""
+if [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
+    SENT="$(tmux show-options -pqv -t "${TMUX_PANE}" @agent_talk_sent 2>/dev/null || true)"
+    if [[ -n "${SENT}" && "${STATUS}" == "success" ]]; then
+        tmux set-option -p -t "${TMUX_PANE}" -u @agent_talk_sent 2>/dev/null || true
+    fi
+fi
+
 # MOCA_URL があれば /notify に通知する (moca-server が喋る。失敗は無視)
 # 目の前で見ている場合も反応は残し、セッション名・agent名だけ省略する
-if [[ -n "${MOCA_URL:-}" ]]; then
+if [[ -n "${MOCA_URL:-}" && ( -z "${SENT}" || "${STATUS}" != "success" ) ]]; then
+    DONE="完了しました"
+    [[ -n "${TALK}" ]] && DONE="agent-talkを完了しました"
     if [[ -n "${VIEWING}" ]]; then
         case "${STATUS}" in
-            success) MSG="完了しました" ;;
+            success) MSG="${DONE}" ;;
             waiting) MSG="確認させてください" ;;
             *)       MSG="${STATUS}で終了しました" ;;
         esac
     else
         case "${STATUS}" in
-            success) MSG="${SESSION:+${SESSION}の}${AGENT}が完了しました" ;;
+            success) MSG="${SESSION:+${SESSION}の}${AGENT}が${DONE}" ;;
             waiting) MSG="${SESSION:+${SESSION}の}${AGENT}が確認を求めています" ;;
             *)       MSG="${SESSION:+${SESSION}の}${AGENT}が${STATUS}で終了しました" ;;
         esac
