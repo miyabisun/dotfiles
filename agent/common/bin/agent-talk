@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# agent-talk: tmux 上の対話エージェント (claude / codex など) 同士の連絡係。
+#
+# 状態は tmux の pane オプション @agent だけ。pane が死ねば登録も一緒に消えるので
+# レジストリの掃除は不要。依頼の本文はファイルで渡し、send-keys は呼び鈴に徹する。
+#
+#   agent-talk register <name>    自 pane を <name> として待受登録
+#   agent-talk unregister         待受登録を解除
+#   agent-talk who                待受中エージェントの一覧
+#   agent-talk resolve <addr>     <addr> を pane ID に解決 (曖昧なら候補を出して失敗)
+#   agent-talk send <addr> [msg]  依頼書ファイルを書き、宛先 pane に呼び鈴を鳴らす
+#                                 (msg 省略時は stdin を本文にする)
+#
+# <addr> は <name>、<scope>/<name>、または返信用の %<pane-id>。
+# scope は tmux セッション名か pane のカレントディレクトリ名
+# (プロジェクト名) に一致する。
+# scope なしの解決は同じ window → 同じ session の順で探し、session は跨がない。
+
+MAILDIR="${AGENT_TALK_DIR:-$HOME/.cache/agent-talk}"
+FMT=$'#{session_name}\t#{window_id}\t#{pane_id}\t#{pane_current_path}\t#{@agent}\t#{window_index}\t#{pane_index}'
+
+die() { echo "agent-talk: $*" >&2; exit 1; }
+
+# tmux 不達 (サンドボックス等) と登録ゼロを区別する。前者を空リストに
+# 変換すると「誰も居ない」という嘘になるので、正直に失敗させる。
+list_agents() {
+  local out
+  out="$(tmux list-panes -a -F "$FMT" 2>&1)" \
+    || die "tmux サーバーに接続できません (sandbox 内なら承認付きで再実行): ${out}"
+  awk -F'\t' '$5 != ""' <<< "$out"
+}
+
+pretty() {
+  awk -F'\t' '{ printf "%-10s %s:%s.%s (%s)  %s\n", $5, $1, $6, $7, $3, $4 }'
+}
+
+cmd_register() {
+  [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]] || exit 0
+  local name="${1:-}"
+  [[ -n "$name" ]] || die "usage: agent-talk register <name>"
+  [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || die "name は英数字と - _ のみ: '$name'"
+  tmux set-option -p -t "$TMUX_PANE" @agent "$name"
+}
+
+cmd_unregister() {
+  [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]] || exit 0
+  tmux set-option -p -t "$TMUX_PANE" -u @agent 2>/dev/null || true
+}
+
+cmd_who() {
+  list_agents | pretty
+}
+
+cmd_resolve() {
+  local addr="${1:-}"
+  [[ -n "$addr" ]] || die "usage: agent-talk resolve [scope/]<name> | %pane"
+
+  # pane ID 直指定 (返信用)。@agent 登録済みの pane に限る
+  if [[ "$addr" =~ ^%[0-9]+$ ]]; then
+    local hit
+    hit="$(list_agents | awk -F'\t' -v p="$addr" '$3 == p')"
+    [[ -n "$hit" ]] || die "pane ${addr} は @agent 登録されていません"
+    echo "$addr"
+    return
+  fi
+
+  local scope="" name="$addr"
+  if [[ "$addr" == */* ]]; then
+    scope="${addr%%/*}"
+    name="${addr#*/}"
+  fi
+
+  local self="${TMUX_PANE:-}"
+  local all rows
+  all="$(list_agents | awk -F'\t' -v n="$name" -v self="$self" '$5 == n && $3 != self')"
+
+  if [[ -n "$scope" ]]; then
+    rows="$(awk -F'\t' -v s="$scope" '{ nf = split($4, a, "/") } $1 == s || a[nf] == s' <<< "$all")"
+  elif [[ -n "$self" ]]; then
+    # 暗黙解決は session を跨がない: 同じ window → 同じ session の順
+    local win ses
+    win="$(tmux display-message -p -t "$self" '#{window_id}')"
+    ses="$(tmux display-message -p -t "$self" '#{session_name}')"
+    rows="$(awk -F'\t' -v w="$win" '$2 == w' <<< "$all")"
+    [[ -n "$rows" ]] || rows="$(awk -F'\t' -v s="$ses" '$1 == s' <<< "$all")"
+  else
+    rows="$all"
+  fi
+
+  local count
+  count="$(grep -c . <<< "$rows" || true)"
+  if [[ "$count" -eq 1 ]]; then
+    awk -F'\t' '{ print $3 }' <<< "$rows"
+  elif [[ "$count" -eq 0 ]]; then
+    {
+      echo "agent-talk: 宛先 '$addr' がスコープ内に見つかりません。待受中:"
+      list_agents | pretty
+    } >&2
+    return 1
+  else
+    {
+      echo "agent-talk: 宛先 '$addr' の候補が複数あります。<scope>/<name> で指定してください:"
+      pretty <<< "$rows"
+    } >&2
+    return 1
+  fi
+}
+
+cmd_send() {
+  local addr="${1:-}"
+  [[ -n "$addr" ]] || die "usage: agent-talk send [scope/]<name> [message]"
+  shift
+  local name="${addr#*/}"
+
+  local pane
+  pane="$(cmd_resolve "$addr")"
+
+  local body
+  if [[ $# -gt 0 ]]; then
+    body="$*"
+  else
+    body="$(cat)"
+  fi
+  [[ -n "$body" ]] || die "本文が空です"
+
+  local from="human" from_session=""
+  if [[ -n "${TMUX_PANE:-}" ]]; then
+    from="$(tmux display-message -p -t "$TMUX_PANE" '#{@agent}' 2>/dev/null || true)"
+    from_session="$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}' 2>/dev/null || true)"
+    [[ -n "$from" ]] || from="human"
+  fi
+
+  # ファイル名に使う名前。pane ID 指定なら登録名を引き、常にサニタイズする
+  local fname="$name"
+  [[ "$addr" =~ ^%[0-9]+$ ]] \
+    && fname="$(list_agents | awk -F'\t' -v p="$pane" '$3 == p { print $5 }')"
+  fname="$(tr -cd 'A-Za-z0-9_-' <<< "$fname")"
+  [[ -n "$fname" ]] || fname="agent"
+  local from_fname
+  from_fname="$(tr -cd 'A-Za-z0-9_-' <<< "$from")"
+  [[ -n "$from_fname" ]] || from_fname="human"
+
+  # 新規dir/fileは非公開で作る。既存のAGENT_TALK_DIRの権限は変更しない。
+  # mktempにより、共有ディレクトリ指定時も衝突とsymlink差し替えを避ける。
+  umask 077
+  mkdir -p -m 700 -- "$MAILDIR"
+  local file
+  file="$(mktemp "$MAILDIR/$(date +%Y%m%d-%H%M%S)-${from_fname}-to-${fname}-XXXXXX.md")"
+
+  local reply="不要 (人間からの依頼。結果は自分の画面に表示すれば読まれる)"
+  if [[ "$from" != "human" && -n "${TMUX_PANE:-}" ]]; then
+    reply="agent-talk send '${TMUX_PANE}' に返信本文を stdin で渡す (pane ID 指定は曖昧にならない)"
+  fi
+
+  local origin=""
+  [[ -n "$from_session" ]] && origin=" (session: ${from_session}, pane: ${TMUX_PANE})"
+
+  {
+    echo "# agent-talk 依頼書"
+    echo "- from: ${from}${origin}"
+    echo "- to: ${addr}"
+    echo "- reply: ${reply}"
+    echo
+    echo "$body"
+  } > "$file"
+
+  local bell="[agent-talk] ${from} から依頼が届きました。${file} を読んで対応してください。"
+  tmux send-keys -t "$pane" -l "$bell"
+  sleep 0.3
+  tmux send-keys -t "$pane" Enter
+  echo "sent -> $pane ($addr): $file"
+}
+
+case "${1:-}" in
+  register)   shift; cmd_register "$@" ;;
+  unregister) shift; cmd_unregister "$@" ;;
+  who)        shift; cmd_who "$@" ;;
+  resolve)    shift; cmd_resolve "$@" ;;
+  send)       shift; cmd_send "$@" ;;
+  *)
+    sed -n '4,20p' "$0" | sed 's/^# \{0,1\}//'
+    exit 1
+    ;;
+esac

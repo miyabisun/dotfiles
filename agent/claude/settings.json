@@ -93,6 +93,26 @@
         ]
       }
     ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.local/bin/agent-talk register claude"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.local/bin/agent-talk unregister"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
