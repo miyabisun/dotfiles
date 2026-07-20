@@ -43,10 +43,29 @@ Do not commit until all applicable statements are true:
 9. A fresh independent `formatter` receipt accounts for requested files and any
    formatter-added implementation files, with successful applicable checks or a
    justified `not_applicable` result.
+10. Every introduced configuration knob, dependency, abstraction, and code path
+    is justified by an acceptance criterion, a test, or a named consumer.
+    Remove mechanisms that exist only for hypothetical future needs before
+    requesting review; prefer a constant over a configuration option unless a
+    consumer needs to vary it without rebuilding.
+11. Behavior that tests exercise only through mocks or stubs (external API
+    semantics, boundary inclusivity, error contracts, default values) is
+    verified against authoritative documentation or a real call, or explicitly
+    recorded as an unverified risk in the delivery receipt.
 
 Documentation-only or metadata-only changes do not require invented product
 tests. Validate their syntax, links, generated output, or consumer behavior as
-appropriate and explain why broader tests are not applicable.
+appropriate and explain why broader tests are not applicable. Documentation
+must also be operationally true: execute documented setup, quickstart, and
+example commands from a clean state when feasible (including any committed
+`.env.example` defaults and container run instructions), and verify factual
+claims (spec or RFC identifiers, URLs, API semantics, defaults) against their
+sources rather than writing them from memory. Route substantive user-facing
+documentation authoring (a new README, docs/**, example configuration) to the
+`docs` role rather than writing it incidentally in the parent or `dev`; its
+receipt of executed commands and claim sources is the documentation evidence,
+and `rev` reviews it like any other deliverable. Trivial doc edits (typo,
+one-line sync with a code change) may stay with the implementer.
 
 Treat large-scale simplification or refactoring as its own `deliver` task with
 explicit scope, behavior-preservation criteria, benchmarks, and regression
@@ -160,7 +179,11 @@ in-scope closure while a reliable local path remains.
 
 For `standard` and `high` work, give `rev` the original request, acceptance
 criteria, relevant diff, and executed checks. The implementer must not act as
-the independent approver.
+the independent approver. Instruct `rev` to review beyond correctness for:
+internal consistency (the same operation implemented in more than one way,
+error codes or messages reused for unrelated conditions), proportionality
+(mechanism heavier than the requirement, unconsumed configuration or code),
+and mock-only evidence for external-system behavior.
 
 The review result must be structured:
 
@@ -278,6 +301,8 @@ issues, and the exact user decision or external change needed.
 - Optimize for verified outcomes, not phase attendance.
 - Own safe local closure; do not expose routine internal handoffs as user blockers.
 - Never claim completion from an agent's prose alone; require evidence.
+- Never state spec identifiers, external URLs, or third-party API semantics
+  from memory; verify them or mark them as unverified in the receipt.
 - Never weaken, delete, skip, or rewrite valid tests merely to turn them green.
 - Never invoke `committer` without an independent `formatter` receipt accounting
   for every eligible file and every applicable check.
