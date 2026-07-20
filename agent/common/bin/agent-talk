@@ -170,6 +170,13 @@ cmd_send() {
   tmux send-keys -t "$pane" -l "$bell"
   sleep 0.3
   tmux send-keys -t "$pane" Enter
+
+  # ボールを相手に渡したターンは完了の声を出さない (チェーン最後の者だけが喋る)。
+  # 自ターン内で set し自ターン終了時に emit-turn-end.sh が消費する
+  if [[ "$from" != "human" && -n "${TMUX_PANE:-}" ]]; then
+    tmux set-option -p -t "$TMUX_PANE" @agent_talk_sent 1 2>/dev/null || true
+  fi
+
   echo "sent -> $pane ($addr): $file"
 }
 
