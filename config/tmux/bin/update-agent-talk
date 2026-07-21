@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+if [ -x "$HOME/.local/bin/agent-talk" ]; then
+  agent_talk="$HOME/.local/bin/agent-talk"
+elif command -v agent-talk >/dev/null 2>&1; then
+  agent_talk="$(command -v agent-talk)"
+else
+  tmux display-message "agent-talk update skipped: command not found"
+  exit 0
+fi
+
+if output="$("$agent_talk" update 2>&1)"; then
+  detail="$(printf '%s\n' "$output" | tail -n 1)"
+  tmux display-message "${detail:-agent-talk update completed}"
+else
+  status=$?
+  detail="$(printf '%s\n' "$output" | tail -n 1)"
+  tmux display-message "agent-talk update failed: ${detail:-exit $status}"
+  exit "$status"
+fi

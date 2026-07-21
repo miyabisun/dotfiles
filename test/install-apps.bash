@@ -9,6 +9,7 @@ fake_bin="$test_root/bin"
 fake_home="$test_root/home"
 log="$test_root/curl.log"
 args_log="$test_root/curl-args.log"
+agent_log="$test_root/agent.log"
 tmp_dir="$test_root/tmp"
 mkdir -p "$fake_bin" "$fake_home/.local/bin" "$tmp_dir"
 
@@ -19,6 +20,14 @@ make_stub() {
 exit 0
 STUB
   chmod +x "$fake_bin/$name"
+}
+
+sha256_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{ print $1 }'
+  else
+    shasum -a 256 "$1" | awk '{ print $1 }'
+  fi
 }
 
 make_stub delta
@@ -65,26 +74,38 @@ case "$url" in
   https://github.com/miyabi-sunny-side/agent-talkd/releases/latest)
     test "$write_out" = '%{redirect_url}'
     printf '%s%s' 'https://github.com/miyabi-sunny-side/agent-talkd/releases/tag/' \
-      "${INSTALL_APPS_TEST_LATEST_TAG:-v0.3.1}"
+      "${INSTALL_APPS_TEST_LATEST_TAG:-v0.3.2}"
     exit 0
     ;;
-  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-linux-x86_64.tar.gz|\
-  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-macos-aarch64.tar.gz)
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.2/agent-talk-linux-x86_64.tar.gz|\
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.2/agent-talk-macos-aarch64.tar.gz)
     archive_root="${output}.root"
     mkdir -p "$archive_root"
     cat >"$archive_root/agent-talk" <<'AGENT'
 #!/bin/sh
-if [ "${1:-}" = "--version" ]; then
-  echo "agent-talk 0.3.1"
-fi
+case "${1:-}" in
+  --version) echo "agent-talk 0.3.2" ;;
+  update)
+    printf '%s\n' update >>"${INSTALL_APPS_TEST_AGENT_LOG:-/dev/null}"
+    exit "${INSTALL_APPS_TEST_AGENT_UPDATE_STATUS:-0}"
+    ;;
+  ensure-daemon)
+    printf '%s\n' ensure-daemon >>"${INSTALL_APPS_TEST_AGENT_LOG:-/dev/null}"
+    echo "agent-talk: tmux server not available; daemon not applicable"
+    ;;
+  *)
+    printf '%s\n' '  agent-talk update' '  agent-talk ensure-daemon'
+    exit 1
+    ;;
+esac
 AGENT
     chmod +x "$archive_root/agent-talk"
     tar -czf "$output" -C "$archive_root" agent-talk
     rm -rf "$archive_root"
     exit 0
     ;;
-  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-linux-x86_64.tar.gz.sha256|\
-  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-macos-aarch64.tar.gz.sha256)
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.2/agent-talk-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.2/agent-talk-macos-aarch64.tar.gz.sha256)
     archive_path="${output%.sha256}"
     archive_name="$(basename "$archive_path")"
     if [ -n "${INSTALL_APPS_TEST_BAD_AGENT_TALK_CHECKSUM:-}" ]; then
@@ -120,6 +141,7 @@ PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
   HOME="$fake_home" \
   INSTALL_APPS_TEST_LOG="$log" \
   INSTALL_APPS_TEST_ARGS_LOG="$args_log" \
+  INSTALL_APPS_TEST_AGENT_LOG="$agent_log" \
   TMPDIR="$tmp_dir" \
   bash "$repo_root/bin/install-apps" >"$test_root/first-run.out"
 
@@ -132,23 +154,27 @@ grep -Fx -- "-fsSL" "$args_log" >/dev/null
 test -x "$fake_home/.local/bin/cursor-agent"
 test -x "$fake_home/.local/bin/codex"
 test -x "$fake_home/.local/bin/agent-talk"
-test "$("$fake_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.1"
+test "$("$fake_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.2"
+grep -F "daemon not applicable" "$test_root/first-run.out" >/dev/null
+test "$(grep -Fxc ensure-daemon "$agent_log")" -eq 1
 test -z "$(find "$tmp_dir" -mindepth 1 -print -quit)"
 
 PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
   HOME="$fake_home" \
   INSTALL_APPS_TEST_LOG="$log" \
   INSTALL_APPS_TEST_ARGS_LOG="$args_log" \
+  INSTALL_APPS_TEST_AGENT_LOG="$agent_log" \
   TMPDIR="$tmp_dir" \
   bash "$repo_root/bin/install-apps" >"$test_root/second-run.out"
 
 test "$(grep -Fc 'https://cursor.com/install' "$log")" -eq 1
 test "$(grep -Fc 'https://chatgpt.com/codex/install.sh' "$log")" -eq 1
-test "$(grep -Fc 'https://github.com/miyabi-sunny-side/agent-talkd/releases/latest' "$log")" -eq 2
+test "$(grep -Fc 'https://github.com/miyabi-sunny-side/agent-talkd/releases/latest' "$log")" -eq 1
 test "$(grep -Fc 'agent-talk-linux-x86_64.tar.gz' "$log")" -eq 2
 grep -F "Cursor CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Codex CLI already installed" "$test_root/second-run.out" >/dev/null
-grep -F "agent-talkd v0.3.1 already installed" "$test_root/second-run.out" >/dev/null
+grep -F "Updating agent-talkd via agent-talk update" "$test_root/second-run.out" >/dev/null
+test "$(grep -Fxc update "$agent_log")" -eq 1
 
 linux_home="$test_root/linux-home"
 linux_tmp="$test_root/linux-tmp"
@@ -164,7 +190,7 @@ grep -Fx "https://cursor.com/install" "$test_root/linux-curl.log" >/dev/null
 grep -Fx "https://chatgpt.com/codex/install.sh" "$test_root/linux-curl.log" >/dev/null
 test -x "$linux_home/.local/bin/cursor-agent"
 test -x "$linux_home/.local/bin/codex"
-test "$("$linux_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.1"
+test "$("$linux_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.2"
 test -z "$(find "$linux_tmp" -mindepth 1 -print -quit)"
 
 legacy_home="$test_root/legacy-home"
@@ -172,8 +198,11 @@ legacy_tmp="$test_root/legacy-tmp"
 mkdir -p "$legacy_home/.local/bin" "$legacy_tmp"
 cat >"$legacy_home/.local/bin/agent-talk" <<'LEGACY_AGENT'
 #!/bin/sh
-echo "agent-talk: tmux agent message broker"
-echo "usage: agent-talk send <addr> [message]"
+if [ "${1:-}" = "--version" ]; then
+  echo "agent-talk 0.3.1"
+else
+  echo "  agent-talk send <addr> [message]"
+fi
 LEGACY_AGENT
 chmod +x "$legacy_home/.local/bin/agent-talk"
 PATH="$fake_bin:$legacy_home/.local/bin:/usr/bin:/bin" \
@@ -183,8 +212,36 @@ PATH="$fake_bin:$legacy_home/.local/bin:/usr/bin:/bin" \
   TMPDIR="$legacy_tmp" \
   bash "$repo_root/bin/install-apps" >"$test_root/legacy.out"
 
-test "$("$legacy_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.1"
+test "$("$legacy_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.2"
 test -z "$(find "$legacy_tmp" -mindepth 1 -print -quit)"
+
+update_failure_home="$test_root/update-failure-home"
+update_failure_tmp="$test_root/update-failure-tmp"
+mkdir -p "$update_failure_home/.local/bin" "$update_failure_tmp"
+cat >"$update_failure_home/.local/bin/agent-talk" <<'UPDATE_FAILURE_AGENT'
+#!/bin/sh
+case "${1:-}" in
+  update) exit 23 ;;
+  *) printf '%s\n' '  agent-talk update'; exit 1 ;;
+esac
+UPDATE_FAILURE_AGENT
+chmod +x "$update_failure_home/.local/bin/agent-talk"
+update_failure_before="$(sha256_file "$update_failure_home/.local/bin/agent-talk")"
+if PATH="$fake_bin:$update_failure_home/.local/bin:/usr/bin:/bin" \
+  HOME="$update_failure_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/update-failure-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/update-failure-curl-args.log" \
+  TMPDIR="$update_failure_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/update-failure.out" 2>&1; then
+  echo "install-apps should propagate agent-talk update failures" >&2
+  exit 1
+fi
+
+test "$update_failure_before" = \
+  "$(sha256_file "$update_failure_home/.local/bin/agent-talk")"
+test "$(grep -Fc 'github.com/miyabi-sunny-side/agent-talkd' \
+  "$test_root/update-failure-curl.log" || true)" -eq 0
+test -z "$(find "$update_failure_tmp" -mindepth 1 -print -quit)"
 
 invalid_tag_home="$test_root/invalid-tag-home"
 invalid_tag_tmp="$test_root/invalid-tag-tmp"
