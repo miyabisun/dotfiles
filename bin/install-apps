@@ -54,10 +54,11 @@ install_agent_clis() {
 
 # ---------------------------------------------------------------------------
 # agent-talkd — tmux agent message broker
-# Download the latest public GitHub release and verify its published checksum.
+# Install the latest public GitHub release and verify its published checksum.
 # ---------------------------------------------------------------------------
 install_agent_talk() (
-  release_url="https://github.com/miyabi-sunny-side/agent-talkd/releases/latest/download"
+  latest_url="https://github.com/miyabi-sunny-side/agent-talkd/releases/latest"
+  target="$HOME/.local/bin/agent-talk"
 
   case "$(uname -s)-$(uname -m)" in
     Linux-x86_64)
@@ -72,10 +73,36 @@ install_agent_talk() (
       ;;
   esac
 
-  tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' EXIT
+  redirect_url="$(curl --proto '=https' --tlsv1.2 -fsS \
+    -o /dev/null -w '%{redirect_url}' "$latest_url")"
+  latest_version="${redirect_url##*/}"
+  if ! printf '%s\n' "$latest_version" \
+    | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "==> Cannot determine latest agent-talkd version from $redirect_url" >&2
+    return 1
+  fi
 
-  echo "==> Installing latest agent-talkd release..."
+  installed_version=""
+  if [ -x "$target" ]; then
+    installed_version="$("$target" --version 2>/dev/null \
+      | awk '$1 == "agent-talk" && $2 ~ /^[0-9]+\.[0-9]+\.[0-9]+$/ && NF == 2 { print "v" $2; exit }' \
+      || true)"
+  fi
+  if [ "$installed_version" = "$latest_version" ]; then
+    echo "==> agent-talkd ${latest_version} already installed"
+    return
+  fi
+
+  tmpdir="$(mktemp -d)"
+  target_tmp=""
+  cleanup() {
+    rm -rf "$tmpdir"
+    [ -z "$target_tmp" ] || rm -f "$target_tmp"
+  }
+  trap cleanup EXIT
+  release_url="https://github.com/miyabi-sunny-side/agent-talkd/releases/download/${latest_version}"
+
+  echo "==> Installing agent-talkd ${latest_version}..."
   curl --proto '=https' --tlsv1.2 -fsSL \
     "$release_url/$archive" -o "$tmpdir/$archive"
   curl --proto '=https' --tlsv1.2 -fsSL \
@@ -89,13 +116,11 @@ install_agent_talk() (
 
   tar -xzf "$tmpdir/$archive" -C "$tmpdir"
   mkdir -p "$HOME/.local/bin"
-  # Retire the legacy dotfiles symlink without following it on either GNU or
-  # BSD install implementations.
-  if [ -L "$HOME/.local/bin/agent-talk" ]; then
-    unlink "$HOME/.local/bin/agent-talk"
-  fi
-  install -m755 "$tmpdir/agent-talk" "$HOME/.local/bin/agent-talk"
-  echo "==> Latest agent-talkd release installed"
+  target_tmp="$(mktemp "$HOME/.local/bin/.agent-talk.XXXXXX")"
+  install -m755 "$tmpdir/agent-talk" "$target_tmp"
+  mv -f "$target_tmp" "$target"
+  target_tmp=""
+  echo "==> agent-talkd ${latest_version} installed"
 )
 
 # ---------------------------------------------------------------------------
