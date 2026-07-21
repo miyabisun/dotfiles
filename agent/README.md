@@ -50,7 +50,7 @@ their completion announcements, including automatic approval reviewers.
 
 Agent-to-agent messages use the Rust `agent-talk` CLI from
 [`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd).
-`bin/install-apps` installs the pinned release binary, while the TPM entry in
+`bin/install-apps` installs the latest release binary, while the TPM entry in
 `config/tmux/tmux.conf` starts its per-tmux-server daemon. Claude hooks and the
 Codex shell wrapper register each interactive pane automatically.
 
