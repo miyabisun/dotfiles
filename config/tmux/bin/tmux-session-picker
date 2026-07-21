@@ -9,7 +9,7 @@ cur="$(tmux display-message -p '#S')"
 s="$(tmux list-sessions -F '#{?#{@agent_bell},1,0}#S' \
   | awk -v cur="$cur" '{
       flag = substr($0, 1, 1); name = substr($0, 2)
-      if (name == cur) next
+      if (name == cur || name ~ /^_/) next
       if (flag == "1") printf "\033[1;38;5;255;48;5;24m%s\033[0m\n", name
       else print name
     }' \
