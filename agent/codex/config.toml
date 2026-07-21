@@ -1,7 +1,7 @@
 # Personal Codex defaults. Authentication, history, and runtime databases
 # intentionally stay outside this repository.
 model_reasoning_effort = "medium"
-personality = "friendly"
+personality = "pragmatic"
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 sandbox_mode = "workspace-write"
