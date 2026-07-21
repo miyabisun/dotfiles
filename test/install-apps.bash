@@ -35,10 +35,15 @@ set -euo pipefail
 
 url=""
 output=""
+write_out=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -o)
       output="$2"
+      shift 2
+      ;;
+    -w)
+      write_out="$2"
       shift 2
       ;;
     http*)
@@ -57,6 +62,41 @@ printf '%s\n' "$url" >>"$INSTALL_APPS_TEST_LOG"
 case "$url" in
   https://cursor.com/install) command_name=cursor-agent ;;
   https://chatgpt.com/codex/install.sh) command_name=codex ;;
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/latest)
+    test "$write_out" = '%{redirect_url}'
+    printf '%s%s' 'https://github.com/miyabi-sunny-side/agent-talkd/releases/tag/' \
+      "${INSTALL_APPS_TEST_LATEST_TAG:-v0.3.1}"
+    exit 0
+    ;;
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-linux-x86_64.tar.gz|\
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-macos-aarch64.tar.gz)
+    archive_root="${output}.root"
+    mkdir -p "$archive_root"
+    cat >"$archive_root/agent-talk" <<'AGENT'
+#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  echo "agent-talk 0.3.1"
+fi
+AGENT
+    chmod +x "$archive_root/agent-talk"
+    tar -czf "$output" -C "$archive_root" agent-talk
+    rm -rf "$archive_root"
+    exit 0
+    ;;
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/agent-talkd/releases/download/v0.3.1/agent-talk-macos-aarch64.tar.gz.sha256)
+    archive_path="${output%.sha256}"
+    archive_name="$(basename "$archive_path")"
+    if [ -n "${INSTALL_APPS_TEST_BAD_AGENT_TALK_CHECKSUM:-}" ]; then
+      digest="0000000000000000000000000000000000000000000000000000000000000000"
+    elif command -v sha256sum >/dev/null 2>&1; then
+      digest="$(sha256sum "$archive_path" | awk '{ print $1 }')"
+    else
+      digest="$(shasum -a 256 "$archive_path" | awk '{ print $1 }')"
+    fi
+    printf '%s  %s\n' "$digest" "$archive_name" >"$output"
+    exit 0
+    ;;
   *) exit 64 ;;
 esac
 
@@ -91,6 +131,8 @@ grep -Fx -- "--tlsv1.2" "$args_log" >/dev/null
 grep -Fx -- "-fsSL" "$args_log" >/dev/null
 test -x "$fake_home/.local/bin/cursor-agent"
 test -x "$fake_home/.local/bin/codex"
+test -x "$fake_home/.local/bin/agent-talk"
+test "$("$fake_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.1"
 test -z "$(find "$tmp_dir" -mindepth 1 -print -quit)"
 
 PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
@@ -100,9 +142,13 @@ PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
   TMPDIR="$tmp_dir" \
   bash "$repo_root/bin/install-apps" >"$test_root/second-run.out"
 
-test "$(wc -l <"$log")" -eq 2
+test "$(grep -Fc 'https://cursor.com/install' "$log")" -eq 1
+test "$(grep -Fc 'https://chatgpt.com/codex/install.sh' "$log")" -eq 1
+test "$(grep -Fc 'https://github.com/miyabi-sunny-side/agent-talkd/releases/latest' "$log")" -eq 2
+test "$(grep -Fc 'agent-talk-linux-x86_64.tar.gz' "$log")" -eq 2
 grep -F "Cursor CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Codex CLI already installed" "$test_root/second-run.out" >/dev/null
+grep -F "agent-talkd v0.3.1 already installed" "$test_root/second-run.out" >/dev/null
 
 linux_home="$test_root/linux-home"
 linux_tmp="$test_root/linux-tmp"
@@ -118,7 +164,45 @@ grep -Fx "https://cursor.com/install" "$test_root/linux-curl.log" >/dev/null
 grep -Fx "https://chatgpt.com/codex/install.sh" "$test_root/linux-curl.log" >/dev/null
 test -x "$linux_home/.local/bin/cursor-agent"
 test -x "$linux_home/.local/bin/codex"
+test "$("$linux_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.1"
 test -z "$(find "$linux_tmp" -mindepth 1 -print -quit)"
+
+legacy_home="$test_root/legacy-home"
+legacy_tmp="$test_root/legacy-tmp"
+mkdir -p "$legacy_home/.local/bin" "$legacy_tmp"
+cat >"$legacy_home/.local/bin/agent-talk" <<'LEGACY_AGENT'
+#!/bin/sh
+echo "agent-talk: tmux agent message broker"
+echo "usage: agent-talk send <addr> [message]"
+LEGACY_AGENT
+chmod +x "$legacy_home/.local/bin/agent-talk"
+PATH="$fake_bin:$legacy_home/.local/bin:/usr/bin:/bin" \
+  HOME="$legacy_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/legacy-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/legacy-curl-args.log" \
+  TMPDIR="$legacy_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/legacy.out"
+
+test "$("$legacy_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.1"
+test -z "$(find "$legacy_tmp" -mindepth 1 -print -quit)"
+
+invalid_tag_home="$test_root/invalid-tag-home"
+invalid_tag_tmp="$test_root/invalid-tag-tmp"
+mkdir -p "$invalid_tag_home/.local/bin" "$invalid_tag_tmp"
+if PATH="$fake_bin:$invalid_tag_home/.local/bin:/usr/bin:/bin" \
+  HOME="$invalid_tag_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/invalid-tag-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/invalid-tag-curl-args.log" \
+  INSTALL_APPS_TEST_LATEST_TAG=garbage \
+  TMPDIR="$invalid_tag_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/invalid-tag.out" 2>&1; then
+  echo "install-apps should fail when the latest agent-talk tag is invalid" >&2
+  exit 1
+fi
+
+grep -F "Cannot determine latest agent-talkd version" "$test_root/invalid-tag.out" >/dev/null
+test ! -e "$invalid_tag_home/.local/bin/agent-talk"
+test -z "$(find "$invalid_tag_tmp" -mindepth 1 -print -quit)"
 
 failure_home="$test_root/failure-home"
 failure_tmp="$test_root/failure-tmp"
@@ -153,5 +237,27 @@ fi
 
 grep -F "Failed to install Cursor CLI" "$test_root/run-failure.out" >/dev/null
 test -z "$(find "$run_failure_tmp" -mindepth 1 -print -quit)"
+
+checksum_home="$test_root/checksum-home"
+checksum_tmp="$test_root/checksum-tmp"
+mkdir -p "$checksum_home/.local/bin" "$checksum_tmp"
+cat >"$checksum_home/.local/bin/agent-talk" <<'OLD_AGENT'
+#!/bin/sh
+echo "agent-talk 0.1.0"
+OLD_AGENT
+chmod +x "$checksum_home/.local/bin/agent-talk"
+if PATH="$fake_bin:$checksum_home/.local/bin:/usr/bin:/bin" \
+  HOME="$checksum_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/checksum-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/checksum-curl-args.log" \
+  INSTALL_APPS_TEST_BAD_AGENT_TALK_CHECKSUM=1 \
+  TMPDIR="$checksum_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/checksum.out" 2>&1; then
+  echo "install-apps should fail when the agent-talk checksum does not match" >&2
+  exit 1
+fi
+
+test "$("$checksum_home/.local/bin/agent-talk" --version)" = "agent-talk 0.1.0"
+test -z "$(find "$checksum_tmp" -mindepth 1 -print -quit)"
 
 echo "install-apps Linux/macOS agent CLI test: pass"
