@@ -60,6 +60,15 @@ install_agent_talk() (
   latest_url="https://github.com/miyabi-sunny-side/agent-talkd/releases/latest"
   target="$HOME/.local/bin/agent-talk"
 
+  if [ -x "$target" ]; then
+    help_output="$("$target" 2>&1 || true)"
+    if printf '%s\n' "$help_output" | grep -Fxq '  agent-talk update'; then
+      echo "==> Updating agent-talkd via agent-talk update..."
+      "$target" update
+      return
+    fi
+  fi
+
   case "$(uname -s)-$(uname -m)" in
     Linux-x86_64)
       archive="agent-talk-linux-x86_64.tar.gz"
@@ -80,17 +89,6 @@ install_agent_talk() (
     | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
     echo "==> Cannot determine latest agent-talkd version from $redirect_url" >&2
     return 1
-  fi
-
-  installed_version=""
-  if [ -x "$target" ]; then
-    installed_version="$("$target" --version 2>/dev/null \
-      | awk '$1 == "agent-talk" && $2 ~ /^[0-9]+\.[0-9]+\.[0-9]+$/ && NF == 2 { print "v" $2; exit }' \
-      || true)"
-  fi
-  if [ "$installed_version" = "$latest_version" ]; then
-    echo "==> agent-talkd ${latest_version} already installed"
-    return
   fi
 
   tmpdir="$(mktemp -d)"
@@ -120,6 +118,7 @@ install_agent_talk() (
   install -m755 "$tmpdir/agent-talk" "$target_tmp"
   mv -f "$target_tmp" "$target"
   target_tmp=""
+  "$target" ensure-daemon
   echo "==> agent-talkd ${latest_version} installed"
 )
 
