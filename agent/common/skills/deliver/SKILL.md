@@ -77,6 +77,11 @@ Maintain a compact delivery ledger in the parent context:
 
 ```json
 {
+  "source_request": {
+    "original": "user-authored task text",
+    "fidelity": "verbatim|reconstructed",
+    "material_followups": []
+  },
   "criteria": [{"requirement": "...", "evidence": "pending", "pass": false}],
   "checks": [{"command": "...", "result": "pending"}],
   "risk": "low|standard|high",
@@ -101,6 +106,15 @@ review approval, browser measurement, or Red/Green observation.
 Read the repository and translate the request into observable acceptance
 criteria, scope, verification commands, and important failure modes.
 
+- Before translating the request, capture the user-authored task text in
+  `source_request` without translation, summarization, paraphrase, or other
+  rewriting. Append later user-authored corrections or constraints verbatim
+  when they materially change the task; do not include assistant summaries or
+  unrelated conversation.
+- If compaction or missing context makes the exact text unavailable, set
+  `fidelity: reconstructed` and label it `Original user request
+  (reconstructed, verbatim unavailable)` wherever it is shared. Never present
+  a reconstruction as verbatim.
 - Reuse explicit user criteria unchanged unless they conflict or cannot be tested.
 - Include concrete input/output examples when they remove ambiguity.
 - Inspect referenced files, fields, APIs, and scripts before assuming they exist.
@@ -128,19 +142,33 @@ selected pane ID in the ledger, and address that exact pane directly for every
 later request. If multiple equally eligible panes remain, show the candidates and
 ask the user which one to use; ambiguity is not absence.
 
-When a counterpart exists, send it the proposed contract, acceptance criteria,
-execution route, important risks, and unresolved questions for review. Require a
+When a counterpart exists, send it a review brief with the following clearly
+separated material:
+
+- `Original user request (verbatim)`: the captured task text in its original
+  language, without translation, summarization, or paraphrase; use the
+  reconstructed label above when exact text is unavailable.
+- `Material user follow-ups (verbatim)`, when any materially changed the task.
+- The proposed contract, acceptance criteria, execution route, important risks,
+  and unresolved questions.
+
+Instruct the counterpart to compare the proposal against the user text, not
+merely judge whether the proposal is internally sound. It must report omitted
+requirements, contradictory interpretations, unauthorized scope expansion, and
+ideas that may be good in isolation but do not answer the request. Require a
 structured result:
 
 ```json
-{"approved": true, "issues": [], "summary": "..."}
+{"approved": true, "request_alignment": {"pass": true, "issues": []}, "issues": [], "summary": "..."}
 ```
 
-Incorporate blocking findings before implementation. Because agent-talk replies
-arrive in a later turn, finish useful read-only preparation, report that delivery
-is waiting for the counterpart, and end the turn. Resume from the ledger when the
-reply prompt arrives. A counterpart review request received while this delivery
-is waiting may be handled normally; it does not count as starting implementation.
+Do not begin implementation until both `approved` and
+`request_alignment.pass` are true. Incorporate blocking findings before
+implementation. Because agent-talk replies arrive in a later turn, finish useful
+read-only preparation, report that delivery is waiting for the counterpart, and
+end the turn. Resume from the ledger when the reply prompt arrives. A counterpart
+review request received while this delivery is waiting may be handled normally;
+it does not count as starting implementation.
 
 Do not treat a delayed reply or a busy pane as absence. Fall back to the existing
 risk-based review route only when agent-talk reports delivery failure, the fixed
@@ -226,13 +254,16 @@ in-scope closure while a reliable local path remains.
 
 ### 4. Review only where it buys confidence
 
-When planning selected a counterpart, give the same fixed pane the original
-request, acceptance criteria, relevant diff, and executed checks after
+When planning selected a counterpart, give the same fixed pane the separately
+labeled original user request and material follow-ups under the fidelity rules
+above, acceptance criteria, relevant diff, and executed checks after
 implementation. This counterpart review replaces low-risk diff self-review and
 standard/high-risk `rev`; the implementer must not act as the independent
-approver. Otherwise, preserve the risk-based route and give `rev` this material
-for standard and high work. In either case, instruct the reviewer to review
-beyond correctness for:
+approver. Otherwise, preserve the risk-based route and give `rev` the same user
+text and implementation material for standard and high work. In either case,
+instruct the reviewer to compare the implementation with both the source request
+and the derived contract, report the request-alignment failures listed in Section
+1a, and review beyond correctness for:
 internal consistency (the same operation implemented in more than one way,
 error codes or messages reused for unrelated conditions), proportionality
 (mechanism heavier than the requirement, unconsumed configuration or code),
@@ -241,7 +272,7 @@ and mock-only evidence for external-system behavior.
 The review result must be structured:
 
 ```json
-{"approved": true, "issues": [], "summary": "..."}
+{"approved": true, "request_alignment": {"pass": true, "issues": []}, "issues": [], "summary": "..."}
 ```
 
 Blocking issues must include target, harm, and a concrete fix. Send the fixed
@@ -252,9 +283,9 @@ materially changed design or behavior beyond that list.
 Apply the same closure rule to counterpart findings: verify the fixed list
 locally, and request a fresh counterpart review only when the fixes materially
 changed design or behavior. Do not advance to `formatter` until the required
-counterpart review approves. If the fixed pane objectively becomes unavailable,
-use the fallback route recorded under section 1a rather than silently
-self-approving.
+review has both `approved` and `request_alignment.pass` set to true. If the fixed
+pane objectively becomes unavailable, use the fallback route recorded under
+section 1a rather than silently self-approving.
 
 Additional gates:
 
