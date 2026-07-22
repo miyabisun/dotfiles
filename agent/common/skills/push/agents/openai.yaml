@@ -1,0 +1,6 @@
+interface:
+  display_name: "Push"
+  short_description: "現在のGitブランチを安全にremoteへpushする"
+  default_prompt: "Use $push to safely push the current branch to its remote."
+policy:
+  allow_implicit_invocation: false
