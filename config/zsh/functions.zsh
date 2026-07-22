@@ -45,14 +45,76 @@ mfa() {
   oathtool --totp --base32 "$secret" | copy && echo "mfa: copied TOTP for $entry"
 }
 
-# Codex には hook がないので、起動を agent-talk の待受登録で包む。
-# 終了 (Ctrl+D・クラッシュ含む) 後は必ず解除する。tmux 外では両方 no-op。
-codex() {
-  command -v agent-talk > /dev/null 2>&1 && agent-talk register codex
-  command codex "$@"
+# CLI agent の起動を agent-talk の待受登録で包む。
+# 終了 (Ctrl+D・クラッシュ含む) 後は解除する。tmux 外では登録だけ no-op。
+_agent_talk_run() {
+  local agent_name="$1"
+  local executable="$2"
+  shift 2
+
+  local registered=0
+  if command -v agent-talk > /dev/null 2>&1 \
+      && command agent-talk register "$agent_name" > /dev/null 2>&1; then
+    registered=1
+  fi
+
+  command "$executable" "$@"
   local rc=$?
-  command -v agent-talk > /dev/null 2>&1 && agent-talk unregister
+
+  if (( registered )); then
+    command agent-talk unregister > /dev/null 2>&1 || true
+  fi
   return $rc
+}
+
+# Codex には session lifecycle hook がないため wrapper で登録する。
+codex() {
+  _agent_talk_run codex codex "$@"
+}
+
+# Cursor の管理・headless command は対話paneではないため登録しない。
+_cursor_agent_is_interactive() {
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      -p|--print|-v|--version|-h|--help)
+        return 1
+        ;;
+    esac
+  done
+
+  case "${1:-}" in
+    install-shell-integration|uninstall-shell-integration|login|logout|mcp|worker|status|whoami|models|about|update|create-chat|generate-rule|rule)
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+cursor-agent() {
+  if _cursor_agent_is_interactive "$@"; then
+    _agent_talk_run cursor cursor-agent "$@"
+  else
+    command cursor-agent "$@"
+  fi
+}
+
+# Cursor installer provides `agent` as a second symlink to cursor-agent. Do not
+# shadow an unrelated command that happens to use this generic name.
+agent() {
+  local agent_path="$(whence -p agent 2> /dev/null)"
+  local cursor_path="$(whence -p cursor-agent 2> /dev/null)"
+  if [[ -z "$agent_path" || -z "$cursor_path" \
+      || "${agent_path:A}" != "${cursor_path:A}" ]]; then
+    command agent "$@"
+    return $?
+  fi
+
+  if _cursor_agent_is_interactive "$@"; then
+    _agent_talk_run cursor agent "$@"
+  else
+    command agent "$@"
+  fi
 }
 
 # tmux attach (outside) / switch (inside): pick a session with fzf, or pass a name

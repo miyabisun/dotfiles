@@ -98,7 +98,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.local/bin/agent-talk busy"
+            "command": "bash ~/.dotfiles/agent/claude/hooks/agent-talk-busy.sh"
           }
         ]
       }
@@ -108,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.local/bin/agent-talk register claude"
+            "command": "bash ~/.dotfiles/agent/claude/hooks/register-agent-talk.sh"
           }
         ]
       }
@@ -118,7 +118,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.local/bin/agent-talk unregister"
+            "command": "bash ~/.dotfiles/agent/claude/hooks/unregister-agent-talk.sh"
           }
         ]
       }
