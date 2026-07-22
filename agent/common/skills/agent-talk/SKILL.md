@@ -1,6 +1,6 @@
 ---
 name: agent-talk
-description: Talk to another interactive agent (claude or codex) running in its own tmux pane. Use when the user asks to consult, delegate to, or request a review from the other agent by name (e.g. "codexに聞いて", "codexに実装してもらって", "claudeにレビューしてもらって"), or when an "[agent-talk]" message arrives in the prompt. Requires tmux.
+description: Talk to another interactive agent (claude, codex, or cursor) running in its own tmux pane. Use when the user asks to consult, delegate to, or request a review from another agent by name (e.g. "codexに聞いて", "cursorに実装してもらって", "claudeにレビューしてもらって"), or when an "[agent-talk]" message arrives in the prompt. Requires tmux.
 ---
 
 # Agent Talk
@@ -10,9 +10,8 @@ Exchange requests between interactive agent sessions through the Rust
 state, and a durable queue; tmux pane options are compatibility mirrors.
 Message bodies live in the broker journal and `send-keys` only rings the
 doorbell with a message ID. The TPM plugin starts the daemon, and registration
-is automatic (claude:
-SessionStart/SessionEnd hooks, codex: zsh wrapper), so a running agent is
-already listed in `agent-talk who`.
+is automatic (Claude Code: SessionStart/SessionEnd hooks; Codex and Cursor CLI:
+zsh wrappers), so a running agent is already listed in `agent-talk who`.
 
 Delivery is steer-safe between agents: `send` rings the doorbell immediately
 only when the target is idle. Busy/idle is tracked by both agents' hooks
@@ -57,6 +56,7 @@ notice instead — silence never means the request is still pending forever.
 
 - `codex` — nearest match: same window first, then same session. Never
   crosses sessions implicitly.
+- `cursor` — the same resolution rules for a registered Cursor CLI pane.
 - `home-server/codex` — explicit scope: tmux session name or the basename
   of the pane's current directory. Required for cross-session requests.
 - `%35` — direct pane ID; never ambiguous. Used for replies (the brief's

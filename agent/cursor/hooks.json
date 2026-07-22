@@ -18,6 +18,11 @@
         "command": "./hooks/guard-subagent-dirty-tree.sh"
       }
     ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "./hooks/agent-talk-busy.sh"
+      }
+    ],
     "stop": [
       {
         "command": "./hooks/stop-turn-end.sh"

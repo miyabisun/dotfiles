@@ -52,7 +52,12 @@ Agent-to-agent messages use the Rust `agent-talk` CLI from
 [`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd).
 `bin/install-apps` installs the latest release binary, while the TPM entry in
 `config/tmux/tmux.conf` starts its per-tmux-server daemon. Claude hooks and the
-Codex shell wrapper register each interactive pane automatically.
+Codex/Cursor shell wrappers register each interactive pane automatically.
+Cursor's prompt and stop hooks mirror the same busy/turn-end lifecycle, while
+`@agent_talkd_skill_syntax=cursor=slash` enables skill-prefixed delivery.
+Cursor CLI also imports Claude-compatible lifecycle hooks, so Claude's
+lifecycle adapters ignore payloads containing `cursor_version` and leave
+registration and turn state to the Cursor wrapper/hooks.
 
 ## Agents (`common/agents`)
 

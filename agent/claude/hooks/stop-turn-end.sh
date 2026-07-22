@@ -8,6 +8,16 @@ set -euo pipefail
 
 INPUT="$(cat 2>/dev/null || true)"
 
+# Cursor CLI imports Claude-compatible hooks but has its own stop hook.
+if command -v jq > /dev/null 2>&1; then
+    if jq -e 'type == "object" and has("cursor_version")' \
+        <<< "${INPUT}" > /dev/null 2>&1; then
+        exit 0
+    fi
+elif [[ "${INPUT}" == *'"cursor_version"'* ]]; then
+    exit 0
+fi
+
 TALK=""
 if command -v jq > /dev/null 2>&1 && [[ -n "${INPUT}" ]]; then
     TRANSCRIPT="$(jq -r '.transcript_path // empty' <<< "${INPUT}" 2>/dev/null || true)"
