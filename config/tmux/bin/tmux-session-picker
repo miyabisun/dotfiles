@@ -10,8 +10,15 @@ s="$(tmux list-sessions -F '#{?#{@agent_bell},1,0}#S' \
   | awk -v cur="$cur" '{
       flag = substr($0, 1, 1); name = substr($0, 2)
       if (name == cur || name ~ /^_/) next
-      if (flag == "1") printf "\033[1;38;5;255;48;5;24m%s\033[0m\n", name
-      else print name
+      if (flag == "1") {
+        bell[++bell_count] = sprintf("\033[1;38;5;255;48;5;24m%s\033[0m", name)
+      } else {
+        normal[++normal_count] = name
+      }
+    }
+    END {
+      for (i = 1; i <= bell_count; i++) print bell[i]
+      for (i = 1; i <= normal_count; i++) print normal[i]
     }' \
   | fzf --ansi --reverse --prompt='session> ' \
       --preview 'tmux list-windows -t {} -F "#I: #W (#{pane_current_command})"; echo; tmux capture-pane -ep -t {}' \
