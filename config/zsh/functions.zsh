@@ -124,6 +124,7 @@ a() {
   if [[ -z "$target" ]]; then
     local sessions
     sessions="$(tmux list-sessions -F '#S' 2> /dev/null)" || { echo "no tmux sessions" >&2; return 1; }
+    sessions="$(sed '/^_/d' <<< "$sessions")"
     [[ -n "$TMUX" ]] && sessions="$(grep -vxF "$(tmux display-message -p '#S')" <<< "$sessions")"
     [[ -z "$sessions" ]] && { echo "no other sessions" >&2; return 1; }
     target="$(fzf --reverse --prompt="session> " \
