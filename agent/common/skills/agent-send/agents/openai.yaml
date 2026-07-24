@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agent Send"
+  short_description: "返信不要の一方向メッセージを別agentへ送り会話を終端する"
+  default_prompt: "Use $agent-send to send this as a terminal message that needs no reply."
+policy:
+  allow_implicit_invocation: true
