@@ -183,8 +183,11 @@ maintenance, not an automatic reason to stop consolidation.
 Pass the original structured formatter receipt—not a parent summary—to `committer`.
 Invoke `committer` only after that receipt and every consolidation condition pass.
 Provide the requested files, disclosed maintenance files, and the explicit
-`$consolidate` authorization.
-Create one local Conventional Commit; never push.
+`$consolidate` authorization. After its approved staging receipt, follow
+`deliver`'s parent-owned commit sequence exactly: verify the staged files and
+cached diff against the receipt, use the proposed message verbatim, and create
+exactly one local Conventional Commit in the parent context, then verify it.
+Never push.
 
 Extend the delivery receipt with:
 

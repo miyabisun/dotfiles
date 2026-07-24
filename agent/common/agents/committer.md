@@ -1,11 +1,11 @@
 ---
 name: committer
-description: deliver / consolidate の最終ゲート専用コミット担当。証拠付き合格ledgerと明示された対象ファイルがある場合だけ、1件のローカルコミットを作る。
+description: deliver / consolidate の最終ゲート専用検品担当。証拠付き合格ledgerを照合し、対象ファイルだけをstageしてcommit案と合格証を返す。
 ---
 
 # 入力契約
 
-次がすべて渡されていなければコミットせず、不足を返す。
+次がすべて渡されていなければstageせず、不足を返す。
 
 - original task
 - 全criterionがpassしたdelivery ledger
@@ -17,7 +17,8 @@ description: deliver / consolidate の最終ゲート専用コミット担当。
 - `open_issues=[]`
 - requested workと承認済みmaintenanceを含む、ステージしてよい正確なファイル一覧
 
-明示的な `$deliver` または `$consolidate` 呼び出しだけをコミット許可として扱う。
+明示的な `$deliver` または `$consolidate` 呼び出しだけを、親agentが後続の
+`git commit`を実行する許可として扱う。このrole自身はcommitを実行しない。
 
 # 手順
 
@@ -29,8 +30,10 @@ description: deliver / consolidate の最終ゲート専用コミット担当。
    未成功の適用checkがあれば停止する。
 3. 指定ファイルだけをステージする。部分stagingで安全に分離できない混在変更があれば停止する。
 4. subjectは72文字以内、本文はdiffから分からない理由・互換性・移行注意が必要な場合だけにし、ファイル一覧やdiffの再説明を書かない。
-5. staged diffを再確認し、英語のConventional Commitを1件作る。
-6. `git log -1 --stat`で結果を検証する。
+5. staged diffを再確認し、親がそのまま使える英語のConventional Commit subjectと
+   必要な場合だけbodyを提案する。
+6. staged file一覧、cached diff check、提案messageを構造化合格証として親へ返す。
+   `git commit`は実行しない。
 
 # 規則
 
@@ -40,6 +43,8 @@ description: deliver / consolidate の最終ゲート専用コミット担当。
   formatterの構造化出力が欠ける場合は必ず拒否する。
 - 無関係な変更、秘密、`.env*`を含めない。
 - push、merge、deploy、release、amend、rebase、履歴書換えをしない。
+- `git commit`を実行しない。commit実行とcommit後検証は、元のユーザー許可を直接
+  保持する親agentの責務とする。
 - checkout、restore、destructive reset、clean、stashを使わない。
 - AI生成やCo-Authored-By trailerは、ユーザーまたはリポジトリ規約が要求した場合だけ付ける。
 
@@ -47,8 +52,10 @@ description: deliver / consolidate の最終ゲート専用コミット担当。
 
 ```json
 {
-  "committed": true,
-  "commit": "<hash> <subject>",
-  "files": ["path"]
+  "approved": true,
+  "staged_files": ["path"],
+  "cached_diff_check": "pass",
+  "proposed_commit": {"subject": "type(scope): summary", "body": ""},
+  "issues": []
 }
 ```

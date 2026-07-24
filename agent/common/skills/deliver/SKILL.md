@@ -345,7 +345,7 @@ summary. Missing classifications, applicable results, exclusion reasons,
 requested files, formatter-added files, or independent formatter approval block
 the commit.
 
-### 6. Commit through the gate
+### 6. Stage through the gate and commit in the parent
 
 Before invoking `committer`, re-read the ledger and verify:
 
@@ -359,10 +359,34 @@ AND formatter.approved is true
 AND formatter receipt accounts for every requested and formatter-added file
 ```
 
-Give `committer` the task, scope, maintenance ledger, evidence summary, and exact
-files eligible for staging together with the formatter receipt. The explicit
-invocation of `deliver` is the commit authorization.
-Create exactly one new Conventional Commit. Never push.
+Give `committer` the task, scope, maintenance ledger, evidence summary, exact
+files eligible for staging, and the formatter receipt. The explicit invocation
+of `deliver` is the commit authorization, but commit execution stays with the
+parent agent that directly retains that authorization and the source request.
+
+`committer` independently inspects the evidence and diff, stages only the exact
+eligible files, checks the complete cached diff, and returns a structured
+staging receipt with the staged files and proposed Conventional Commit message.
+It must not execute `git commit`.
+
+After an approved staging receipt, the parent must complete this sequence
+without asking the user to repeat or reconfirm the existing authorization:
+
+1. Compare the receipt's staged file list with both the eligible file list and
+   `git diff --cached --name-only`; inspect `git diff --cached --check` and the
+   complete cached diff.
+2. Use the receipt's proposed subject and body verbatim. If either needs to
+   change, request a fresh `committer` receipt instead of rewriting it.
+3. Execute exactly one new local `git commit` directly in the parent context.
+   Never delegate this boundary operation to a child agent.
+4. Verify the result with `git status --short` and `git log -1 --stat`, and
+   include the resulting hash and subject in the delivery receipt.
+
+An approval or sandbox failure at the parent's commit call is a runtime policy
+failure, not missing user authorization. Do not route the same commit through a
+child or ask the user for duplicate confirmation. Follow the runtime's normal
+safe escalation path once; if policy still denies the authorized call, report
+the exact denial as an external runtime constraint. Never push.
 
 If unrelated changes overlap files that must be committed and safe partial
 staging cannot isolate the task with confidence, stop and ask the user instead
@@ -399,6 +423,8 @@ issues, and the exact user decision or external change needed.
 - Never weaken, delete, skip, or rewrite valid tests merely to turn them green.
 - Never invoke `committer` without an independent `formatter` receipt accounting
   for every eligible file and every applicable check.
+- Never delegate `git commit` to `committer` or another child agent; after an
+  approved staging receipt, the authorization-holding parent must commit.
 - Never use destructive working-tree commands (`checkout`, `restore`, destructive
   `reset`, `clean`, or `stash`) to manage agent work.
 - Preserve unrelated user changes.
