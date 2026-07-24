@@ -348,6 +348,10 @@ Default size `1.2em`, aligned to the text baseline.
   bg (e.g. unread = project-defined). Whitespace-padded, never icon-bearing.
 - **Tabs (top nav):** label type, muted when inactive, on-surface + 2px
   accent underline when active. No background change.
+- **Top-level navigation:** Every tab or primary view has a stable
+  router-backed URL. Navigation creates browser history entries; direct
+  loads and reloads restore the same view. Never keep the selected primary
+  tab only in volatile component state.
 - **Modals:** centered, 12px radius, 16px padding, scrim click / × / Esc to
   close. The × is a quiet icon button (SVG x, not the character ×). Content
   scrolls internally with hidden scrollbars; max-height 80dvh.
