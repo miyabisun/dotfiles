@@ -1,6 +1,6 @@
 ---
 name: agent-talk
-description: Talk to another interactive agent (claude, codex, or cursor) running in its own tmux pane when a response, consultation, delegated result, review, or follow-up is required, or when an "[agent-talk]" message arrives in the prompt. Use agent-send instead for one-way notifications or terminal answers that need no reply. Requires tmux.
+description: Talk to another interactive agent (claude, codex, or cursor) running in its own tmux pane. Use for requests, consultations, delegated results, reviews, one-way notifications, terminal answers, or whenever an "[agent-talk]" message arrives in the prompt. Requires tmux and agent-talk CLI v0.5.0 or newer for no-reply sends.
 ---
 
 # Agent Talk
@@ -31,44 +31,28 @@ need no follow-up. If a queued request becomes undeliverable (the target
 exits or is replaced), the daemon sends the sender an `[agent-talk] 配達失敗`
 notice instead — silence never means the request is still pending forever.
 
-## Reply policy
+## Reply mode
 
-The first non-empty line of every new message body declares its reply policy:
+Use ordinary `agent-talk send` for a request, question, consultation, or review
+that needs a substantive response. Use `agent-talk send --no-reply` for a final
+answer, notification, acknowledgement-free handoff, or terminal veto.
 
-```text
-reply-policy: response-required
-```
-
-or:
-
-```text
-reply-policy: no-reply
-```
-
-Use `response-required` for a request, question, consultation, or review. Use
-`no-reply` for a final answer, notification, acknowledgement-free handoff, or
-terminal veto. A missing marker means `response-required` for compatibility
-with messages created before this protocol.
-
-The body policy overrides the broker-generated `reply:` line in the brief. That
-line provides a return address; it does not require a response to a `no-reply`
-message.
+The daemon makes the one-way intent authoritative: a no-reply brief says that a
+response is normally unnecessary, and its doorbell asks the recipient only to
+read the message. Do not recreate reply mode as a body marker.
 
 ## Sending a request
 
 1. Check who is available: `agent-talk who`
    (columns: name, state, session:window.pane, pane id, current dir)
-2. Compose a self-contained brief whose first non-empty line is
-   `reply-policy: response-required`, followed by the objective, exact question or task,
-   relevant repository paths, constraints, requested answer format. The
+2. Compose a self-contained brief with the objective, exact question or task,
+   relevant repository paths, constraints, and requested answer format. The
    recipient shares your filesystem but NOT your conversation context.
 3. Send it (body via stdin; the broker journals the brief and rings the
    doorbell with its message ID):
 
    ```bash
    agent-talk send codex <<'EOF'
-   reply-policy: response-required
-
    ## 依頼
    ...
    EOF
@@ -78,7 +62,14 @@ message.
    line). One substantive reply normally arrives asynchronously as an
    `[agent-talk]` prompt in your own pane; do not block waiting for it.
 
-Use agent-send instead when the outbound message itself should end the exchange.
+When the outbound message itself should end the exchange, add `--no-reply`:
+
+```bash
+agent-talk send codex --no-reply <<'EOF'
+## 連絡
+...
+EOF
+```
 
 ## Addressing
 
@@ -101,33 +92,29 @@ When a prompt starting with `[agent-talk]` arrives:
    stdout contains `from`, `reply` instructions, and the brief. `read` is
    non-destructive until journal checkpointing, so it may be retried if the
    turn is interrupted.
-2. Read the body's reply policy before acting. Treat a missing marker as
-   `response-required`; treat `no-reply` as overriding the brief's generated
-   `reply:` instruction.
+2. Read the brief's generated `reply:` instruction before acting. The daemon
+   marks one-way messages as normally requiring no response.
 3. Do the work in your own session as usual.
-4. For `response-required`, return one substantive result to the address in the
-   `reply:` line. Make that result terminal by sending it with a no-reply body:
+4. When a response is requested, return one substantive result to the address
+   in the `reply:` line. Make that result terminal with `--no-reply`:
 
    ```bash
-   agent-talk send '%<pane-id>' <<'EOF'
-   reply-policy: no-reply
-
+   agent-talk send '%<pane-id>' --no-reply <<'EOF'
    ## 回答
    ...
    EOF
    ```
 
-   If the result must ask a necessary follow-up question, use
-   `reply-policy: response-required` instead. If the sender is `human`, showing
-   the result in your own pane is enough.
-5. For `no-reply`, do not send routine acknowledgement, thanks, receipt,
+   If the result must ask a necessary follow-up question, omit `--no-reply`.
+   If the sender is `human`, showing the result in your own pane is enough.
+5. For a no-reply brief, do not send routine acknowledgement, thanks, receipt,
    approval confirmation, agreement, status recap, or optional improvement
    advice. The broker's `sent ->` or `queued (busy) ->` output already proves
    delivery.
 
 ### Material veto exception
 
-Reply to a `no-reply` message only when silence would cause material harm:
+Reply to a no-reply brief only when silence would cause material harm:
 
 - following it would be destructive, irreversible, or unsafe;
 - it directly contradicts the user's source request or a verified repository
@@ -136,11 +123,10 @@ Reply to a `no-reply` message only when silence would cause material harm:
 
 Preference differences, non-blocking suggestions, partial disagreement,
 acknowledgement, and courtesy never qualify. Send at most one veto, include the
-evidence and required correction, and make the veto terminal:
+evidence and required correction, and make the veto terminal with
+`agent-talk send '%<pane-id>' --no-reply`:
 
 ```text
-reply-policy: no-reply
-
 ## 異議
 ...
 ```
