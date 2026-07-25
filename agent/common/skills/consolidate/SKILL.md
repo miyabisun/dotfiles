@@ -166,8 +166,10 @@ answer:
 - Are old production paths actually unreachable or deleted?
 - Are compatibility, errors, concurrency, and performance preserved?
 
-Use `sec` when consolidation crosses trust, auth, tenant, serialization, SQL,
-URL, filesystem, command, secret, or destructive-data boundaries.
+Consolidation that crosses trust, auth, tenant, serialization, SQL, URL,
+filesystem, command, secret, or destructive-data boundaries is
+security-sensitive. Run `deliver`'s two independent security reviews at the point
+its route defines, after `formatter`; do not run them here.
 
 After fixes, rerun affected characterization/full checks and inspect retired
 path searches again. Material ownership or API redesign requires a fresh full

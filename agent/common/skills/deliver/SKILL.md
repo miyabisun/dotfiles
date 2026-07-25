@@ -91,10 +91,23 @@ Maintain a compact delivery ledger in the parent context:
   "counterpart": {
     "runtime": "claude|codex|none",
     "pane": "%N|null",
-    "planning_review": {"message_id": "#N|null", "result": "pending|approved|unavailable"},
+    "planning": {
+      "counterpart_proposal": {"message_id": "#N|null", "result": "pending|received|unavailable"},
+      "reconciliation": {"message_id": "#N|null", "result": "pending|aligned|user_decision"}
+    },
     "implementation_review": {"message_id": "#N|null", "result": "pending|approved|fallback"}
   },
-  "formatter": {"result": "pending", "applicability": "pending", "requested_files": [], "added_files": []}
+  "formatter": {"result": "pending", "applicability": "pending", "requested_files": [], "added_files": []},
+  "review_snapshot": {"id": null, "paths": [], "hashes": {}, "git_status": null, "diff_identity": null, "checks": []},
+  "security_review": {
+    "applicable": false,
+    "local": {"runtime": "...", "independence": "independent|implementer", "receipt": null},
+    "counterpart": {"runtime": "...", "independence": "independent|implementer", "receipt": null},
+    "union_findings": [],
+    "open_critical_high": [],
+    "approved_snapshot_id": null,
+    "fallback_reason": null
+  }
 }
 ```
 
@@ -127,7 +140,7 @@ criteria, scope, verification commands, and important failure modes.
 - A separate strategist is optional; use it only when the contract itself is
   difficult, cross-cutting, UI-heavy, externally integrated, or high risk.
 
-### 1a. Cross-check the plan with the counterpart
+### 1a. Co-author the contract with the counterpart
 
 Before implementation, use `agent-talk who` to look for the opposite interactive
 application in the current tmux session:
@@ -142,33 +155,61 @@ selected pane ID in the ledger, and address that exact pane directly for every
 later request. If multiple equally eligible panes remain, show the candidates and
 ask the user which one to use; ambiguity is not absence.
 
-When a counterpart exists, send it a review brief with the following clearly
-separated material:
+Both sides propose a contract independently, then reconcile. Reviewing a
+finished proposal fixes the counterpart on hunting for errors in one framing;
+proposing independently explores a second design space as well.
+
+Immediately after capturing `source_request`, and before finalizing the local
+contract, send the fixed counterpart pane the following clearly separated
+material:
 
 - `Original user request (verbatim)`: the captured task text in its original
   language, without translation, summarization, or paraphrase; use the
   reconstructed label above when exact text is unavailable.
 - `Material user follow-ups (verbatim)`, when any materially changed the task.
-- The proposed contract, acceptance criteria, execution route, important risks,
-  and unresolved questions.
+- Verified repository facts, protected paths, and objective environment
+  constraints.
+- A request for an independent proposal containing acceptance criteria, scope,
+  verification commands, risks, and unresolved questions.
 
-Instruct the counterpart to compare the proposal against the user text, not
-merely judge whether the proposal is internally sound. It must report omitted
-requirements, contradictory interpretations, unauthorized scope expansion, and
-ideas that may be good in isolation but do not answer the request. Require a
-structured result:
+Do not include a proposed contract in this first brief. Draft the local proposal
+in the same turn that sends the brief: the counterpart reply cannot arrive until
+a later turn, so this ordering is structurally enforced rather than a matter of
+discipline. Finish other useful read-only preparation, report that delivery is
+waiting for the counterpart, and end the turn. A counterpart request received
+while this delivery is waiting may be handled normally; it does not count as
+starting implementation.
+
+Reconcile both proposals against the original request by source-request
+fidelity, verified repository evidence, testability, and smallest sufficient
+scope. Record material differences, the selected resolution, and its evidence.
+Send the integrated contract and that reconciliation record to the same pane for
+one check that asks two questions, not one:
+
+1. does a material mismatch remain between the integrated contract and the
+   counterpart proposal; and
+2. naming it now, does the integrated contract contain a defect that neither
+   proposal surfaced — an untestable success criterion, a missing failure mode,
+   an exit contract that cannot hold, or evidence that cannot be produced?
 
 ```json
-{"approved": true, "request_alignment": {"pass": true, "issues": []}, "issues": [], "summary": "..."}
+{"aligned": true, "material_mismatches": [], "corrections": [], "summary": "..."}
 ```
 
-Do not begin implementation until both `approved` and
-`request_alignment.pass` are true. Incorporate blocking findings before
-implementation. Because agent-talk replies arrive in a later turn, finish useful
-read-only preparation, report that delivery is waiting for the counterpart, and
-end the turn. Resume from the ledger when the reply prompt arrives. A counterpart
-review request received while this delivery is waiting may be handled normally;
-it does not count as starting implementation.
+A `corrections` entry from the second question is closed locally with focused
+evidence; it does not restart planning. Do not implement while a material
+mismatch remains. Never resolve a disagreement by runtime precedence: decide it
+with repository evidence or a focused check, choose the smaller mechanism when
+only preference separates the options, and ask the user when materially
+different product outcomes remain. The normal protocol is one
+independent-proposal exchange and one reconciliation exchange; do not turn
+planning into an open-ended approval loop. Escalate an unresolved material
+conflict to the user instead of spending a third round on it.
+
+A counterpart planning exchange does not replace `strategist` or `strategy-rev`.
+Use `strategist` when the contract itself needs specialist design (migration,
+complex state transitions, external integration), and `strategy-rev` to verify a
+contract or test design that `strategist` created or changed.
 
 Do not treat a delayed reply or a busy pane as absence. Fall back to the existing
 risk-based review route only when agent-talk reports delivery failure, the fixed
@@ -187,12 +228,36 @@ Classify by the highest applicable risk:
 |---|---|---|
 | `low` | docs, comments, narrow config, mechanical rename | implement → focused validation → diff self-review → `formatter` → commit |
 | `standard` | ordinary bug fix, feature, refactor, multi-file behavior | implement → relevant checks → independent `rev` → `formatter` → commit |
-| `high` | auth, permissions, secrets, destructive data, migration, payments, concurrency, public compatibility | contract specialist as useful → implement → full behavior checks → independent `rev` + `sec` → `formatter` → commit |
+| `high` | auth, permissions, secrets, destructive data, migration, payments, concurrency, public compatibility | contract specialist as useful → implement → full behavior checks → independent `rev` → `formatter` → security gate when security-sensitive → commit |
+
+Treat every security-sensitive change as high risk. A high-risk change that is
+purely non-security (concurrency, public compatibility, a large migration with no
+threat path) uses the high route without a security gate; a security-adjacent
+change with no reachable threat path is not security-sensitive.
 
 When planning selected a counterpart, replace only the general semantic review
 in this table: replace low-risk diff self-review and standard/high-risk `rev`
 with the counterpart implementation review described below. Do not replace
-`strategy-rev`, `ui-checker`, `sec`, `formatter`, or `committer`.
+`strategy-rev`, `ui-checker`, `sec`, `formatter`, or `committer`. For
+security-sensitive work, keep the implementation runtime's independent `sec` gate
+and add an independent security review from the fixed counterpart pane. Both
+review the same frozen snapshot, and their findings form one blocking union.
+
+The security gate runs after `formatter`, not before it: freezing a snapshot and
+then letting `formatter` rewrite the source would mean the reviewed bytes are not
+the committed bytes.
+
+```text
+high, non-security:   implement → full checks → counterpart implementation
+                      review → formatter → committer → commit
+security-sensitive:   implement → full checks → counterpart implementation
+                      review → formatter → freeze the final snapshot →
+                      local sec + counterpart sec independently →
+                      reconcile the union → committer → commit
+```
+
+The implementing agent's own inspection never substitutes for either independent
+security receipt.
 
 UI behavior additionally requires `ui-checker` evidence for observable visual
 and interaction criteria. Use `designer` only when visual/product decisions are
@@ -293,7 +358,13 @@ Additional gates:
   or tests, require `strategy-rev.approved=true` before treating that evidence
   design as authoritative.
 - UI: every criterion has `ui-checker.evidence`; missing evidence is failure.
-- Security-sensitive: `sec.approved=true` and no Critical/High issue.
+- Security-sensitive: the local and counterpart security receipts approve the
+  same frozen snapshot, the union of their blocking findings is empty, required
+  security criteria have evidence, and no Critical/High issue remains. Then
+  `committer` verifies that the staged snapshot is that same snapshot.
+- If one security side is objectively unavailable, use the available independent
+  review as an explicitly recorded reduced-independence fallback; never present
+  it as dual approval.
 
 Do not impose a fixed retry count while new evidence shows progress. Stop when
 the same blocking condition repeats and no safe in-scope action can advance it.
@@ -345,6 +416,57 @@ summary. Missing classifications, applicable results, exclusion reasons,
 requested files, formatter-added files, or independent formatter approval block
 the commit.
 
+### 5a. Freeze and run two independent security reviews
+
+For security-sensitive work, freeze the final post-`formatter` snapshot before
+either security review starts, and record a manifest in `review_snapshot`:
+
+- the reviewed paths, with protected and unrelated paths listed separately;
+- a content hash per reviewed file;
+- `git status --short`;
+- the identity of the reviewed diff;
+- the checks already executed.
+
+Do not mutate the reviewed files while either security review is in flight.
+
+Run two reviews against that exact manifest, independently and in parallel where
+possible:
+
+- the implementation runtime's independent `sec` role; and
+- the fixed counterpart pane, instructed to read `agent/common/agents/sec.md`
+  completely and apply that same canonical role rather than a brief-local
+  paraphrase.
+
+Give both the original request, integrated contract, trust boundaries, external
+inputs, privileged or secret sinks, current diff, executed checks, and the
+manifest. Do not reveal either reviewer's initial findings to the other before
+both initial receipts exist.
+
+Treat the two results as a union, not a vote. Do not average severities, outvote
+a finding, or silently drop one. Every blocking finding from either side must be
+fixed, or dismissed with concrete evidence accepted by the reviewer that raised
+it. When two findings conflict with each other, or one conflicts with a
+requirement the user stated, build one integrated correction that satisfies both
+constraints instead of discarding either; ask the user only when evidence cannot
+resolve a material product or security trade-off.
+
+Both receipts are equal blockers. Record independence metadata — a reviewer that
+authored the production change is not an independent receipt for it, and a
+cross-runtime review carries stronger independence — but never use that metadata
+to weigh one side's findings down.
+
+After fixes, issue a new manifest. Use a focused closure review from both sides
+when the threat model and design are unchanged; rerun both full reviews when a
+fix changes a trust boundary, parser, authorization rule, secret flow,
+destructive operation, or other material security semantics. Do not advance to
+`committer` until both receipts identify the same current manifest, both have
+`approved=true`, their blocking union is empty, and no Critical/High issue
+remains.
+
+Do not impose a round cap on this gate. Continue focused closure while fixes keep
+producing new evidence; when the same conflict repeats with no new evidence,
+return the product or security trade-off to the user instead of trading turns.
+
 ### 6. Stage through the gate and commit in the parent
 
 Before invoking `committer`, re-read the ledger and verify:
@@ -357,10 +479,14 @@ AND open_issues is empty
 AND diff is requested work plus disclosed bounded maintenance
 AND formatter.approved is true
 AND formatter receipt accounts for every requested and formatter-added file
+AND for security-sensitive work, both security receipts approve the current frozen snapshot
 ```
 
 Give `committer` the task, scope, maintenance ledger, evidence summary, exact
-files eligible for staging, and the formatter receipt. The explicit invocation
+files eligible for staging, the formatter receipt, and the security manifest when
+one exists. `committer` reports
+`staged_snapshot_matches_security_manifest: true|false`; a false value blocks the
+commit because the approved bytes and the staged bytes differ. The explicit invocation
 of `deliver` is the commit authorization, but commit execution stays with the
 parent agent that directly retains that authorization and the source request.
 
@@ -402,7 +528,8 @@ On success, return a concise delivery receipt:
   "commit": "<hash> <subject>",
   "criteria": [{"requirement": "...", "evidence": "...", "pass": true}],
   "checks": [{"command": "...", "result": "pass"}],
-  "reviews": [{"gate": "peer|rev|ui|sec", "result": "approved|not-applicable", "message_id": "#N|null"}],
+  "reviews": [{"gate": "planning|peer|rev|ui|sec-local|sec-counterpart", "result": "approved|not-applicable", "message_id": "#N|null"}],
+  "security_snapshot": "<manifest id>|not-applicable",
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
   "formatter": {"result": "approved", "applicability": "checked|not_applicable", "added_files": []}
 }
@@ -415,8 +542,21 @@ issues, and the exact user decision or external change needed.
 
 - Optimize for verified outcomes, not phase attendance.
 - Own safe local closure; do not expose routine internal handoffs as user blockers.
-- When a counterpart was selected, do not implement before its planning review
-  or normalize and commit before its implementation review.
+- When a counterpart was selected, do not implement before the contract is
+  reconciled with it, or normalize and commit before its implementation review.
+- Never send a proposed contract in the first planning brief, and never read the
+  counterpart proposal before drafting the local one.
+- For security-sensitive work, never treat one security reviewer as a substitute
+  for the other while both runtimes are available; require both approvals on the
+  same frozen snapshot.
+- Never expose one security reviewer's initial findings to the other before both
+  initial receipts exist.
+- Never average, outvote, or silently drop a security finding; reconcile the
+  union with evidence.
+- Never count the implementing agent's self-review as an independent security
+  receipt.
+- Any mutation after the security freeze invalidates both receipts; issue a new
+  manifest and review again.
 - Never claim completion from an agent's prose alone; require evidence.
 - Never state spec identifiers, external URLs, or third-party API semantics
   from memory; verify them or mark them as unverified in the receipt.
