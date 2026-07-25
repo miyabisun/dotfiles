@@ -1,0 +1,5 @@
+# bin/bw/* は $(dirname "${BASH_SOURCE[0]}")/lib.sh を source する。
+# 静的解析では CWD 基準で探して見つけられないため、スクリプトのある
+# ディレクトリを基準に解決させる (SC1091 の回避)。
+external-sources=true
+source-path=SCRIPTDIR

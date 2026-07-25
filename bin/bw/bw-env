@@ -5,25 +5,132 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 FOLDER="Env Files"
 
-usage() {
+usage() { # [exit_code]
     cat <<'EOF'
 Usage: bw-env <command> [args]
 
 Commands:
   save <name> [file]   .env ファイルを保存する (default: ./.env)
   load <name> [file]   .env ファイルを復元する (default: ./.env, 0600)
+  diff <name> [file]   ローカルの .env と保存内容をキー単位で比較する (default: ./.env)
   get <name> <var>     保存した .env から1変数の値だけを stdout に出す
   keys <name>          保存した .env の変数名一覧を stdout に出す
   list                 保存済みの .env 一覧
   remove <name>        保存した .env を削除する
 
+diff の記号:  - Bitwarden にのみ存在 / + ローカルにのみ存在 / ~ 両方にあるが値が異なる
+diff は既定では値を表示しない。--values (-v) で値も表示する。
+diff の終了コード: 0 = 差分なし, 1 = 差分あり, 2 = エラー
+
 name にはプロジェクト名を使う (例: bw-env save shoebox ~/projects/shoebox/.env)
 EOF
-    exit 1
+    exit "${1:-1}"
 }
 
 get_content() { # <name>
     get_item_notes "$FOLDER" "$1" | base64 -d
+}
+
+# .env 本文 (stdin) から "mark\x02key\x02value" を1行1キーで出す (<label> はエラー表示用)。
+# mark=1 は「引用符なしで折り返された base64 の末尾行」= キー名自体が値の断片であることを示す。
+# 'export ' 接頭辞は無視し、値は最初の '=' で分割する (値内の '=' は保持)。
+# 複数行の値 (引用符が同じ行で閉じない値と PEM ブロック) は閉じまで畳んで1つの値にする。
+# 同名キーは先勝ち (cmd_get の head -n 1 と同じ規約)。
+# 解釈できない行は黙って捨てない。捨てると (a) 継続行が「キー行」に見えて値の断片が
+# 出力に漏れ、(b) 本文の違いを取りこぼして「一致」と誤報するため、行番号を添えて中断する
+# (行の内容は表示しない)。
+env_pairs() { # <label>
+    awk -v label="$1" '
+        function bail(msg) {
+            print "Error: " label ": " msg > "/dev/stderr"
+            failed = 1
+            exit 1
+        }
+        # s の中で引用符 q が閉じているか (二重引用符内の \ はエスケープ、単一引用符内では文字)
+        function closes(s, q,    i, c) {
+            i = 1
+            while (i <= length(s)) {
+                c = substr(s, i, 1)
+                if (q == "\"" && c == "\\") { i += 2; continue }
+                if (c == q) return 1
+                i++
+            }
+            return 0
+        }
+        # 引用符なし・padding なしの純 base64 本体か (折り返しの1行目)。
+        # 判定用に末尾の空白と CR を無視する (CRLF や貼り付け由来の末尾空白で外れないように)。
+        function b64_body(v,   t) {
+            t = v
+            sub(/[[:space:]]+$/, "", t)
+            return (length(t) >= 32 && t ~ /^[A-Za-z0-9+\/]+$/)
+        }
+        # 折り返された base64 の末尾行か (キーが英数字のみ + 値が padding だけ)。
+        # 長さは見ない。直前の行が base64 本体だったという文脈だけで判定する。
+        function chunk_tail(k, v,   t) {
+            t = v
+            sub(/[[:space:]]+$/, "", t)
+            if (t != "" && t != "=" && t != "==") return 0
+            return (k ~ /^[A-Za-z0-9]+$/)
+        }
+        function emit(m, k, v) {
+            if (k in seen) return
+            seen[k] = 1
+            print m fs k fs v
+        }
+        # fs は値の前後の TAB を read が剥がさないように IFS whitespace 以外にする
+        BEGIN { sep = sprintf("%c", 1); fs = sprintf("%c", 2) }
+        {
+            line = $0
+            if (pending == "quote") {
+                acc = acc sep line
+                if (closes(line, quote)) { emit(0, key, acc); blob = 0; pending = "" }
+                next
+            }
+            if (pending == "pem") {
+                acc = acc sep line
+                if (line ~ /-----END/) { emit(0, key, acc); blob = 0; pending = "" }
+                next
+            }
+            # 空行やコメントを挟んだら折り返しの文脈は切れる (mark を持ち越さない)
+            if (line ~ /^[[:space:]]*$/ || line ~ /^[[:space:]]*#/) { blob = 0; next }
+            if (line !~ /^[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*=/) {
+                bail("line " FNR ": cannot parse as KEY=value" \
+                    " (keys are [A-Za-z_][A-Za-z0-9_]*, no spaces around '='," \
+                    " comments need a leading #, multi-line values need quotes or a PEM block)")
+            }
+            sub(/^[[:space:]]*(export[[:space:]]+)?/, "", line)
+            eq = index(line, "=")
+            key = substr(line, 1, eq - 1)
+            value = substr(line, eq + 1)
+            quote = substr(value, 1, 1)
+            if ((quote == "\"" || quote == "'"'"'") && !closes(substr(value, 2), quote)) {
+                pending = "quote"
+                blob = 0
+                start = FNR
+                acc = value
+                next
+            }
+            if (value ~ /^-----BEGIN/) {
+                pending = "pem"
+                blob = 0
+                start = FNR
+                acc = value
+                next
+            }
+            mark = (blob && chunk_tail(key, value)) ? 1 : 0
+            blob = b64_body(value)
+            emit(mark, key, value)
+        }
+        END {
+            if (failed) exit 1
+            if (pending == "quote") {
+                bail("unterminated quoted value for " key " (starts at line " start ")")
+            }
+            if (pending == "pem") {
+                bail("unterminated PEM block for " key " (starts at line " start ")")
+            }
+        }
+    '
 }
 
 cmd_save() {
@@ -44,6 +151,158 @@ cmd_load() {
     get_content "$name" > "$file"
     chmod 600 "$file"
     echo "Saved env file to $file"
+}
+
+# env_pairs の1レコードが健全か検査する (mark は 0/1、キーは非空)。
+# 壊れたレコードを黙って捨てると伏せ字も比較も静かに失われるため、必ずエラーにする。
+read_mark() { # <mark> <key> <label>
+    case "$1" in
+        0 | 1) ;;
+        *)
+            echo "Error: could not read the parsed $3 (missing chunk mark)." >&2
+            return 1
+            ;;
+    esac
+    if [ -z "$2" ]; then
+        echo "Error: could not read the parsed $3 (empty key)." >&2
+        return 1
+    fi
+}
+
+# 読み取り専用。既定では値を出さずキー単位の差分だけを報告する (--values で値も出す)
+cmd_diff() {
+    local values=0 args=() opts=1 arg
+    for arg in "$@"; do
+        if [ "$opts" -eq 1 ]; then
+            case "$arg" in
+                --) opts=0; continue ;;
+                --values|-v) values=1; continue ;;
+                -?*)
+                    echo "Error: unknown option '$arg'" >&2
+                    exit 2
+                    ;;
+            esac
+        fi
+        args+=("$arg")
+    done
+    if [ "${#args[@]}" -gt 2 ]; then
+        echo "Error: too many arguments (expected: diff <name> [file])" >&2
+        exit 2
+    fi
+    local name="${args[0]:-}" file="${args[1]:-./.env}"
+    [ -z "$name" ] && usage 2
+    if [ ! -f "$file" ]; then
+        echo "Error: env file not found at $file" >&2
+        exit 2
+    fi
+
+    local names remote
+    if ! names=$(list_item_names "$FOLDER"); then
+        echo "Error: could not list '$FOLDER' folder." >&2
+        exit 2
+    fi
+    if ! printf '%s\n' "$names" | grep -qxF -- "$name"; then
+        echo "Error: env '$name' not found in '$FOLDER' folder." >&2
+        exit 2
+    fi
+    if ! remote=$(get_content "$name"); then
+        echo "Error: could not read env '$name' (notes are empty or not base64)." >&2
+        exit 2
+    fi
+
+    # パースはコマンド置換で行う (プロセス置換では読み取り/awk/sort の失敗を検知できない)
+    local remote_pairs local_pairs
+    if ! remote_pairs=$(printf '%s\n' "$remote" | env_pairs "env '$name' in '$FOLDER'"); then
+        echo "Error: could not parse the stored env '$name'." >&2
+        exit 2
+    fi
+    # 第1引数の "$file" はエラー表示用のラベルで、書き込みはしない (SC2094 は誤検知)
+    # shellcheck disable=SC2094
+    if ! local_pairs=$(env_pairs "$file" < "$file"); then
+        echo "Error: could not read or parse env file at $file" >&2
+        exit 2
+    fi
+
+    # 以降のプロセス置換は検証済みの文字列を流すだけ (復号内容をディスクに書かない)
+    # 区切りは env_pairs と同じ \x02 (TAB だと read が値の前後を剥がす)
+    local -A remote_map=() local_map=() chunk_map=()
+    local mark key value
+    # mark の検査を先に行う (空キー判定を先にすると壊れたレコードが検査を迂回する)
+    while IFS=$'\002' read -r mark key value; do
+        [ -z "$mark$key$value" ] && continue
+        if ! read_mark "$mark" "$key" "env '$name' in '$FOLDER'"; then
+            exit 2
+        fi
+        [ "$mark" = 1 ] && chunk_map["$key"]=1
+        remote_map["$key"]="$value"
+    done < <(printf '%s\n' "$remote_pairs")
+    while IFS=$'\002' read -r mark key value; do
+        [ -z "$mark$key$value" ] && continue
+        if ! read_mark "$mark" "$key" "$file"; then
+            exit 2
+        fi
+        [ "$mark" = 1 ] && chunk_map["$key"]=1
+        local_map["$key"]="$value"
+    done < <(printf '%s\n' "$local_pairs")
+
+    local keys
+    if ! keys=$(printf '%s\n' "${!remote_map[@]}" "${!local_map[@]}" | LC_ALL=C sort -u); then
+        echo "Error: could not sort the env key list." >&2
+        exit 2
+    fi
+
+    # 畳んだ複数行の値は表示だけ '\n' に戻す (比較は畳んだままの完全一致で行う)
+    local nl=$'\001'
+    local report=() differ=0 bw_only=0 local_only=0 same=0 withheld=0 shown hide
+    while read -r key; do
+        [ -z "$key" ] && continue
+        # 引用符なしで折り返された base64 の途中行は、構文上は代入と区別できない。
+        # 代入として比較はするが、キー名が値の断片になり得るため既定では名前を出さない。
+        shown="$key"
+        hide=0
+        if [ "$values" -eq 0 ] && [ "${chunk_map[$key]:-0}" = 1 ]; then
+            shown="<withheld>"
+            hide=1
+        fi
+        if [ -z "${remote_map[$key]+set}" ]; then
+            local_only=$((local_only + 1))
+            report+=("+ $shown")
+            if [ "$values" -eq 1 ]; then
+                report+=("    local:     ${local_map[$key]//$nl/\\n}")
+            fi
+        elif [ -z "${local_map[$key]+set}" ]; then
+            bw_only=$((bw_only + 1))
+            report+=("- $shown")
+            if [ "$values" -eq 1 ]; then
+                report+=("    bitwarden: ${remote_map[$key]//$nl/\\n}")
+            fi
+        elif [ "${remote_map[$key]}" != "${local_map[$key]}" ]; then
+            differ=$((differ + 1))
+            report+=("~ $shown")
+            if [ "$values" -eq 1 ]; then
+                report+=("    bitwarden: ${remote_map[$key]//$nl/\\n}" \
+                    "    local:     ${local_map[$key]//$nl/\\n}")
+            fi
+        else
+            same=$((same + 1))
+            hide=0 # 一致したキーは行を出さないので伏せる対象にならない
+        fi
+        withheld=$((withheld + hide))
+    done < <(printf '%s\n' "$keys")
+
+    if [ "${#report[@]}" -gt 0 ]; then
+        printf '%s\n' "${report[@]}"
+    fi
+    if [ "$withheld" -gt 0 ]; then
+        printf '# %d key name(s) withheld: they look like a base64 value wrapped without quotes; %s\n' \
+            "$withheld" "quote the value, or use --values to see them"
+    fi
+    printf '# %s vs %s: %d differ, %d bitwarden-only, %d local-only, %d identical\n' \
+        "$name" "$file" "$differ" "$bw_only" "$local_only" "$same"
+    if [ $((differ + bw_only + local_only)) -gt 0 ]; then
+        exit 1
+    fi
+    exit 0
 }
 
 cmd_get() {
@@ -76,7 +335,7 @@ cmd_remove() {
 }
 
 case "${1:-}" in
-    save|load|get|keys|list|remove)
+    save|load|diff|get|keys|list|remove)
         cmd="$1"; shift
         require_unlocked
         "cmd_$cmd" "$@"
