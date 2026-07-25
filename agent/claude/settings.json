@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Skill(deliver)",
       "Skill(consolidate)",
@@ -30,9 +29,10 @@
       "Edit(**/.env.staging)",
       "Edit(**/.env.production)",
       "Edit(**/.env.production.local)"
-    ]
+    ],
+    "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -165,7 +165,7 @@
     "learning-output-style@claude-plugins-official": false
   },
   "language": "Japanese",
-  "effortLevel": "medium",
+  "effortLevel": "high",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized",
