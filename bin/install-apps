@@ -93,6 +93,8 @@ install_agent_talk() (
 
   tmpdir="$(mktemp -d)"
   target_tmp=""
+  # 下の trap EXIT から呼ぶ (shellcheck は間接呼び出しを追えない)
+  # shellcheck disable=SC2329
   cleanup() {
     rm -rf "$tmpdir"
     [ -z "$target_tmp" ] || rm -f "$target_tmp"

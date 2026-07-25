@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# assert する文字列は対象ファイルの literal なので、$ や ` を展開させない
+# shellcheck disable=SC2016
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

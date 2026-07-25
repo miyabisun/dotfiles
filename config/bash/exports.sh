@@ -6,6 +6,7 @@
 # --------------------------------------------------
 # Secrets
 # --------------------------------------------------
+# shellcheck source=/dev/null
 [ -f "$HOME/.config/.secrets" ] && . "$HOME/.config/.secrets"
 
 # --------------------------------------------------
@@ -26,11 +27,9 @@ _prepend_path() {
 
 # Homebrew keg-only formulas (resolves /opt/homebrew, /usr/local, /home/linuxbrew/.linuxbrew)
 if command -v brew >/dev/null 2>&1; then
-  for _keg in rustup; do
-    _keg_bin="$(brew --prefix "$_keg" 2>/dev/null)/bin"
-    [ -d "$_keg_bin" ] && _prepend_path "$_keg_bin"
-  done
-  unset _keg _keg_bin
+  _keg_bin="$(brew --prefix rustup 2>/dev/null)/bin"
+  [ -d "$_keg_bin" ] && _prepend_path "$_keg_bin"
+  unset _keg_bin
 fi
 
 unset -f _prepend_path
@@ -43,6 +42,7 @@ unset -f _prepend_path
 export BUN_INSTALL="$HOME/.bun"
 
 # cargo / rust
+# shellcheck source=/dev/null
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # Aliases (fish built-in equivalents)

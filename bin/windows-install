@@ -6,7 +6,7 @@
 #
 set -euo pipefail
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE:-${(%):-%N}}")"; pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 dotfiles_dir="$script_dir/.."
 claude_src="$dotfiles_dir/agent/claude"
 skills_src="$dotfiles_dir/agent/common/skills"
