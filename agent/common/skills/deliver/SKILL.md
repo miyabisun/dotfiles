@@ -62,10 +62,13 @@ example commands from a clean state when feasible (including any committed
 claims (spec or RFC identifiers, URLs, API semantics, defaults) against their
 sources rather than writing them from memory. Route substantive user-facing
 documentation authoring (a new README, docs/**, example configuration) to the
-`docs` role rather than writing it incidentally in the parent or `dev`; its
-receipt of executed commands and claim sources is the documentation evidence,
-and `rev` reviews it like any other deliverable. Trivial doc edits (typo,
-one-line sync with a code change) may stay with the implementer.
+`docs` role rather than writing it incidentally in the parent or `dev`. Give
+that role the `source_request` original text, material follow-ups, and
+fidelity label under the rules above: a domain premise that shaped the design
+usually has no source other than the user's own words. Its receipt of executed
+commands and claim sources is the documentation evidence, and `rev` reviews it
+like any other deliverable. Trivial doc edits (typo, one-line sync with a code
+change) may stay with the implementer.
 
 Treat large-scale simplification or refactoring as its own `deliver` task with
 explicit scope, behavior-preservation criteria, benchmarks, and regression
