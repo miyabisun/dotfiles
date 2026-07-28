@@ -12,19 +12,29 @@ mkdir -p "$fake_bin" "$fake_home/.local/bin"
 
 cat >"$fake_bin/agent-talk" <<'AGENT_TALK'
 #!/usr/bin/env bash
-printf 'agent-talk %s\n' "$*" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf 'agent-talk argc=%s' "$#" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf ' <%s>' "$@" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf '\n' >>"$CURSOR_AGENT_TALK_TEST_LOG"
+if [[ "${1:-}" == run ]]; then
+  shift 2
+  exec "$@"
+fi
 exit 0
 AGENT_TALK
 
 cat >"$fake_bin/cursor-agent" <<'CURSOR_AGENT'
 #!/usr/bin/env bash
-printf 'cursor-agent %s\n' "$*" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf 'cursor-agent argc=%s' "$#" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf ' <%s>' "$@" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf '\n' >>"$CURSOR_AGENT_TALK_TEST_LOG"
 exit "${CURSOR_AGENT_TALK_TEST_STATUS:-0}"
 CURSOR_AGENT
 
 cat >"$fake_bin/codex" <<'CODEX'
 #!/usr/bin/env bash
-printf 'codex %s\n' "$*" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf 'codex argc=%s' "$#" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf ' <%s>' "$@" >>"$CURSOR_AGENT_TALK_TEST_LOG"
+printf '\n' >>"$CURSOR_AGENT_TALK_TEST_LOG"
 exit "${CURSOR_AGENT_TALK_TEST_STATUS:-0}"
 CODEX
 
@@ -41,38 +51,53 @@ run_zsh() {
 
 run_zsh cursor-agent "review this"
 cat >"$test_root/expected" <<'EXPECTED'
-agent-talk register cursor
-cursor-agent review this
-agent-talk unregister
+agent-talk argc=4 <run> <cursor> <cursor-agent> <review this>
+cursor-agent argc=1 <review this>
 EXPECTED
 cmp "$test_root/expected" "$event_log"
 
 : >"$event_log"
 run_zsh codex "preserve wrapper"
-grep -Fx 'agent-talk register codex' "$event_log" >/dev/null
-grep -Fx 'codex preserve wrapper' "$event_log" >/dev/null
-grep -Fx 'agent-talk unregister' "$event_log" >/dev/null
+cat >"$test_root/expected" <<'EXPECTED'
+agent-talk argc=4 <run> <codex> <codex> <preserve wrapper>
+codex argc=1 <preserve wrapper>
+EXPECTED
+cmp "$test_root/expected" "$event_log"
 
 : >"$event_log"
 run_zsh agent "review alias"
-grep -Fx 'agent-talk register cursor' "$event_log" >/dev/null
-grep -Fx 'cursor-agent review alias' "$event_log" >/dev/null
-grep -Fx 'agent-talk unregister' "$event_log" >/dev/null
+cat >"$test_root/expected" <<'EXPECTED'
+agent-talk argc=4 <run> <cursor> <agent> <review alias>
+cursor-agent argc=1 <review alias>
+EXPECTED
+cmp "$test_root/expected" "$event_log"
 
 : >"$event_log"
 run_zsh cursor-agent --version
-grep -Fx 'cursor-agent --version' "$event_log" >/dev/null
+grep -Fx 'cursor-agent argc=1 <--version>' "$event_log" >/dev/null
 if grep -F 'agent-talk ' "$event_log" >/dev/null; then
   echo "non-interactive cursor command must not register" >&2
   exit 1
 fi
 
 : >"$event_log"
-if CURSOR_AGENT_TALK_TEST_STATUS=23 run_zsh cursor-agent "failing turn"; then
-  echo "cursor wrapper must preserve a failing CLI status" >&2
+set +e
+CURSOR_AGENT_TALK_TEST_STATUS=23 run_zsh codex "failing turn"
+status=$?
+set -e
+if [[ "$status" -ne 23 ]]; then
+  echo "codex wrapper must preserve status 23, got $status" >&2
   exit 1
 fi
-grep -Fx 'agent-talk unregister' "$event_log" >/dev/null
+
+mv "$fake_bin/agent-talk" "$test_root/agent-talk"
+: >"$event_log"
+if run_zsh codex "missing broker" 2>"$test_root/missing-agent-talk.err"; then
+  echo "codex wrapper must fail when agent-talk is unavailable" >&2
+  exit 1
+fi
+test ! -s "$event_log"
+mv "$test_root/agent-talk" "$fake_bin/agent-talk"
 
 rm "$fake_bin/agent"
 cat >"$fake_bin/agent" <<'OTHER_AGENT'

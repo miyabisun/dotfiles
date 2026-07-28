@@ -45,31 +45,10 @@ mfa() {
   oathtool --totp --base32 "$secret" | copy && echo "mfa: copied TOTP for $entry"
 }
 
-# CLI agent の起動を agent-talk の待受登録で包む。
-# 終了 (Ctrl+D・クラッシュ含む) 後は解除する。tmux 外では登録だけ no-op。
-_agent_talk_run() {
-  local agent_name="$1"
-  local executable="$2"
-  shift 2
-
-  local registered=0
-  if command -v agent-talk > /dev/null 2>&1 \
-      && command agent-talk register "$agent_name" > /dev/null 2>&1; then
-    registered=1
-  fi
-
-  command "$executable" "$@"
-  local rc=$?
-
-  if (( registered )); then
-    command agent-talk unregister > /dev/null 2>&1 || true
-  fi
-  return $rc
-}
-
 # Codex には session lifecycle hook がないため wrapper で登録する。
+# 委譲先の agent-talk run は v0.5.1 以降が必要。
 codex() {
-  _agent_talk_run codex codex "$@"
+  command agent-talk run codex codex "$@"
 }
 
 # Cursor の管理・headless command は対話paneではないため登録しない。
@@ -93,7 +72,7 @@ _cursor_agent_is_interactive() {
 
 cursor-agent() {
   if _cursor_agent_is_interactive "$@"; then
-    _agent_talk_run cursor cursor-agent "$@"
+    command agent-talk run cursor cursor-agent "$@"
   else
     command cursor-agent "$@"
   fi
@@ -111,7 +90,7 @@ agent() {
   fi
 
   if _cursor_agent_is_interactive "$@"; then
-    _agent_talk_run cursor agent "$@"
+    command agent-talk run cursor agent "$@"
   else
     command agent "$@"
   fi
