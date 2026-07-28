@@ -69,6 +69,10 @@ config_file = "agents/docs.toml"
 description = "合格済みdelivery ledgerの対象ファイルだけを1件コミットする。"
 config_file = "agents/committer.toml"
 
+[agents.knowledge_inventory]
+description = "commit後に再利用可能なドメイン知識を棚卸しし、安全な1 batchをknowledge司書へ渡す。"
+config_file = "agents/knowledge-inventory.toml"
+
 [mcp_servers.obscura]
 command = "obscura"
 args = ["mcp"]

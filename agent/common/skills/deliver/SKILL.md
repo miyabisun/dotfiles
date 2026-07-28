@@ -53,6 +53,11 @@ Do not commit until all applicable statements are true:
     verified against authoritative documentation or a real call, or explicitly
     recorded as an unverified risk in the delivery receipt.
 
+Items 1–11 are the commit-readiness gate. After the commit, do not return the
+final delivery receipt until the domain-knowledge inventory in Section 6a has
+been attempted and recorded. A `pending` inventory is a soft failure and does
+not undo an otherwise successful delivery.
+
 Documentation-only or metadata-only changes do not require invented product
 tests. Validate their syntax, links, generated output, or consumer behavior as
 appropriate and explain why broader tests are not applicable. Documentation
@@ -101,6 +106,7 @@ Maintain a compact delivery ledger in the parent context:
     "implementation_review": {"message_id": "#N|null", "result": "pending|approved|fallback"}
   },
   "formatter": {"result": "pending", "applicability": "pending", "requested_files": [], "added_files": []},
+  "knowledge_inventory": {"status": "pending", "message_id": null, "reason": "not_run", "preflight": null},
   "review_snapshot": {"id": null, "paths": [], "hashes": {}, "git_status": null, "diff_identity": null, "checks": []},
   "security_review": {
     "applicable": false,
@@ -222,6 +228,46 @@ If agent-talk is unavailable or the current runtime has no defined counterpart,
 record `counterpart.runtime: none` with the reason and use the existing route.
 If no counterpart exists during planning, record that once and use the existing
 review route for the whole delivery.
+
+### 1b. Reconcile Project drift with home-development-rules
+
+The first reference in a delivery is **共通開発ルール（home-development-rules）**;
+after that, use the Japanese name when the context is clear and the slug for
+machine references. This is a plain scope label, not a brand. Until a dedicated
+`home-development-rules` document is introduced, the slug identifies the base
+rules distributed as `~/.claude/CLAUDE.md` or `~/.codex/AGENTS.md` (in this
+repository, `agent/common/rules/GLOBAL.md`). Those base rules are the default for
+all Projects. An explicit Project override wins only for its recorded diff, and
+`DESIGN.md` is the subordinate difference convention for UI/UX presentation.
+
+When an affected Project differs from the common rules, treat it as an obvious
+mistake that this delivery may align automatically only when these 5 conditions
+are all true:
+
+1. The canonical policyに明文規則がある.
+2. The violation is grep、build、lintなどで機械検出できる.
+3. The fix is 局所的かつ挙動保存で、API、schema、UXを変えない.
+4. The Project overrideがその逸脱を明示していない.
+5. The fix is 今回のdeliver scope内で完結する.
+
+5条件をすべて満たす場合だけ、the parent owns the bounded alignment as part
+of delivery closure and records the evidence and affected path. Otherwise use
+exactly one of these routes:
+
+- base ruleが沈黙している事項はdriftではなくProjectの自由; do not invent a
+  default or an override.
+- A base rule自体の穴、矛盾、適用不能 is a policy defect; do not work around it
+  silently and ユーザーへ相談する.
+- A 正当なProject固有理由 is not a mistake; Project overrideとして記録する.
+- If the mismatch is scope外なら自動修正せず、最終報告へ推奨として記録する.
+
+A Project override contains only the difference from the base. Put it in the
+AGENTS.md本体、またはAGENTS.mdから明示リンクされる単一file so every runtime
+can discover it in one hop; base全文をcopyしない. Record the canonical path and
+section, base側commit hashまたは日付, override理由、scope、影響、再評価条件.
+Use `home-development-rules#<existing-rule-id>` only after the canonical rule
+already supplies that stable ID. 存在しないrule IDをinventしない; until then,
+use the slug plus canonical path and section without a fragment.
 
 ### 2. Choose proportional execution
 
@@ -521,6 +567,62 @@ If unrelated changes overlap files that must be committed and safe partial
 staging cannot isolate the task with confidence, stop and ask the user instead
 of committing mixed work.
 
+### 6a. Inventory domain knowledge after commit
+
+commit後、final receipt前, capture `git rev-parse HEAD` and `git status --short`,
+then invoke the dedicated `knowledge-inventory` role exactly once. Give it the
+source request and material follow-ups with fidelity labels, the final commit
+hash and diff summary, executed checks and evidence, and candidates from this
+delivery only:
+
+- domain facts and invariants;
+- decisions and rejected or deprecated alternatives;
+- open questions and deferred choices;
+- common-rule drift and Project overrides; and
+- reusable cross-Project lessons.
+
+Do not turn the inventory into a whole-Project backlog sweep. The role follows
+the existing `agent-knowledge-intake.md` playbook and returns exactly one of:
+
+- `sent`: it found durable knowledge, sanitized one batch, sent it once, and
+  captured the broker `message_id`;
+- `not_applicable`: it found nothing worth preserving, gives a one-line reason,
+  and sends no empty batch; or
+- `pending`: the explicit `knowledge/codex` target was unavailable or ambiguous,
+  sending failed, or the safety scan could not be made clean. Record the reason,
+  but 自動再送queueを作らない.
+
+The default route is one notification-style
+`agent-talk send 'knowledge/codex' --no-reply` call, not a required
+acknowledgement exchange. There is 1 deliverにつき最大1 batch and no retry in the
+same delivery. Run only the `agent-talk` command through the runtime's escalated
+path when the workspace sandbox blocks the tmux socket; do not broaden the
+sandbox. The inventory role must not run git in arona-knowledge, write directly
+to its bundles by default, decide whether development is complete, choose
+routing or release actions, or mutate the delivered repository.
+
+After the role returns, prove the repository was not changed by comparing the
+棚卸し前後のHEAD hashと`git status --short`を比較する. A changed HEAD or worktree
+is a blocking inventory defect to investigate, but an unreachable knowledge
+session or failed safe send remains `pendingでもdelivery本体の成功を取り消さない`.
+Never amend the delivery commit to add the inventory result.
+
+The role must preserve provenance: when `source_request.fidelity=verbatim`, keep
+the user statement distinct from agent inference; when fidelity is
+`reconstructed`, never quote it as a human statement and say that the original
+text was unavailable. Before its sole send, it serializes the exact candidate
+body, excludes raw `.env*` sources and values, mechanically scans and redacts
+credential, token, private-key, private/local host, and internal-endpoint
+candidates, enumerates other URLs/hosts for classification, and rescans. If the
+second scan is not clean, it sends nothing and returns `pending` with the reason.
+Remove or redact only the unsafe items; do not discard unrelated safe knowledge.
+
+For the first live use of a newly introduced inventory/redaction path, the
+parent must inspect the serialized candidate and scan result before authorizing
+the send, and record that preflight in the delivery receipt. This one-time
+preflight does not weaken the independent security reviews of the committed
+implementation.
+
 ## Output
 
 On success, return a concise delivery receipt:
@@ -533,6 +635,7 @@ On success, return a concise delivery receipt:
   "checks": [{"command": "...", "result": "pass"}],
   "reviews": [{"gate": "planning|peer|rev|ui|sec-local|sec-counterpart", "result": "approved|not-applicable", "message_id": "#N|null"}],
   "security_snapshot": "<manifest id>|not-applicable",
+  "knowledge_inventory": {"status": "sent|not_applicable|pending", "message_id": "#N|null", "reason": "string|null", "preflight": "inspected|not_required|null"},
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
   "formatter": {"result": "approved", "applicability": "checked|not_applicable", "added_files": []}
 }
@@ -573,3 +676,8 @@ issues, and the exact user decision or external change needed.
 - Preserve unrelated user changes.
 - Never commit secrets or environment files.
 - Never push, merge, deploy, or release.
+- Never run the post-commit knowledge inventory before the parent-owned commit,
+  send more than one intake batch, retry automatically, or amend the commit with
+  its result.
+- Never put credential, token, private-key, `.env`-derived value, private host,
+  or internal endpoint material into the persistent agent-talk journal.

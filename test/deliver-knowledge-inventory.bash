@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+# assert する文字列は対象ファイルの literal なので、$ や ` を展開させない
+# shellcheck disable=SC2016,SC2088
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+deliver="$repo_root/agent/common/skills/deliver/SKILL.md"
+role="$repo_root/agent/common/agents/knowledge-inventory.md"
+adapter="$repo_root/agent/codex/agents/knowledge-inventory.toml"
+config="$repo_root/agent/codex/config.toml"
+readme="$repo_root/agent/README.md"
+
+assert_contains() {
+  local file="$1"
+  local text="$2"
+  grep -Fq -- "$text" "$file" || {
+    printf 'missing contract in %s: %s\n' "$file" "$text" >&2
+    return 1
+  }
+}
+
+# 共通開発ルールの追従を「明らかな過失」に限定する5条件
+assert_contains "$deliver" '共通開発ルール（home-development-rules）'
+assert_contains "$deliver" 'canonical policyに明文規則がある'
+assert_contains "$deliver" 'grep、build、lintなどで機械検出できる'
+assert_contains "$deliver" '局所的かつ挙動保存で、API、schema、UXを変えない'
+assert_contains "$deliver" 'Project overrideがその逸脱を明示していない'
+assert_contains "$deliver" '今回のdeliver scope内で完結する'
+assert_contains "$deliver" '5条件をすべて満たす場合だけ'
+
+# 5条件を満たさない場合の行き先
+assert_contains "$deliver" 'base ruleが沈黙している事項はdriftではなくProjectの自由'
+assert_contains "$deliver" 'base rule自体の穴、矛盾、適用不能'
+assert_contains "$deliver" 'ユーザーへ相談する'
+assert_contains "$deliver" '正当なProject固有理由'
+assert_contains "$deliver" 'Project overrideとして記録する'
+assert_contains "$deliver" 'scope外なら自動修正せず、最終報告へ推奨として記録する'
+
+# overrideはbaseの複製ではなく、AGENTS.mdから発見できる差分
+assert_contains "$deliver" 'AGENTS.md本体、またはAGENTS.mdから明示リンクされる単一file'
+assert_contains "$deliver" 'base全文をcopyしない'
+assert_contains "$deliver" 'home-development-rules#<existing-rule-id>'
+assert_contains "$deliver" '存在しないrule IDをinventしない'
+assert_contains "$deliver" 'base側commit hashまたは日付'
+assert_contains "$deliver" 'override理由、scope、影響、再評価条件'
+assert_contains "$deliver" 'agent/common/rules/GLOBAL.md'
+
+# commit後・final receipt前のsoft-fail棚卸し
+assert_contains "$deliver" '### 6a. Inventory domain knowledge after commit'
+assert_contains "$deliver" 'commit後、final receipt前'
+assert_contains "$deliver" 'knowledge-inventory'
+assert_contains "$deliver" '棚卸し前後のHEAD hashと`git status --short`を比較する'
+assert_contains "$deliver" '1 deliverにつき最大1 batch'
+assert_contains "$deliver" 'knowledge/codex'
+assert_contains "$deliver" '--no-reply'
+assert_contains "$deliver" '自動再送queueを作らない'
+assert_contains "$deliver" 'pendingでもdelivery本体の成功を取り消さない'
+assert_contains "$deliver" '"knowledge_inventory"'
+assert_contains "$deliver" '"status": "sent|not_applicable|pending"'
+assert_contains "$deliver" '"preflight": "inspected|not_required|null"'
+assert_contains "$deliver" 'parent must inspect the serialized candidate and scan result'
+
+# dedicated role: provenance、空batch禁止、安全な1回送信
+test -f "$role"
+assert_contains "$role" 'source_request.fidelity=reconstructed'
+assert_contains "$role" '人間の原文として引用しない'
+assert_contains "$role" '空batchを送らない'
+assert_contains "$role" 'typoだけの文書修正'
+assert_contains "$role" 'agent-knowledge-intake.md'
+assert_contains "$role" 'candidate_file'
+assert_contains "$role" 'candidate_file="$(mktemp)"'
+assert_contains "$role" 'host_file="$(mktemp)"'
+assert_contains "$role" 'chmod 600 "$candidate_file" "$host_file"'
+assert_contains "$role" "trap 'rm -f \"\$candidate_file\" \"\$host_file\"' EXIT HUP INT TERM"
+assert_contains "$role" '一回のshell呼び出しの中でtemporary file作成、serialize、scan、'
+assert_contains "$role" 'sensitive_pattern'
+assert_contains "$role" 'rg -q -i --pcre2 "$sensitive_pattern" "$candidate_file"'
+assert_contains "$role" 'URLとhost候補を別に列挙'
+assert_contains "$role" '再走査にも候補が残る場合は送信しない'
+assert_contains "$role" '該当itemだけを除外またはredact'
+assert_contains "$role" 'test "$scan_status" -eq 1 || exit 2'
+assert_contains "$role" 'test "$host_status" -eq 1 || exit 2'
+assert_contains "$role" 'hash_line="$(sha256sum "$candidate_file")" || exit 2'
+assert_contains "$role" '[[ "$validated_hash" =~ ^[0-9a-f]{64}$ ]] || exit 2'
+assert_contains "$role" 'test "$validated_hash" = "$send_hash" || exit 1'
+assert_contains "$role" "agent-talk send 'knowledge/codex' --no-reply"
+assert_contains "$role" '送信は最大1回'
+assert_contains "$role" '自動再送しない'
+assert_contains "$role" 'arona-knowledgeでgit操作をしない'
+assert_contains "$role" 'knowledgeは開発完了、routing、releaseを決めない'
+
+# role配布: common role + Codex adapter/config。installはdirectory symlinkなので変更不要
+test -f "$adapter"
+assert_contains "$adapter" 'name = "knowledge-inventory"'
+assert_contains "$adapter" '~/.agents/agents/knowledge-inventory.md'
+assert_contains "$config" '[agents.knowledge_inventory]'
+assert_contains "$config" 'config_file = "agents/knowledge-inventory.toml"'
+assert_contains "$readme" '`knowledge-inventory`'
+
+python3 - "$adapter" "$config" <<'PY'
+import sys
+import tomllib
+
+for path in sys.argv[1:]:
+    with open(path, "rb") as handle:
+        tomllib.load(handle)
+PY
+
+# roleに埋め込まれた実patternが代表的なbypassをfail-closedにする
+sensitive_pattern="$(sed -n "s/^   sensitive_pattern='\(.*\)'$/\1/p" "$role")"
+host_pattern="$(sed -n "s/^   host_pattern='\(.*\)'$/\1/p" "$role")"
+test -n "$sensitive_pattern"
+test -n "$host_pattern"
+
+probe_root="$(mktemp -d)"
+trap 'rm -rf "$probe_root"' EXIT
+assert_blocked() {
+  local value="$1"
+  printf '%s\n' "$value" >"$probe_root/candidate"
+  if ! rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate" \
+      && ! rg -q -i --pcre2 "$host_pattern" "$probe_root/candidate"; then
+    printf 'unsafe knowledge candidate bypassed both scans: %s\n' "$2" >&2
+    return 1
+  fi
+}
+
+openai_probe="sk-proj-$(printf 'a%.0s' {1..24})"
+slack_probe="xoxb-$(printf 'b%.0s' {1..24})"
+aws_session_probe="ASIA$(printf 'C%.0s' {1..16})"
+stripe_probe="sk_live_$(printf 'd%.0s' {1..24})"
+google_probe="AIza$(printf 'e%.0s' {1..35})"
+assert_blocked "$openai_probe" "provider token"
+assert_blocked "$slack_probe" "Slack token"
+assert_blocked "$aws_session_probe" "AWS session key"
+assert_blocked 'aws_secret_access_key = placeholder-value' "credential assignment"
+assert_blocked 'apiKey = placeholder-value' "camelCase API key"
+assert_blocked 'accessToken = placeholder-value' "camelCase access token"
+assert_blocked 'authToken = placeholder-value' "camelCase auth token"
+assert_blocked 'clientSecret = placeholder-value' "camelCase client secret"
+assert_blocked 'secretKey = placeholder-value' "camelCase secret key"
+assert_blocked 'dbPassword = placeholder-value' "camelCase database password"
+assert_blocked 'sessionToken = placeholder-value' "camelCase session token"
+assert_blocked 'idToken = placeholder-value' "camelCase identity token"
+assert_blocked 'consumerSecret = placeholder-value' "camelCase consumer secret"
+assert_blocked 'webhookSecret = placeholder-value' "camelCase webhook secret"
+assert_blocked 'signingKey = placeholder-value' "camelCase signing key"
+assert_blocked 'encryptionKey = placeholder-value' "camelCase encryption key"
+assert_blocked "$stripe_probe" "Stripe token"
+assert_blocked "$google_probe" "Google API key"
+assert_blocked 'https://demo:placeholder@example.com/path' "URL userinfo"
+assert_blocked '10.23.45.67' "bare private IPv4"
+assert_blocked 'fd12::1' "bare private IPv6"
+assert_blocked 'host: database01' "single-label host field"
+assert_blocked 'node1.corp' "private suffix host"
+assert_blocked 'prod-db.example.com' "bare FQDN"
+
+for safe_label in keyword tokenizer monkey hotkey secretary; do
+  printf '%s: documented term\n' "$safe_label" >"$probe_root/candidate"
+  if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate"; then
+    printf 'ordinary label must not be treated as a credential: %s\n' "$safe_label" >&2
+    exit 1
+  fi
+done
+
+printf '%s\n' 'token=placeholder-value' 'claim: safe reusable rule' >"$probe_root/candidate"
+rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate"
+sed -i 's/token=placeholder-value/[redacted]/' "$probe_root/candidate"
+if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate" \
+    || rg -q -i --pcre2 "$host_pattern" "$probe_root/candidate"; then
+  echo "redacted knowledge candidate must pass rescan" >&2
+  exit 1
+fi
+
+printf '%s\n' 'claim: immutable candidate' >"$probe_root/candidate"
+validated_hash="$(sha256sum "$probe_root/candidate" | cut -d ' ' -f 1)"
+printf '%s\n' 'unvalidated append' >>"$probe_root/candidate"
+send_hash="$(sha256sum "$probe_root/candidate" | cut -d ' ' -f 1)"
+if [[ "$validated_hash" == "$send_hash" ]]; then
+  echo "candidate mutation must invalidate the send hash" >&2
+  exit 1
+fi
+
+printf '%s\n' 'project: settings' 'claim: reusable public rule' >"$probe_root/candidate"
+if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate" \
+    || rg -q -i --pcre2 "$host_pattern" "$probe_root/candidate"; then
+  echo "safe knowledge candidate must pass both scans" >&2
+  exit 1
+fi
+
+printf '%s\n' 'basis: library/okf/spec.md' 'source: agent/common/skills/deliver/SKILL.md' \
+  >"$probe_root/candidate"
+if rg -q -i --pcre2 "$host_pattern" "$probe_root/candidate"; then
+  echo "source paths must not be classified as hosts" >&2
+  exit 1
+fi
+
+scan_failed=0
+if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/missing" 2>/dev/null; then
+  echo "missing scan input must not be clean" >&2
+  exit 1
+else
+  scan_status=$?
+  [[ "$scan_status" -eq 1 ]] || scan_failed=1
+fi
+test "$scan_failed" -eq 1
+
+if hash_line="$(sha256sum "$probe_root/missing" 2>/dev/null)"; then
+  echo "missing hash input must fail" >&2
+  exit 1
+fi
+test -z "$hash_line"
+
+frontmatter="$(sed -n '2,/^---$/p' "$role" | sed '$d')"
+printf '%s\n' "$frontmatter" | grep -Eq '^name: knowledge-inventory$'
+printf '%s\n' "$frontmatter" | grep -Eq '^description: '
+test "$(printf '%s\n' "$frontmatter" | grep -Ec '^[a-zA-Z_-]+:')" -eq 2
+
+# dedicated roleには書込・release orchestrationを持たせない
+assert_contains "$role" 'arona-knowledgeでgit操作をしない'
+assert_contains "$role" '`git add`、`git commit`、`git push`を実行しない'
+assert_contains "$role" 'release・deploy・pushを行わない'
+
+echo "deliver knowledge inventory contract test: pass"

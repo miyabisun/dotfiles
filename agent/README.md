@@ -89,6 +89,7 @@ Notable skills:
 - `dev` / `rev` — implement and semantic review (no self-approval)
 - `formatter` — applicability, format correction, and lint evidence for eligible source before commit
 - `ui-checker` — measure with evidence only (does not write strategy/tests)
+- `knowledge-inventory` — inventory durable delivery knowledge after commit and route one sanitized batch to the librarian
 
 ## Adding a new agent tool
 
