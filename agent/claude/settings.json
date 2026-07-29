@@ -3,7 +3,9 @@
     "allow": [
       "Skill(deliver)",
       "Skill(consolidate)",
-      "Skill(commit)"
+      "Skill(commit)",
+      "Bash(~/.local/bin/agent-talk-peer:*)",
+      "Bash(~/.local/bin/notify-file-permission.sh:*)"
     ],
     "deny": [
       "Bash(bw:*)",

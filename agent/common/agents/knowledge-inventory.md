@@ -56,8 +56,8 @@ itemはinbox/司書向けと明記する。1 deliverの候補は1 batchにまと
    残存していたら安全性の欠陥として報告する。scan前の本文をagent-talkへ渡さない。
 
    ```bash
-   candidate_file="$(mktemp)"
-   host_file="$(mktemp)"
+   candidate_file="$(mktemp /tmp/agent-knowledge.XXXXXX)"
+   host_file="$(mktemp /tmp/agent-knowledge-hosts.XXXXXX)"
    chmod 600 "$candidate_file" "$host_file"
    trap 'rm -f "$candidate_file" "$host_file"' EXIT HUP INT TERM
    ```
@@ -117,7 +117,8 @@ itemはinbox/司書向けと明記する。1 deliverの候補は1 batchにまと
    send_hash="${hash_line%% *}"
    [[ "$send_hash" =~ ^[0-9a-f]{64}$ ]] || exit 2
    test "$validated_hash" = "$send_hash" || exit 1
-   agent-talk send 'knowledge/codex' --no-reply < "$candidate_file"
+   ~/.local/bin/agent-talk-peer send 'knowledge/codex' --no-reply \
+     --body-file "$candidate_file" --sha256 "$send_hash"
    ```
 
 このscanは受け側policyの前倒しであり、完全なsecret検出を保証しない。`mykey`のような

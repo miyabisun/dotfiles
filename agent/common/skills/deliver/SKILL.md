@@ -151,7 +151,7 @@ criteria, scope, verification commands, and important failure modes.
 
 ### 1a. Co-author the contract with the counterpart
 
-Before implementation, use `agent-talk who` to look for the opposite interactive
+Before implementation, use `~/.local/bin/agent-talk-peer who` to look for the opposite interactive
 application in the current tmux session:
 
 - Claude Code's counterpart is Codex.
@@ -593,11 +593,12 @@ the existing `agent-knowledge-intake.md` playbook and returns exactly one of:
   but 自動再送queueを作らない.
 
 The default route is one notification-style
-`agent-talk send 'knowledge/codex' --no-reply` call, not a required
+`~/.local/bin/agent-talk-peer send 'knowledge/codex' --no-reply` call, not a required
 acknowledgement exchange. There is 1 deliverにつき最大1 batch and no retry in the
-same delivery. Run only the `agent-talk` command through the runtime's escalated
-path when the workspace sandbox blocks the tmux socket; do not broaden the
-sandbox. The inventory role must not run git in arona-knowledge, write directly
+same delivery. Run only the `~/.local/bin/agent-talk-peer send` notification through the
+runtime's approved command path when the workspace sandbox blocks the tmux
+socket; do not broaden the sandbox. The inventory role must not run git in
+arona-knowledge, write directly
 to its bundles by default, decide whether development is complete, choose
 routing or release actions, or mutate the delivered repository.
 

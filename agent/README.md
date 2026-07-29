@@ -59,6 +59,22 @@ Cursor CLI also imports Claude-compatible lifecycle hooks, so Claude's
 lifecycle adapters ignore payloads containing `cursor_version` and leave
 registration and turn state to the Cursor wrapper/hooks.
 
+Peer `who`, `read`, safe send, and `reply` calls are standing-authority
+conversation operations. They use the `~/.local/bin/agent-talk-peer` dispatcher, whose send
+path rejects `--skill` and `--from` before calling the broker; direct
+`agent-talk send` is not promptless. Claude allows the dispatcher explicitly,
+while Codex loads the
+narrow rules in `agent/codex/rules/agent-talk.rules`; other broker maintenance
+commands remain outside that allow list. The installer copies this
+installer-owned policy and dispatcher into machine-local runtime state rather
+than linking either back to the writable repository. The dispatcher calls only
+the adjacent regular `agent-talk` executable, never a PATH-resolved substitute.
+Peer messages never carry user authority for workspace changes.
+When a change needs direct approval,
+`~/.local/bin/notify-file-permission.sh` rings the pane, emits one sanitized MOCA notice when
+configured, and leaves the agent waiting without blocking the normal
+turn-end/idle lifecycle.
+
 ## Agents (`common/agents`)
 
 Role definitions shared by Claude Code and Cursor. Frontmatter keeps only

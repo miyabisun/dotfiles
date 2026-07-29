@@ -1,0 +1,81 @@
+#!/bin/bash
+set -euo pipefail
+
+SOURCE_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd -P)"
+RUNTIME_BIN="$HOME/.local/bin"
+RULES_DIR="$HOME/.codex/rules"
+mkdir -p "$RUNTIME_BIN" "$RULES_DIR"
+
+TMUX_RUNTIME="$(command -v tmux)" || exit 1
+CURL_RUNTIME="$(command -v curl || true)"
+if SHA256_RUNTIME="$(command -v sha256sum)"; then
+    SHA256_MODE=sha256sum
+elif SHA256_RUNTIME="$(command -v shasum)"; then
+    SHA256_MODE=shasum
+else
+    exit 1
+fi
+COPY_RUNTIME="$(command -v cp)" || exit 1
+REMOVE_RUNTIME="$(command -v rm)" || exit 1
+STAT_RUNTIME="$(command -v stat)" || exit 1
+if "$STAT_RUNTIME" -c %a "$SOURCE_ROOT" >/dev/null 2>&1; then
+    STAT_MODE=gnu
+elif "$STAT_RUNTIME" -f %Lp "$SOURCE_ROOT" >/dev/null 2>&1; then
+    STAT_MODE=bsd
+else
+    exit 1
+fi
+case "$TMUX_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
+case "$CURL_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
+case "$SHA256_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
+case "$COPY_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
+case "$REMOVE_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
+case "$STAT_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
+for RUNTIME_PATH in "$TMUX_RUNTIME" "$CURL_RUNTIME" "$SHA256_RUNTIME" \
+    "$COPY_RUNTIME" "$REMOVE_RUNTIME" "$STAT_RUNTIME"; do
+    [[ "$RUNTIME_PATH" != *[$' \t\r\n']* ]] || exit 1
+done
+
+RUNTIME_PATHS="$RUNTIME_BIN/.dotfiles-agent-runtime"
+if [[ -L "$RUNTIME_PATHS" ]]; then
+    unlink "$RUNTIME_PATHS"
+fi
+RUNTIME_PATHS_TEMP="$(mktemp "$RUNTIME_BIN/.dotfiles-agent-runtime.XXXXXX")"
+trap 'rm -f "$RUNTIME_PATHS_TEMP"' EXIT
+printf 'TMUX_BIN=%s\nCURL_BIN=%s\nSHA256_BIN=%s\nSHA256_MODE=%s\nCP_BIN=%s\nRM_BIN=%s\nSTAT_BIN=%s\nSTAT_MODE=%s\n' \
+    "$TMUX_RUNTIME" "$CURL_RUNTIME" "$SHA256_RUNTIME" "$SHA256_MODE" \
+    "$COPY_RUNTIME" "$REMOVE_RUNTIME" "$STAT_RUNTIME" "$STAT_MODE" \
+    >"$RUNTIME_PATHS_TEMP"
+chmod 0644 "$RUNTIME_PATHS_TEMP"
+mv "$RUNTIME_PATHS_TEMP" "$RUNTIME_PATHS"
+trap - EXIT
+
+for RUNTIME_NAME in emit-turn-end.sh agent-talk-peer notify-file-permission.sh; do
+    RUNTIME_TARGET="$RUNTIME_BIN/$RUNTIME_NAME"
+    if [[ -L "$RUNTIME_TARGET" ]]; then
+        unlink "$RUNTIME_TARGET"
+    fi
+done
+cp "$SOURCE_ROOT/agent/common/bin/emit-turn-end.sh" \
+    "$RUNTIME_BIN/emit-turn-end.sh"
+cp "$SOURCE_ROOT/agent/common/bin/agent-talk-peer" \
+    "$RUNTIME_BIN/agent-talk-peer"
+cp "$SOURCE_ROOT/agent/common/bin/notify-file-permission.sh" \
+    "$RUNTIME_BIN/notify-file-permission.sh"
+chmod 0755 "$RUNTIME_BIN/emit-turn-end.sh" \
+    "$RUNTIME_BIN/agent-talk-peer" \
+    "$RUNTIME_BIN/notify-file-permission.sh"
+
+RULES_TARGET="$RULES_DIR/agent-talk.rules"
+if [[ -L "$RULES_TARGET" ]]; then
+    unlink "$RULES_TARGET"
+fi
+RULES_TEMP="$(mktemp "$RULES_DIR/.agent-talk.rules.XXXXXX")"
+trap 'rm -f "$RULES_TEMP"' EXIT
+sed \
+    -e "s|@AGENT_TALK_PEER@|$RUNTIME_BIN/agent-talk-peer|g" \
+    -e "s|@NOTIFY_FILE_PERMISSION@|$RUNTIME_BIN/notify-file-permission.sh|g" \
+    "$SOURCE_ROOT/agent/codex/rules/agent-talk.rules" >"$RULES_TEMP"
+mv "$RULES_TEMP" "$RULES_TARGET"
+chmod 0644 "$RULES_TARGET"
+trap - EXIT

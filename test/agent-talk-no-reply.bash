@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # assert する文字列は対象ファイルの literal なので、$ や ` を展開させない
-# shellcheck disable=SC2016
+# shellcheck disable=SC2016,SC2088
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -14,7 +14,7 @@ assert_contains() {
   }
 }
 
-assert_contains 'agent-talk send codex --no-reply'
+assert_contains '~/.local/bin/agent-talk-peer send codex --no-reply'
 assert_contains 'The daemon makes the one-way intent authoritative'
 assert_contains 'Make that result terminal with `--no-reply`'
 assert_contains 'do not send routine acknowledgement, thanks, receipt'

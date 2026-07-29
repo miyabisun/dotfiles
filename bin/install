@@ -57,14 +57,13 @@ fi
 link "agent/codex/hooks.json" "$HOME/.codex"
 link "agent/codex/agents" "$HOME/.codex"
 link "agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md"
+agent/common/bin/install-agent-runtime || exit 1
 
 mkdir -p "$HOME/.agents"
 link "agent/common/skills" "$HOME/.agents"
 link "agent/common/agents" "$HOME/.agents"
 link "agent/common/designs" "$HOME/.agents"
 
-mkdir -p "$HOME/.local/bin"
-link "agent/common/bin/emit-turn-end.sh" "$HOME/.local/bin"
 link "agent/codex/hooks/notify-turn-end.sh" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-session-picker" "$HOME/.local/bin"
 

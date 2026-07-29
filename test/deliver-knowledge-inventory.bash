@@ -68,8 +68,6 @@ assert_contains "$role" '空batchを送らない'
 assert_contains "$role" 'typoだけの文書修正'
 assert_contains "$role" 'agent-knowledge-intake.md'
 assert_contains "$role" 'candidate_file'
-assert_contains "$role" 'candidate_file="$(mktemp)"'
-assert_contains "$role" 'host_file="$(mktemp)"'
 assert_contains "$role" 'chmod 600 "$candidate_file" "$host_file"'
 assert_contains "$role" "trap 'rm -f \"\$candidate_file\" \"\$host_file\"' EXIT HUP INT TERM"
 assert_contains "$role" '一回のshell呼び出しの中でtemporary file作成、serialize、scan、'
@@ -83,7 +81,27 @@ assert_contains "$role" 'test "$host_status" -eq 1 || exit 2'
 assert_contains "$role" 'hash_line="$(sha256sum "$candidate_file")" || exit 2'
 assert_contains "$role" '[[ "$validated_hash" =~ ^[0-9a-f]{64}$ ]] || exit 2'
 assert_contains "$role" 'test "$validated_hash" = "$send_hash" || exit 1'
-assert_contains "$role" "agent-talk send 'knowledge/codex' --no-reply"
+assert_contains "$role" 'candidate_file="$(mktemp /tmp/agent-knowledge.XXXXXX)"'
+assert_contains "$role" 'host_file="$(mktemp /tmp/agent-knowledge-hosts.XXXXXX)"'
+assert_contains "$role" "~/.local/bin/agent-talk-peer send 'knowledge/codex' --no-reply"
+assert_contains "$role" '--body-file "$candidate_file" --sha256 "$send_hash"'
+if grep -Fq -- 'agent-talk-peer send' "$role" \
+  && grep -Fq -- '< "$candidate_file"' "$role"; then
+  echo 'knowledge handoff must not require shell redirection' >&2
+  exit 1
+fi
+
+alternate_tmp="$(mktemp -d)"
+candidate_probe="$(TMPDIR="$alternate_tmp" mktemp /tmp/agent-knowledge.XXXXXX)"
+case "$candidate_probe" in
+  /tmp/agent-knowledge.*) ;;
+  *)
+    echo 'knowledge candidate must stay under the dispatcher-approved /tmp root' >&2
+    exit 1
+    ;;
+esac
+rm -f "$candidate_probe"
+rmdir "$alternate_tmp"
 assert_contains "$role" '送信は最大1回'
 assert_contains "$role" '自動再送しない'
 assert_contains "$role" 'arona-knowledgeでgit操作をしない'
