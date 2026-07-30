@@ -21,6 +21,7 @@ mkdir -p "$HOME/.config"
 link "config/git" "$HOME/.config"
 link "config/nvim" "$HOME/.config"
 link "config/tmux" "$HOME/.config"
+mkdir -p "$HOME/.config/tmuxinator"
 link "config/.deepl.json" "$HOME/.config"
 
 mkdir -p "$HOME/.claude"
