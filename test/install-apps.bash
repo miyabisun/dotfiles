@@ -10,6 +10,7 @@ fake_home="$test_root/home"
 log="$test_root/curl.log"
 args_log="$test_root/curl-args.log"
 agent_log="$test_root/agent.log"
+mux_log="$test_root/mux.log"
 tmp_dir="$test_root/tmp"
 mkdir -p "$fake_bin" "$fake_home/.local/bin" "$tmp_dir"
 
@@ -32,6 +33,26 @@ sha256_file() {
 
 make_stub delta
 make_stub obscura
+
+cat >"$fake_bin/uname" <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in
+  -s) printf '%s\n' "${INSTALL_APPS_TEST_UNAME_S:-Linux}" ;;
+  -m) printf '%s\n' "${INSTALL_APPS_TEST_UNAME_M:-x86_64}" ;;
+  *) exit 64 ;;
+esac
+STUB
+chmod +x "$fake_bin/uname"
+
+cat >"$fake_bin/shasum" <<'STUB'
+#!/usr/bin/env bash
+if [ "${1:-}" != -a ] || [ "${2:-}" != 256 ]; then
+  exit 64
+fi
+shift 2
+sha256sum "$@"
+STUB
+chmod +x "$fake_bin/shasum"
 
 cat >"$fake_bin/curl" <<'STUB'
 #!/usr/bin/env bash
@@ -118,6 +139,57 @@ AGENT
     printf '%s  %s\n' "$digest" "$archive_name" >"$output"
     exit 0
     ;;
+  https://github.com/miyabisun/mux/releases/latest)
+    test "$write_out" = '%{redirect_url}'
+    printf '%s%s' 'https://github.com/miyabisun/mux/releases/tag/' \
+      "${INSTALL_APPS_TEST_MUX_LATEST_TAG:-v0.1.1}"
+    exit 0
+    ;;
+  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-linux-x86_64.tar.gz|\
+  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-macos-aarch64.tar.gz)
+    archive_root="${output}.root"
+    mkdir -p "$archive_root"
+    cat >"$archive_root/mux" <<'MUX'
+#!/bin/sh
+case "${1:-}" in
+  --version) echo "mux ${INSTALL_APPS_TEST_MUX_VERSION:-0.1.1}" ;;
+  --help)
+    printf '%s\n' \
+      'Select, validate, and launch tmux projects' \
+      '  update    Update mux from the latest GitHub Release'
+    ;;
+  update)
+    printf '%s\n' update >>"${INSTALL_APPS_TEST_MUX_LOG:-/dev/null}"
+    exit "${INSTALL_APPS_TEST_MUX_UPDATE_STATUS:-0}"
+    ;;
+  *) exit 1 ;;
+esac
+MUX
+    chmod +x "$archive_root/mux"
+    printf '%s\n' license >"$archive_root/LICENSE"
+    if [ -n "${INSTALL_APPS_TEST_MUX_EXTRA_MEMBER:-}" ]; then
+      printf '%s\n' unexpected >"$archive_root/unexpected"
+      tar -czf "$output" -C "$archive_root" mux LICENSE unexpected
+    else
+      tar -czf "$output" -C "$archive_root" mux LICENSE
+    fi
+    rm -rf "$archive_root"
+    exit 0
+    ;;
+  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-macos-aarch64.tar.gz.sha256)
+    archive_path="${output%.sha256}"
+    archive_name="$(basename "$archive_path")"
+    if [ -n "${INSTALL_APPS_TEST_BAD_MUX_CHECKSUM:-}" ]; then
+      digest="0000000000000000000000000000000000000000000000000000000000000000"
+    elif command -v sha256sum >/dev/null 2>&1; then
+      digest="$(sha256sum "$archive_path" | awk '{ print $1 }')"
+    else
+      digest="$(shasum -a 256 "$archive_path" | awk '{ print $1 }')"
+    fi
+    printf '%s  %s\n' "$digest" "$archive_name" >"$output"
+    exit 0
+    ;;
   *) exit 64 ;;
 esac
 
@@ -142,6 +214,7 @@ PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
   INSTALL_APPS_TEST_LOG="$log" \
   INSTALL_APPS_TEST_ARGS_LOG="$args_log" \
   INSTALL_APPS_TEST_AGENT_LOG="$agent_log" \
+  INSTALL_APPS_TEST_MUX_LOG="$mux_log" \
   TMPDIR="$tmp_dir" \
   bash "$repo_root/bin/install-apps" >"$test_root/first-run.out"
 
@@ -155,6 +228,8 @@ test -x "$fake_home/.local/bin/cursor-agent"
 test -x "$fake_home/.local/bin/codex"
 test -x "$fake_home/.local/bin/agent-talk"
 test "$("$fake_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.2"
+test -x "$fake_home/.local/bin/mux"
+test "$("$fake_home/.local/bin/mux" --version)" = "mux 0.1.1"
 grep -F "daemon not applicable" "$test_root/first-run.out" >/dev/null
 test "$(grep -Fxc ensure-daemon "$agent_log")" -eq 1
 test -z "$(find "$tmp_dir" -mindepth 1 -print -quit)"
@@ -164,6 +239,7 @@ PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
   INSTALL_APPS_TEST_LOG="$log" \
   INSTALL_APPS_TEST_ARGS_LOG="$args_log" \
   INSTALL_APPS_TEST_AGENT_LOG="$agent_log" \
+  INSTALL_APPS_TEST_MUX_LOG="$mux_log" \
   TMPDIR="$tmp_dir" \
   bash "$repo_root/bin/install-apps" >"$test_root/second-run.out"
 
@@ -171,10 +247,14 @@ test "$(grep -Fc 'https://cursor.com/install' "$log")" -eq 1
 test "$(grep -Fc 'https://chatgpt.com/codex/install.sh' "$log")" -eq 1
 test "$(grep -Fc 'https://github.com/miyabi-sunny-side/agent-talkd/releases/latest' "$log")" -eq 1
 test "$(grep -Fc 'agent-talk-linux-x86_64.tar.gz' "$log")" -eq 2
+test "$(grep -Fc 'https://github.com/miyabisun/mux/releases/latest' "$log")" -eq 1
+test "$(grep -Fc 'mux-linux-x86_64.tar.gz' "$log")" -eq 2
 grep -F "Cursor CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Codex CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Updating agent-talkd via agent-talk update" "$test_root/second-run.out" >/dev/null
 test "$(grep -Fxc update "$agent_log")" -eq 1
+grep -F "Updating mux via mux update" "$test_root/second-run.out" >/dev/null
+test "$(grep -Fxc update "$mux_log")" -eq 1
 
 linux_home="$test_root/linux-home"
 linux_tmp="$test_root/linux-tmp"
@@ -191,6 +271,7 @@ grep -Fx "https://chatgpt.com/codex/install.sh" "$test_root/linux-curl.log" >/de
 test -x "$linux_home/.local/bin/cursor-agent"
 test -x "$linux_home/.local/bin/codex"
 test "$("$linux_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.2"
+test "$("$linux_home/.local/bin/mux" --version)" = "mux 0.1.1"
 test -z "$(find "$linux_tmp" -mindepth 1 -print -quit)"
 
 legacy_home="$test_root/legacy-home"
@@ -316,5 +397,172 @@ fi
 
 test "$("$checksum_home/.local/bin/agent-talk" --version)" = "agent-talk 0.1.0"
 test -z "$(find "$checksum_tmp" -mindepth 1 -print -quit)"
+
+prepare_mux_case() {
+  local home="$1"
+  local tmp="$2"
+
+  mkdir -p "$home/.local/bin" "$tmp"
+  cp "$fake_home/.local/bin/cursor-agent" "$home/.local/bin/cursor-agent"
+  cp "$fake_home/.local/bin/codex" "$home/.local/bin/codex"
+  cp "$fake_home/.local/bin/agent-talk" "$home/.local/bin/agent-talk"
+}
+
+darwin_home="$test_root/darwin-home"
+darwin_tmp="$test_root/darwin-tmp"
+prepare_mux_case "$darwin_home" "$darwin_tmp"
+PATH="$fake_bin:$darwin_home/.local/bin:/usr/bin:/bin" \
+  HOME="$darwin_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/darwin-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/darwin-curl-args.log" \
+  INSTALL_APPS_TEST_UNAME_S=Darwin \
+  INSTALL_APPS_TEST_UNAME_M=arm64 \
+  TMPDIR="$darwin_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/darwin.out"
+
+test "$("$darwin_home/.local/bin/mux" --version)" = "mux 0.1.1"
+grep -F "mux-macos-aarch64.tar.gz" "$test_root/darwin-curl.log" >/dev/null
+test -z "$(find "$darwin_tmp" -mindepth 1 -print -quit)"
+
+mux_update_failure_home="$test_root/mux-update-failure-home"
+mux_update_failure_tmp="$test_root/mux-update-failure-tmp"
+prepare_mux_case "$mux_update_failure_home" "$mux_update_failure_tmp"
+cp "$fake_home/.local/bin/mux" "$mux_update_failure_home/.local/bin/mux"
+mux_update_failure_before="$(sha256_file "$mux_update_failure_home/.local/bin/mux")"
+if PATH="$fake_bin:$mux_update_failure_home/.local/bin:/usr/bin:/bin" \
+  HOME="$mux_update_failure_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/mux-update-failure-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/mux-update-failure-curl-args.log" \
+  INSTALL_APPS_TEST_MUX_UPDATE_STATUS=23 \
+  TMPDIR="$mux_update_failure_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/mux-update-failure.out" 2>&1; then
+  echo "install-apps should propagate mux update failures" >&2
+  exit 1
+fi
+
+test "$mux_update_failure_before" = \
+  "$(sha256_file "$mux_update_failure_home/.local/bin/mux")"
+test ! -e "$test_root/mux-update-failure-curl.log" \
+  || test "$(grep -Fc 'github.com/miyabisun/mux' \
+    "$test_root/mux-update-failure-curl.log" || true)" -eq 0
+test -z "$(find "$mux_update_failure_tmp" -mindepth 1 -print -quit)"
+
+unknown_mux_home="$test_root/unknown-mux-home"
+unknown_mux_tmp="$test_root/unknown-mux-tmp"
+prepare_mux_case "$unknown_mux_home" "$unknown_mux_tmp"
+cat >"$unknown_mux_home/.local/bin/mux" <<'UNKNOWN_MUX'
+#!/bin/sh
+echo "another mux"
+UNKNOWN_MUX
+chmod +x "$unknown_mux_home/.local/bin/mux"
+unknown_mux_before="$(sha256_file "$unknown_mux_home/.local/bin/mux")"
+if PATH="$fake_bin:$unknown_mux_home/.local/bin:/usr/bin:/bin" \
+  HOME="$unknown_mux_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/unknown-mux-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/unknown-mux-curl-args.log" \
+  TMPDIR="$unknown_mux_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/unknown-mux.out" 2>&1; then
+  echo "install-apps should refuse an unrecognized mux target" >&2
+  exit 1
+fi
+
+grep -F "Refusing to replace unrecognized mux target" "$test_root/unknown-mux.out" >/dev/null
+test "$unknown_mux_before" = "$(sha256_file "$unknown_mux_home/.local/bin/mux")"
+test ! -e "$test_root/unknown-mux-curl.log" \
+  || test "$(grep -Fc 'github.com/miyabisun/mux' \
+    "$test_root/unknown-mux-curl.log" || true)" -eq 0
+test -z "$(find "$unknown_mux_tmp" -mindepth 1 -print -quit)"
+
+unsupported_mux_home="$test_root/unsupported-mux-home"
+unsupported_mux_tmp="$test_root/unsupported-mux-tmp"
+prepare_mux_case "$unsupported_mux_home" "$unsupported_mux_tmp"
+if PATH="$fake_bin:$unsupported_mux_home/.local/bin:/usr/bin:/bin" \
+  HOME="$unsupported_mux_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/unsupported-mux-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/unsupported-mux-curl-args.log" \
+  INSTALL_APPS_TEST_UNAME_S=FreeBSD \
+  INSTALL_APPS_TEST_UNAME_M=x86_64 \
+  TMPDIR="$unsupported_mux_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/unsupported-mux.out" 2>&1; then
+  echo "install-apps should reject unsupported mux platforms" >&2
+  exit 1
+fi
+
+grep -F "mux does not support FreeBSD-x86_64" "$test_root/unsupported-mux.out" >/dev/null
+test ! -e "$unsupported_mux_home/.local/bin/mux"
+test -z "$(find "$unsupported_mux_tmp" -mindepth 1 -print -quit)"
+
+invalid_mux_tag_home="$test_root/invalid-mux-tag-home"
+invalid_mux_tag_tmp="$test_root/invalid-mux-tag-tmp"
+prepare_mux_case "$invalid_mux_tag_home" "$invalid_mux_tag_tmp"
+if PATH="$fake_bin:$invalid_mux_tag_home/.local/bin:/usr/bin:/bin" \
+  HOME="$invalid_mux_tag_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/invalid-mux-tag-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/invalid-mux-tag-curl-args.log" \
+  INSTALL_APPS_TEST_MUX_LATEST_TAG=garbage \
+  TMPDIR="$invalid_mux_tag_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/invalid-mux-tag.out" 2>&1; then
+  echo "install-apps should fail when the latest mux tag is invalid" >&2
+  exit 1
+fi
+
+grep -F "Cannot determine latest mux version" "$test_root/invalid-mux-tag.out" >/dev/null
+test ! -e "$invalid_mux_tag_home/.local/bin/mux"
+test "$(grep -Fc '/releases/download/' "$test_root/invalid-mux-tag-curl.log" || true)" -eq 0
+test -z "$(find "$invalid_mux_tag_tmp" -mindepth 1 -print -quit)"
+
+bad_mux_checksum_home="$test_root/bad-mux-checksum-home"
+bad_mux_checksum_tmp="$test_root/bad-mux-checksum-tmp"
+prepare_mux_case "$bad_mux_checksum_home" "$bad_mux_checksum_tmp"
+if PATH="$fake_bin:$bad_mux_checksum_home/.local/bin:/usr/bin:/bin" \
+  HOME="$bad_mux_checksum_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/bad-mux-checksum-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/bad-mux-checksum-curl-args.log" \
+  INSTALL_APPS_TEST_BAD_MUX_CHECKSUM=1 \
+  TMPDIR="$bad_mux_checksum_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/bad-mux-checksum.out" 2>&1; then
+  echo "install-apps should fail when the mux checksum does not match" >&2
+  exit 1
+fi
+
+grep -F "Checksum mismatch for mux" "$test_root/bad-mux-checksum.out" >/dev/null
+test ! -e "$bad_mux_checksum_home/.local/bin/mux"
+test -z "$(find "$bad_mux_checksum_tmp" -mindepth 1 -print -quit)"
+
+unsafe_mux_archive_home="$test_root/unsafe-mux-archive-home"
+unsafe_mux_archive_tmp="$test_root/unsafe-mux-archive-tmp"
+prepare_mux_case "$unsafe_mux_archive_home" "$unsafe_mux_archive_tmp"
+if PATH="$fake_bin:$unsafe_mux_archive_home/.local/bin:/usr/bin:/bin" \
+  HOME="$unsafe_mux_archive_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/unsafe-mux-archive-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/unsafe-mux-archive-curl-args.log" \
+  INSTALL_APPS_TEST_MUX_EXTRA_MEMBER=1 \
+  TMPDIR="$unsafe_mux_archive_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/unsafe-mux-archive.out" 2>&1; then
+  echo "install-apps should reject unexpected mux archive members" >&2
+  exit 1
+fi
+
+grep -F "Unsafe archive member for mux" "$test_root/unsafe-mux-archive.out" >/dev/null
+test ! -e "$unsafe_mux_archive_home/.local/bin/mux"
+test -z "$(find "$unsafe_mux_archive_tmp" -mindepth 1 -print -quit)"
+
+wrong_mux_version_home="$test_root/wrong-mux-version-home"
+wrong_mux_version_tmp="$test_root/wrong-mux-version-tmp"
+prepare_mux_case "$wrong_mux_version_home" "$wrong_mux_version_tmp"
+if PATH="$fake_bin:$wrong_mux_version_home/.local/bin:/usr/bin:/bin" \
+  HOME="$wrong_mux_version_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/wrong-mux-version-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/wrong-mux-version-curl-args.log" \
+  INSTALL_APPS_TEST_MUX_VERSION=9.9.9 \
+  TMPDIR="$wrong_mux_version_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/wrong-mux-version.out" 2>&1; then
+  echo "install-apps should reject a mux binary with the wrong version" >&2
+  exit 1
+fi
+
+grep -F "mux binary version does not match" "$test_root/wrong-mux-version.out" >/dev/null
+test ! -e "$wrong_mux_version_home/.local/bin/mux"
+test -z "$(find "$wrong_mux_version_tmp" -mindepth 1 -print -quit)"
 
 echo "install-apps Linux/macOS agent CLI test: pass"

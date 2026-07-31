@@ -125,6 +125,129 @@ install_agent_talk() (
 )
 
 # ---------------------------------------------------------------------------
+# mux — small tmux project launcher
+# Install the latest public GitHub release and verify its published checksum.
+# ---------------------------------------------------------------------------
+install_mux() (
+  latest_url="https://github.com/miyabisun/mux/releases/latest"
+  target="$HOME/.local/bin/mux"
+
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    if [ ! -f "$target" ] || [ ! -x "$target" ] || [ -L "$target" ]; then
+      echo "==> Refusing to replace unrecognized mux target: $target" >&2
+      return 1
+    fi
+
+    version_output="$("$target" --version 2>/dev/null || true)"
+    help_output="$("$target" --help 2>/dev/null || true)"
+    if printf '%s\n' "$version_output" \
+      | grep -Eq '^mux [0-9]+\.[0-9]+\.[0-9]+$' \
+      && printf '%s\n' "$help_output" \
+        | grep -Eq '^  update[[:space:]]+Update mux from the latest GitHub Release$'; then
+      echo "==> Updating mux via mux update..."
+      "$target" update
+      return
+    fi
+
+    echo "==> Refusing to replace unrecognized mux target: $target" >&2
+    return 1
+  fi
+
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64)
+      archive="mux-linux-x86_64.tar.gz"
+      ;;
+    Darwin-arm64)
+      archive="mux-macos-aarch64.tar.gz"
+      ;;
+    *)
+      echo "==> mux does not support $(uname -s)-$(uname -m)" >&2
+      return 1
+      ;;
+  esac
+
+  redirect_url="$(curl --proto '=https' --tlsv1.2 -fsS \
+    -o /dev/null -w '%{redirect_url}' "$latest_url")"
+  latest_version="${redirect_url##*/}"
+  if ! printf '%s\n' "$latest_version" \
+    | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "==> Cannot determine latest mux version from $redirect_url" >&2
+    return 1
+  fi
+
+  tmpdir="$(mktemp -d)"
+  target_tmp=""
+  # 下の trap EXIT から呼ぶ (shellcheck は間接呼び出しを追えない)
+  # shellcheck disable=SC2329
+  cleanup() {
+    rm -rf "$tmpdir"
+    [ -z "$target_tmp" ] || rm -f "$target_tmp"
+  }
+  trap cleanup EXIT
+  release_url="https://github.com/miyabisun/mux/releases/download/${latest_version}"
+
+  echo "==> Installing mux ${latest_version}..."
+  curl --proto '=https' --tlsv1.2 -fsSL \
+    "$release_url/$archive" -o "$tmpdir/$archive"
+  curl --proto '=https' --tlsv1.2 -fsSL \
+    "$release_url/$archive.sha256" -o "$tmpdir/$archive.sha256"
+
+  read -r expected_hash checksum_name checksum_extra <"$tmpdir/$archive.sha256" || true
+  checksum_name="${checksum_name#\*}"
+  if [ -n "${checksum_extra:-}" ] \
+    || ! printf '%s\n' "${expected_hash:-}" | grep -Eq '^[0-9A-Fa-f]{64}$' \
+    || [ "${checksum_name:-}" != "$archive" ]; then
+    echo "==> Invalid checksum file for mux ${latest_version}" >&2
+    return 1
+  fi
+  if [ "$(uname -s)" = Darwin ]; then
+    actual_hash="$(shasum -a 256 "$tmpdir/$archive" | awk '{ print $1 }')"
+  else
+    actual_hash="$(sha256sum "$tmpdir/$archive" | awk '{ print $1 }')"
+  fi
+  if [ "$actual_hash" != "$expected_hash" ]; then
+    echo "==> Checksum mismatch for mux ${latest_version}" >&2
+    return 1
+  fi
+
+  archive_members="$(tar -tzf "$tmpdir/$archive")"
+  mux_members=0
+  license_members=0
+  while IFS= read -r member; do
+    case "$member" in
+      mux) mux_members=$((mux_members + 1)) ;;
+      LICENSE) license_members=$((license_members + 1)) ;;
+      *)
+        echo "==> Unsafe archive member for mux ${latest_version}: $member" >&2
+        return 1
+        ;;
+    esac
+  done <<<"$archive_members"
+  if [ "$mux_members" -ne 1 ] || [ "$license_members" -gt 1 ]; then
+    echo "==> Invalid archive contents for mux ${latest_version}" >&2
+    return 1
+  fi
+
+  tar -xzf "$tmpdir/$archive" -C "$tmpdir" mux
+  if [ ! -f "$tmpdir/mux" ] || [ -L "$tmpdir/mux" ]; then
+    echo "==> Invalid mux binary in release ${latest_version}" >&2
+    return 1
+  fi
+  if [ "$("$tmpdir/mux" --version 2>/dev/null || true)" \
+    != "mux ${latest_version#v}" ]; then
+    echo "==> mux binary version does not match ${latest_version}" >&2
+    return 1
+  fi
+
+  mkdir -p "$HOME/.local/bin"
+  target_tmp="$(mktemp "$HOME/.local/bin/.mux.XXXXXX")"
+  install -m755 "$tmpdir/mux" "$target_tmp"
+  mv -f "$target_tmp" "$target"
+  target_tmp=""
+  echo "==> mux ${latest_version} installed"
+)
+
+# ---------------------------------------------------------------------------
 # git-delta — syntax-highlighting pager for git diff/log/show
 # ---------------------------------------------------------------------------
 install_delta() {
@@ -210,6 +333,7 @@ MSG
 
 install_agent_clis
 install_agent_talk
+install_mux
 install_delta
 install_rbw
 install_obscura
