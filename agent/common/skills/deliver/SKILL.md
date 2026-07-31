@@ -143,8 +143,15 @@ criteria, scope, verification commands, and important failure modes.
 - Snapshot initial `git status` and relevant diffs before mutation; record
   pre-existing user paths as protected so later formatter or maintenance work
   cannot absorb them.
-- If materially different outcomes remain plausible, stop and ask a concise
-  question. Do not spend agents or tokens implementing guesses.
+- Before asking the user to approve anything, search for authorization that
+  already exists: the invoking request, earlier user statements, and this
+  skill's own invocation. Record what you find as authority evidence and
+  proceed. Do not re-ask for permission the user has already given.
+- If materially different outcomes remain plausible, do not stop at a refusal.
+  Run one `discuss` round to close the open question, then re-decide whether
+  implementation can start. Return to the user only for an authority gap, and
+  only with the single decision that would unblock the work. Do not spend agents
+  or tokens implementing guesses, and never treat unease as a blocker.
 - For non-trivial behavior, prefer a failing regression test before the fix.
 - A separate strategist is optional; use it only when the contract itself is
   difficult, cross-cutting, UI-heavy, externally integrated, or high risk.
@@ -212,8 +219,11 @@ with repository evidence or a focused check, choose the smaller mechanism when
 only preference separates the options, and ask the user when materially
 different product outcomes remain. The normal protocol is one
 independent-proposal exchange and one reconciliation exchange; do not turn
-planning into an open-ended approval loop. Escalate an unresolved material
-conflict to the user instead of spending a third round on it.
+planning into an open-ended approval loop. When a material conflict survives
+both exchanges, escalate it into one `discuss` round rather than back to the
+user: `discuss` must land on Ready, Ready with reduced scope, or a named
+authority gap. Only the authority gap returns to the user, and it names the one
+decision that unblocks the work.
 
 A counterpart planning exchange does not replace `strategist` or `strategy-rev`.
 Use `strategist` when the contract itself needs specialist design (migration,
@@ -359,7 +369,14 @@ specialist finds adjacent work, classify and route it:
 - Ask the user only when closure requires a materially different product choice,
   ambiguous or broad runtime/toolchain policy, public compatibility change,
   destructive or external action, secret handling, or modification of
-  overlapping user work.
+  overlapping user work. Before doing so, run one `discuss` round; ask only if
+  it reports an authority gap.
+- A repository rule that blocks authorized work is itself work to route. Check
+  who authored it. An agent-authored description of product state is updated as
+  a consequence of the authorized change, in the same commit, under the
+  exact-conformance conditions in `discuss`. A binding instruction still binds
+  the current turn regardless of who wrote it: update the control surface with
+  authority evidence first, then implement.
 
 An agent response equivalent to “outside my responsibility” is an internal
 handoff, not a user-visible blocker. The parent must reassign or perform safe
