@@ -1,0 +1,13 @@
+# herdr 設定 (dotfiles 管理; bin/install が ~/.config/herdr/config.toml へ
+# ファイル単位で symlink する。~/.config/herdr 自体は herdr ランタイムの
+# 実ディレクトリ (sock/log/session) なので dir 単位では張らない)
+#
+# 方針 (user 指示): herdr 既定のショートカットをそのまま使い、override は
+# 最小限に留める。tmux・mux・a() は不変。
+# 参考: split_vertical=prefix+v / new_cwd=follow は herdr 既定のため設定不要。
+# prefix 二度押し (tmux の C-b C-b の指癖) は herdr がリテラル prefix 送出に
+# 予約しており割当不可。
+
+[keys]
+# 下 (上下) 分割は既定の prefix+minus ではなく tmux と同じ prefix+s
+split_horizontal = "prefix+s"

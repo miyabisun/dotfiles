@@ -32,6 +32,11 @@ link "agent/claude/hooks" "$HOME/.claude"
 link "agent/claude/CLAUDE.md" "$HOME/.claude"
 link "agent/claude/settings.json" "$HOME/.claude"
 
+# herdr: ~/.config/herdr はランタイム実ディレクトリ (sock/log/session) のため
+# dir ごとではなく config.toml だけをファイル単位で張る
+mkdir -p "$HOME/.config/herdr"
+link "config/herdr/config.toml" "$HOME/.config/herdr"
+
 mkdir -p "$HOME/.cursor"
 link "agent/common/skills" "$HOME/.cursor"
 link "agent/common/agents" "$HOME/.cursor"
