@@ -2,31 +2,37 @@
 name: deliver
 description: >-
   互換ディスパッチャ。deliver は開発段階別の3スキル (spike / polish / harden)
-  に分割された (decision 0002)。段階未指定の $deliver は従来と同じ保証を持つ
-  harden として実行する。user が同じ依頼で段階を明示した場合のみ該当スキルへ
-  委譲し、選択を宣言する。保証を暗黙に弱めない。push・deploy・release は
-  しない。
+  に分割された (decision 0002/0003)。まず決定的 gate (user の v1.0.0 宣言=
+  明示 $harden 起動と同値、または version が既に 1.0.0 以上) を判定し、該当
+  なら harden、非該当なら変更の性質から spike / polish を自動判断して選択と
+  根拠を宣言する。リスクの重さからの推論で harden を選ばない。push・deploy・
+  release はしない。
 ---
 
 # deliver (dispatcher)
 
-`deliver` は decision 0002 で開発段階別の3スキルに分割された。
+`deliver` は decision 0002 で開発段階別の3スキルに分割され、decision 0003 で
+段階の既定が「作りたいものを何とか実装してくれる」方向へ再定義された。
 
 | 段階 | スキル | 概要 |
 |---|---|---|
-| 黎明期 | `spike` | まず動かして体験を得る。ゲートなし、動作証拠1つ |
-| ブラッシュアップ | `polish` | 不満を直す。隣接チェック+レビュー1回 |
-| リリース水準 | `harden` | 旧 deliver のフルパイプライン承継 |
+| 黎明期 (〜v0.1.0) | `spike` | まず動かして体験を得る。TDD+軽レビュー1回 |
+| ブラッシュアップ (0.x) | `polish` | 不満を直し v1.0.0 へ磨く。隣接チェック+レビュー1回 |
+| 全世界に問いかける (v1.0.0〜) | `harden` | 旧 deliver のフルパイプライン |
 
 ## ディスパッチ規則
 
-1. **段階未指定の `$deliver` は `harden` として実行する。** 旧 `$deliver` が
-   持っていた「verified local commit + full gate」の保証を暗黙に弱めない。
-   既存の参照 (consolidate、tests、agent 定義) はこの既定で従来どおり成立する。
-2. user が**同じ依頼文で**段階を明示した場合 (例: 「spike で」「まず動かす
-   だけ」「ブラッシュアップして」) のみ、該当スキルへ委譲する。委譲時は選択
-   した段階と根拠 (user の文言) を宣言してから実行する。
-3. 変更の性質からの推論だけで spike / polish を選んではならない。迷ったら
-   harden。降格の既定変更を望む場合は、別途の明示的な user decision とする。
-4. spike / polish の内側で昇格トリガー (secret・権限境界・破壊的データ・
-   外部公開) に触れたら、各スキルの規定どおり harden へ強制昇格する。
+1. **まず決定的 gate を判定する**: user が「v1.0.0 にして全世界に問いかける」と
+   宣言している (**明示的な `$harden` 起動はこの宣言と同値**)、または project の
+   version (Rust なら Cargo.toml) が**既に 1.0.0 以上**なら、`harden` で実行
+   する。この gate は依頼文が spike/polish を明示していても優先される
+   (「これ既に v1.0.0 やん、なんで spike やねん」条項)。
+2. gate に該当しなければ、変更の性質から **spike / polish を自動判断**し、
+   選択した段階と根拠を宣言して実行する。新しい体験・greenfield・まだ動いて
+   いないもの → spike。動いているものの改善・不満の解消 → polish。
+   **迷ったら polish** (レビュー1回が付く方)。
+   **リスクや成果物の重さからの推論で harden を選んではならない** —
+   gate だけが harden への入口である (decision 0003)。
+3. gate 非該当で user が同じ依頼文で段階を明示した場合はそれに従う。
+4. spike の内側で credential・secret・権限境界・破壊的データに触れる必要が
+   生じたときの昇格先は polish (各スキルの規定どおり)。

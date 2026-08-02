@@ -4,16 +4,18 @@ description: >-
   Release-grade delivery: turn a requested change into a verified local commit
   through the full pipeline (co-authored contract, independent review,
   formatter gate, dual security review on a frozen snapshot, gated staging).
-  Use when the user explicitly invokes harden, when $deliver is invoked
-  without a stage, or when release-level security/robustness is required.
-  Never push, deploy, or release.
+  Use only when the user explicitly invokes harden, has declared the v1.0.0
+  "present to the world" milestone, or the project version is already at or
+  above 1.0.0 (decision 0003). Never push, deploy, or release.
 ---
 
 # harden
 
 This skill inherits the full former `deliver` pipeline unchanged (decision
 0002). In this document, "deliver"/"delivery" refers to this skill's own
-process; `$deliver` without an explicit stage resolves here.
+process. Per decision 0003, `$deliver` without an explicit stage no longer
+resolves here: this stage is entered only by explicit invocation, the user's
+declared v1.0.0 milestone, or a project version already at or above 1.0.0.
 
 Turn a request into a **verified local commit**. Choose the smallest reliable
 route. Phases and subagents are tools, not completion criteria.
