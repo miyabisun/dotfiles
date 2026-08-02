@@ -29,6 +29,32 @@ assert_contains() {
   }
 }
 
+# MCP-first contract (v0.7.0): 4 tools, dual-backend, CLI remains the fallback
+assert_contains "$global_rules" '`list_peers`'
+assert_contains "$global_rules" '`send_message`'
+assert_contains "$global_rules" '`read_message`'
+assert_contains "$global_rules" '`ack_message`'
+assert_contains "$global_rules" 'both tmux and herdr'
+assert_contains "$talk_skill" 'list_peers'
+assert_contains "$talk_skill" 'ack_message'
+assert_contains "$talk_skill" 'w1:p2'
+assert_contains "$talk_skill" 'tmux と herdr'
+assert_contains "$talk_skill" 'herdr が積極的に idle と判定した pane にだけ'
+# ack の罠 (E2E #1065 で実測): reply_to は ack 前に控える。human 宛返信は不可
+assert_contains "$talk_skill" 'reply_to` を控えてから'
+assert_contains "$talk_skill" '送信者が human (未登録 pane) の場合、返信は構造的に不可'
+if grep -Fq 'One daemon per tmux server' "$talk_skill"; then
+  echo 'dual-backend daemon の事実に反する旧記述が残っている' >&2
+  exit 1
+fi
+
+codex_config="$repo_root/agent/codex/config.toml"
+assert_contains "$codex_config" '[mcp_servers.agent_talk]'
+assert_contains "$codex_config" 'agent-talk-mcp'
+assert_contains "$codex_config" 'HERDR_PANE_ID'
+assert_contains "$codex_config" 'HERDR_SOCKET_PATH'
+assert_contains "$codex_config" '"TMUX", "TMUX_PANE"'
+
 assert_contains "$global_rules" 'without asking the user for permission each time'
 assert_contains "$global_rules" '`~/.local/bin/agent-talk-peer who`, `~/.local/bin/agent-talk-peer read`,'
 assert_contains "$global_rules" 'Do not refuse these conversation commands merely because the standing permission is written in instructions'
