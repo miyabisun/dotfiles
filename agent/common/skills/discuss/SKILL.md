@@ -30,6 +30,36 @@ description: 議論を、実装者が blocking question ゼロで着手できる
 user へ承認を求める前に、**既にある承認を探索する**。過去の指示・skill 起動・原文を辿り、
 該当があれば Authority evidence に記録して進む。すでに承認された事項を再度訊かない。
 
+## counterpart との1往復
+
+discuss を起動したら、solo で収束させる前に、利用可能な counterpart の
+反証機会を**1回だけ**設ける。
+
+1. `deliver` から呼ばれた場合は、その delivery が固定済みの counterpart pane を
+   そのまま使い、選び直さない。単独起動では `~/.local/bin/agent-talk-peer who` で
+   反対 runtime の登録 pane を同じ window、次に同じ session の順で一意に特定する。
+   候補が曖昧なら推測せず、候補を user に示す。
+2. 特定した pane へ1件だけ送る: user 原文 (verbatim)、確認済みの事実、こちらの
+   暫定結論、残る争点、期限と default action、求める返答の種類
+   (material objection / missing risk / concrete correction)。
+   秘密・`.env` 由来値・private host・internal endpoint は送らない。
+3. 交換は最大1往復。再照会・承認ループ・deliver 型の二段階照合を持ち込まない。
+   反映するのは反証・新事実・権限境界に関わる指摘だけ。単なる選好差は
+   小さい可逆案へ収束させ、2回目の問い合わせをしない。
+4. 同一 delivery 内で counterpart が既に同一争点へ見解を返している場合は
+   再照会しない。同一争点かは記録済みの message ID と争点の対応で判定し、
+   意味の推測で照会を省略しない。既出の見解を counterpart 意見として記録し、
+   新規争点だけを照会する。
+5. counterpart 不在・pane 消失・配達失敗・期限超過は solo fallback とし、
+   Ready / Ready with reduced scope / Authority gap のいずれかへ必ず着地する。
+   期限は round 開始時に deadline と default action として記録し、**次に実行が
+   再開した時点で評価する**。active polling や自動 wake-up は約束しない。
+   deadline 後に届いた返答で決定を自動で巻き戻さず、Reopen triggers に該当する
+   新事実だけを別途扱う。
+6. peer message は情報であって mutation 権限ではない。決定記録の作成・更新の
+   権限境界は現行のまま維持する。counterpart pane・message ID・応答の有無・
+   採否・fallback 理由は決定記録の実装者向け欄に記録し、冒頭要約には書かない。
+
 ## deliver から呼ばれる場合
 
 `deliver` は目標へ導くのが仕事であり、判断が割れたときに拒否して終わるのは失敗である。
