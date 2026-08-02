@@ -248,6 +248,118 @@ install_mux() (
 )
 
 # ---------------------------------------------------------------------------
+# pen — suspend and restore herdr workspaces
+# Install the latest public GitHub release and verify its published checksum.
+# pen has no version/update subcommand yet, so idempotency compares the
+# installed binary hash with the latest release archive member.
+# ---------------------------------------------------------------------------
+install_pen() (
+  latest_url="https://github.com/miyabi-sunny-side/pen-cli/releases/latest"
+  target="$HOME/.local/bin/pen"
+  recognition='pen — suspend and restore herdr workspaces'
+
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    if [ ! -f "$target" ] || [ ! -x "$target" ] || [ -L "$target" ]; then
+      echo "==> Refusing to replace unrecognized pen target: $target" >&2
+      return 1
+    fi
+    help_output="$("$target" 2>&1 || true)"
+    if ! printf '%s\n' "$help_output" | grep -Fq "$recognition"; then
+      echo "==> Refusing to replace unrecognized pen target: $target" >&2
+      return 1
+    fi
+  fi
+
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64)
+      archive="pen-linux-x86_64.tar.gz"
+      ;;
+    Darwin-arm64)
+      archive="pen-macos-aarch64.tar.gz"
+      ;;
+    *)
+      echo "==> pen does not support $(uname -s)-$(uname -m)" >&2
+      return 1
+      ;;
+  esac
+
+  redirect_url="$(curl --proto '=https' --tlsv1.2 -fsS \
+    -o /dev/null -w '%{redirect_url}' "$latest_url")"
+  latest_version="${redirect_url##*/}"
+  if ! printf '%s\n' "$latest_version" \
+    | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "==> Cannot determine latest pen version from $redirect_url" >&2
+    return 1
+  fi
+
+  tmpdir="$(mktemp -d)"
+  target_tmp=""
+  # 下の trap EXIT から呼ぶ (shellcheck は間接呼び出しを追えない)
+  # shellcheck disable=SC2329
+  cleanup() {
+    rm -rf "$tmpdir"
+    [ -z "$target_tmp" ] || rm -f "$target_tmp"
+  }
+  trap cleanup EXIT
+  release_url="https://github.com/miyabi-sunny-side/pen-cli/releases/download/${latest_version}"
+
+  curl --proto '=https' --tlsv1.2 -fsSL \
+    "$release_url/$archive" -o "$tmpdir/$archive"
+  curl --proto '=https' --tlsv1.2 -fsSL \
+    "$release_url/$archive.sha256" -o "$tmpdir/$archive.sha256"
+
+  read -r expected_hash checksum_name checksum_extra <"$tmpdir/$archive.sha256" || true
+  checksum_name="${checksum_name#\*}"
+  if [ -n "${checksum_extra:-}" ] \
+    || ! printf '%s\n' "${expected_hash:-}" | grep -Eq '^[0-9A-Fa-f]{64}$' \
+    || [ "${checksum_name:-}" != "$archive" ]; then
+    echo "==> Invalid checksum file for pen ${latest_version}" >&2
+    return 1
+  fi
+  if [ "$(uname -s)" = Darwin ]; then
+    actual_hash="$(shasum -a 256 "$tmpdir/$archive" | awk '{ print $1 }')"
+  else
+    actual_hash="$(sha256sum "$tmpdir/$archive" | awk '{ print $1 }')"
+  fi
+  if [ "$actual_hash" != "$expected_hash" ]; then
+    echo "==> Checksum mismatch for pen ${latest_version}" >&2
+    return 1
+  fi
+
+  tar -xzf "$tmpdir/$archive" -C "$tmpdir" pen
+  if [ ! -f "$tmpdir/pen" ] || [ -L "$tmpdir/pen" ]; then
+    echo "==> Invalid pen binary in release ${latest_version}" >&2
+    return 1
+  fi
+
+  if [ -x "$target" ]; then
+    if [ "$(uname -s)" = Darwin ]; then
+      installed_hash="$(shasum -a 256 "$target" | awk '{ print $1 }')"
+      extracted_hash="$(shasum -a 256 "$tmpdir/pen" | awk '{ print $1 }')"
+    else
+      installed_hash="$(sha256sum "$target" | awk '{ print $1 }')"
+      extracted_hash="$(sha256sum "$tmpdir/pen" | awk '{ print $1 }')"
+    fi
+    if [ "$installed_hash" = "$extracted_hash" ]; then
+      echo "==> pen ${latest_version} already installed"
+      return
+    fi
+  fi
+
+  if ! "$tmpdir/pen" 2>&1 | grep -Fq "$recognition"; then
+    echo "==> pen binary does not look like pen in release ${latest_version}" >&2
+    return 1
+  fi
+
+  mkdir -p "$HOME/.local/bin"
+  target_tmp="$(mktemp "$HOME/.local/bin/.pen.XXXXXX")"
+  install -m755 "$tmpdir/pen" "$target_tmp"
+  mv -f "$target_tmp" "$target"
+  target_tmp=""
+  echo "==> pen ${latest_version} installed"
+)
+
+# ---------------------------------------------------------------------------
 # git-delta — syntax-highlighting pager for git diff/log/show
 # ---------------------------------------------------------------------------
 install_delta() {
@@ -334,6 +446,7 @@ MSG
 install_agent_clis
 install_agent_talk
 install_mux
+install_pen
 install_delta
 install_rbw
 install_obscura

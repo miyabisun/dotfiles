@@ -11,3 +11,27 @@
 [keys]
 # 下 (上下) 分割は既定の prefix+minus ではなく tmux と同じ prefix+s
 split_horizontal = "prefix+s"
+
+# pen — herdr workspace の仮死トグル (miyabi-sunny-side/pen-cli)
+# alt+s: 現在の workspace を TOML へ保存
+[[keys.command]]
+key = "alt+s"
+type = "shell"
+command = "pen save"
+
+# alt+x: 現在の workspace を削除 (TOML 未保存なら「先にセーブするか?」の確認)
+[[keys.command]]
+key = "alt+x"
+type = "popup"
+command = "pen close"
+width = "50%"
+height = "40%"
+
+# prefix+space: 保存 TOML + 生存 workspace の統合 picker
+# (ctrl+b 二連打は herdr がリテラル prefix 送出に予約しており割当不可)
+[[keys.command]]
+key = "prefix+space"
+type = "popup"
+command = "pen picker"
+width = "90%"
+height = "90%"

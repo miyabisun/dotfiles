@@ -13,11 +13,22 @@ import sys, tomllib
 with open(sys.argv[1], 'rb') as f:
     data = tomllib.load(f)
 
-# 体験の契約2: 「herdr 既定を活かし、下分割だけ prefix+s」(user 指示)。
-# [keys] は完全一致で assert し、意図しない override の追加・削除を退行検知する
-assert data['keys'] == {'split_horizontal': 'prefix+s'}, data['keys']
-# [keys] 以外のテーブルも増えていないこと (既定で足りるものを override しない)
-assert set(data.keys()) == {'keys'}, set(data.keys())
+# 体験の契約2: 「herdr 既定を活かし、下分割だけ prefix+s」(user 指示) +
+# pen の keys.command 3本。[keys] は完全一致で assert し退行検知する。
+# ([keys] 以外のテーブルは user が直接育てる領域なので assert しない)
+keys = data['keys']
+assert set(keys.keys()) == {'split_horizontal', 'command'}, set(keys.keys())
+assert keys['split_horizontal'] == 'prefix+s'
+assert len(keys['command']) == 3, len(keys['command'])
+expected = [
+    {'key': 'alt+s', 'type': 'shell', 'command': 'pen save'},
+    {'key': 'alt+x', 'type': 'popup', 'command': 'pen close',
+     'width': '50%', 'height': '40%'},
+    {'key': 'prefix+space', 'type': 'popup', 'command': 'pen picker',
+     'width': '90%', 'height': '90%'},
+]
+actual = sorted(keys['command'], key=lambda c: c['key'])
+assert actual == sorted(expected, key=lambda c: c['key']), actual
 print('herdr config contract: ok')
 EOF
 

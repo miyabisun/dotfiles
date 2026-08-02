@@ -176,6 +176,38 @@ MUX
     rm -rf "$archive_root"
     exit 0
     ;;
+  https://github.com/miyabi-sunny-side/pen-cli/releases/latest)
+    test "$write_out" = '%{redirect_url}'
+    printf '%s%s' 'https://github.com/miyabi-sunny-side/pen-cli/releases/tag/' \
+      "${INSTALL_APPS_TEST_PEN_LATEST_TAG:-v0.1.0}"
+    exit 0
+    ;;
+  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-linux-x86_64.tar.gz|\
+  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-macos-aarch64.tar.gz)
+    archive_root="${output}.root"
+    mkdir -p "$archive_root"
+    cat >"$archive_root/pen" <<'PEN'
+#!/bin/sh
+echo 'pen — suspend and restore herdr workspaces'
+PEN
+    chmod +x "$archive_root/pen"
+    printf '%s\n' license >"$archive_root/LICENSE"
+    tar -czf "$output" -C "$archive_root" pen LICENSE
+    rm -rf "$archive_root"
+    exit 0
+    ;;
+  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-macos-aarch64.tar.gz.sha256)
+    archive_path="${output%.sha256}"
+    archive_name="$(basename "$archive_path")"
+    if [ -n "${INSTALL_APPS_TEST_BAD_PEN_CHECKSUM:-}" ]; then
+      digest="0000000000000000000000000000000000000000000000000000000000000000"
+    else
+      digest="$(sha256sum "$archive_path" | awk '{ print $1 }')"
+    fi
+    printf '%s  %s\n' "$digest" "$archive_name" >"$output"
+    exit 0
+    ;;
   https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-linux-x86_64.tar.gz.sha256|\
   https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-macos-aarch64.tar.gz.sha256)
     archive_path="${output%.sha256}"
@@ -230,6 +262,8 @@ test -x "$fake_home/.local/bin/agent-talk"
 test "$("$fake_home/.local/bin/agent-talk" --version)" = "agent-talk 0.3.2"
 test -x "$fake_home/.local/bin/mux"
 test "$("$fake_home/.local/bin/mux" --version)" = "mux 0.1.1"
+test -x "$fake_home/.local/bin/pen"
+"$fake_home/.local/bin/pen" | grep -Fq 'pen — suspend and restore herdr workspaces'
 grep -F "daemon not applicable" "$test_root/first-run.out" >/dev/null
 test "$(grep -Fxc ensure-daemon "$agent_log")" -eq 1
 test -z "$(find "$tmp_dir" -mindepth 1 -print -quit)"
@@ -255,6 +289,8 @@ grep -F "Updating agent-talkd via agent-talk update" "$test_root/second-run.out"
 test "$(grep -Fxc update "$agent_log")" -eq 1
 grep -F "Updating mux via mux update" "$test_root/second-run.out" >/dev/null
 test "$(grep -Fxc update "$mux_log")" -eq 1
+grep -F "pen v0.1.0 already installed" "$test_root/second-run.out" >/dev/null
+test "$(grep -Fc 'pen-linux-x86_64.tar.gz' "$log")" -eq 4
 
 linux_home="$test_root/linux-home"
 linux_tmp="$test_root/linux-tmp"
@@ -422,6 +458,8 @@ PATH="$fake_bin:$darwin_home/.local/bin:/usr/bin:/bin" \
 
 test "$("$darwin_home/.local/bin/mux" --version)" = "mux 0.1.1"
 grep -F "mux-macos-aarch64.tar.gz" "$test_root/darwin-curl.log" >/dev/null
+grep -F "pen-macos-aarch64.tar.gz" "$test_root/darwin-curl.log" >/dev/null
+test -x "$darwin_home/.local/bin/pen"
 test -z "$(find "$darwin_tmp" -mindepth 1 -print -quit)"
 
 mux_update_failure_home="$test_root/mux-update-failure-home"
@@ -564,5 +602,79 @@ fi
 grep -F "mux binary version does not match" "$test_root/wrong-mux-version.out" >/dev/null
 test ! -e "$wrong_mux_version_home/.local/bin/mux"
 test -z "$(find "$wrong_mux_version_tmp" -mindepth 1 -print -quit)"
+
+update_pen_home="$test_root/update-pen-home"
+update_pen_tmp="$test_root/update-pen-tmp"
+prepare_mux_case "$update_pen_home" "$update_pen_tmp"
+cp "$fake_home/.local/bin/mux" "$update_pen_home/.local/bin/mux"
+cat >"$update_pen_home/.local/bin/pen" <<'OLD_PEN'
+#!/bin/sh
+echo 'pen — suspend and restore herdr workspaces'
+echo 'old build'
+OLD_PEN
+chmod +x "$update_pen_home/.local/bin/pen"
+update_pen_before="$(sha256_file "$update_pen_home/.local/bin/pen")"
+PATH="$fake_bin:$update_pen_home/.local/bin:/usr/bin:/bin" \
+  HOME="$update_pen_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/update-pen-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/update-pen-curl-args.log" \
+  TMPDIR="$update_pen_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/update-pen.out"
+grep -F "pen v0.1.0 installed" "$test_root/update-pen.out" >/dev/null
+if grep -Fq "==> pen v0.1.0 already installed" "$test_root/update-pen.out"; then
+  echo "recognized old pen should be replaced, not treated as current" >&2
+  exit 1
+fi
+update_pen_after="$(sha256_file "$update_pen_home/.local/bin/pen")"
+test "$update_pen_before" != "$update_pen_after"
+"$update_pen_home/.local/bin/pen" | grep -Fq 'pen — suspend and restore herdr workspaces'
+if "$update_pen_home/.local/bin/pen" | grep -Fq 'old build'; then
+  echo "old pen build survived the update" >&2
+  exit 1
+fi
+test -z "$(find "$update_pen_tmp" -mindepth 1 -print -quit)"
+
+bad_pen_checksum_home="$test_root/bad-pen-checksum-home"
+bad_pen_checksum_tmp="$test_root/bad-pen-checksum-tmp"
+prepare_mux_case "$bad_pen_checksum_home" "$bad_pen_checksum_tmp"
+cp "$fake_home/.local/bin/mux" "$bad_pen_checksum_home/.local/bin/mux"
+if PATH="$fake_bin:$bad_pen_checksum_home/.local/bin:/usr/bin:/bin" \
+  HOME="$bad_pen_checksum_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/bad-pen-checksum-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/bad-pen-checksum-curl-args.log" \
+  INSTALL_APPS_TEST_BAD_PEN_CHECKSUM=1 \
+  TMPDIR="$bad_pen_checksum_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/bad-pen-checksum.out" 2>&1; then
+  echo "install-apps should fail when the pen checksum does not match" >&2
+  exit 1
+fi
+grep -F "Checksum mismatch for pen" "$test_root/bad-pen-checksum.out" >/dev/null
+test ! -e "$bad_pen_checksum_home/.local/bin/pen"
+test -z "$(find "$bad_pen_checksum_tmp" -mindepth 1 -print -quit)"
+
+unknown_pen_home="$test_root/unknown-pen-home"
+unknown_pen_tmp="$test_root/unknown-pen-tmp"
+prepare_mux_case "$unknown_pen_home" "$unknown_pen_tmp"
+cp "$fake_home/.local/bin/mux" "$unknown_pen_home/.local/bin/mux"
+cat >"$unknown_pen_home/.local/bin/pen" <<'UNKNOWN_PEN'
+#!/bin/sh
+echo "another pen"
+UNKNOWN_PEN
+chmod +x "$unknown_pen_home/.local/bin/pen"
+unknown_pen_before="$(sha256_file "$unknown_pen_home/.local/bin/pen")"
+if PATH="$fake_bin:$unknown_pen_home/.local/bin:/usr/bin:/bin" \
+  HOME="$unknown_pen_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/unknown-pen-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/unknown-pen-curl-args.log" \
+  TMPDIR="$unknown_pen_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/unknown-pen.out" 2>&1; then
+  echo "install-apps should refuse an unrecognized pen target" >&2
+  exit 1
+fi
+grep -F "Refusing to replace unrecognized pen target" "$test_root/unknown-pen.out" >/dev/null
+test "$unknown_pen_before" = "$(sha256_file "$unknown_pen_home/.local/bin/pen")"
+test ! -e "$test_root/unknown-pen-curl.log" \
+  || test "$(grep -Fc 'pen-cli' "$test_root/unknown-pen-curl.log" || true)" -eq 0
+test -z "$(find "$unknown_pen_tmp" -mindepth 1 -print -quit)"
 
 echo "install-apps Linux/macOS agent CLI test: pass"
