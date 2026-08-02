@@ -34,10 +34,25 @@ user の明示的な `$polish` 起動、または同じ依頼文での段階明�
      困難なら理由を receipt に1行で書く。
    - formatter/linter は repo に既存の設定があれば直接実行する。独立 formatter
      ゲートは立てない。
-4. **レビュー1回**: counterpart pane が利用可能なら、user 原文 (verbatim)・
-   diff・実行済みチェックを送り実装レビューを1往復だけ受ける。blocking は
-   修正して focused closure、それ以外は記録して進む。counterpart 不在・配達
-   失敗・期限超過は self diff-review へ fallback し、その旨を receipt に記す。
+4. **レビュー1回**: レビュー前に `~/.local/bin/agent-talk-peer who` を1回
+   実行し、反対 runtime の登録 pane を同じ window、次に同じ session の順で
+   一意に固定して、user 原文 (verbatim)・diff・実行済みチェックを送り実装
+   レビューを1往復だけ受ける。blocking は修正して focused closure、それ以外は
+   記録して進む。不在・pane 消失・配達失敗・期限超過のときだけ self
+   diff-review へ fallback し、その旨を receipt に記す。
+
+   レビュワーの検査項目 (spike と横並び):
+   - **テストの誠実さ (blocking)**: テストを読み、トートロジー (実装の
+     言い換え、常に真になる assert) と誤魔化し (期待値のハードコード合わせ、
+     assert の削除・弱体化、skip での回避) を検知する。サボり・不誠実は厳格に
+     修正させる。直したバグに回帰テストが付いているかも見る。
+   - **DRY**: 今回の diff が導入した有害な重複で、
+     機構追加なしの局所抽出で消せるものだけを blocking とする。
+     それ以外は non-blocking の TODO。
+   - **過度な YAGNI (non-blocking)**: 落とされたケースに
+     「このケースは必要か?」の質問を残し、receipt で user に返す。
+   - **formatter / linter の実行確認 (blocking)** と、commit 対象が今回の
+     変更だけかの **scope 確認 (blocking)**。
 5. **コミットする**: 1 invocation = 1 local commit。English Conventional
    Commits。知識棚卸しは行わない (harden 専用)。
 6. **報告する**: 解消した不満と証拠、残る不満、追加した回帰テスト、review の

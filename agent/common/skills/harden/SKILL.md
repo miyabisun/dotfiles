@@ -403,7 +403,18 @@ and the derived contract, report the request-alignment failures listed in Sectio
 internal consistency (the same operation implemented in more than one way,
 error codes or messages reused for unrelated conditions), proportionality
 (mechanism heavier than the requirement, unconsumed configuration or code),
-and mock-only evidence for external-system behavior.
+mock-only evidence for external-system behavior, and the shared review
+standards (decision 0002, aligned with spike/polish):
+
+- test honesty (blocking): read the tests;
+  tautological tests that restate the implementation,
+  expected values hardcoded to fit output, weakened or skipped assertions,
+  and any dishonest shortcut are strict blockers that must be fixed.
+- DRY: harmful duplication introduced by this diff that a local extraction
+  removes without new mechanism is blocking; intentional duplication or
+  duplication whose removal needs new abstraction becomes a non-blocking TODO.
+- over-applied YAGNI (non-blocking): a dropped case that may be needed returns
+  as the question "Is this case actually needed?" in the receipt for the user.
 
 The review result must be structured:
 
