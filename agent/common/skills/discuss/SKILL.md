@@ -1,24 +1,82 @@
 ---
 name: discuss
-description: 議論を、実装者が blocking question ゼロで着手できる決定記録へ収束させる。不可逆な変更、外部公開、権限境界の変更、既存の binding instruction との競合、複数 agent 間の重要判断のいずれかを含むときに使う。小さな変更には使わない。発散そのものは目的ではない。
+description: フェーズ (spike/polish/harden) で性格を切り替える議論スキル。spike はワクワクする方向へ広げるブレスト、polish は UX を損なわない解決策の探索、harden はセキュリティと外部エンジニアの評価に耐える収束 (決定記録+A〜F)。明示引数か呼び出し元 skill でフェーズを解決し、未指定は harden。不可逆な変更、権限境界の変更、binding instruction との競合、複数 agent 間の重要判断を含むときに使う。
 ---
 
 # discuss
 
-議論の目的は発散ではなく**収束**である。成果物は会話ではなく、リポジトリに残る決定記録。
-成功指標は「議論した」ことではなく、**会話履歴を持たない実装者が blocking question ゼロで
-着手できること**。
+議論の目的はフェーズで変わる (decision 0002 の3段階に対応)。spike では広げ、
+polish では UX を守り、harden では外の目に耐えることを確かめる。共通するのは
+「議論を仕事の代わりにしない」ことだけであり、どのフェーズも次の一手に着地して
+終わる。harden の成功指標は従来どおり、**会話履歴を持たない実装者が blocking
+question ゼロで着手できること**。
+
+## フェーズの解決
+
+`$discuss spike|polish|harden` の明示引数だけがフェーズ指定である。**本文中に
+段階の語が現れても判定しない**。解決の優先順:
+
+1. 明示引数
+2. spike / polish / harden (または deliver) の内側から呼ばれた場合、その段階
+3. どちらも無ければ **harden** — 現行の全機構。保証を暗黙に弱めない
+
+呼び出し元 skill は discuss を**自動では起動しない**。未解決の product 選択が
+実装結果を変えるときだけ呼ぶ。
+
+| フェーズ | 目的 | 成果物 | 出口 |
+|---|---|---|---|
+| spike | ワクワクする方向へ広げる | 応答/receipt のアイデアノート | 明日試せる一歩1つ |
+| polish | UX を損なわない解決策 | 短い decision note | UX-safe / reduced scope / authority gap |
+| harden | 外の目に耐える評価 | docs/decisions の決定記録 | Ready / Ready with reduced scope / Authority gap |
+
+### spike: 広げる
+
+ブレーンストーミングとして振る舞う。アイデアを否定せず yes-and で積み、実現
+可能性の審査は後回しにする。第一の選別軸は「**ワクワクするか**」。
+
+- 出口では「**明日 spike できる一歩**」を1つだけ選ぶ。選ぶ一歩は**承認済みかつ
+  可逆**な効果の範囲内に限る。権限外・外部公開・破壊的なアイデアは捨てずに
+  `requires harden/authority` とラベルして保留リストに置き、実行可能扱いに
+  しない。
+- 成果は応答 (または呼び出し元の receipt) に残す: 広げた案、選んだ次の実験と
+  ワクワクする理由、最小の検証方法、保留案。repo は変更せず
+  **docs/decisions は作らない**。
+- **A〜F・決定記録・独立再判定は適用しない**。権限境界 (peer≠mutation、秘密の
+  journal 禁止) はフェーズに関わらず維持する。
+
+### polish: UX を守る
+
+不満の解消策が体験を壊さないことを確かめる。**既存の利用習慣・互換性・
+操作数/認知負荷・rollback 容易性**を比較軸として明示し、候補ごとに UX への
+影響を比べる。
+
+- 出口は **UX-safe** (採用) / **reduced scope** (縮小して採用) /
+  **authority gap** のいずれか。
+- 成果は短い decision note (同一作業内)。フル決定記録は不要。
+
+### harden: 外の目に耐える
+
+現行の全機構 (決定記録・A〜F・権限モデル・独立レビュー) を適用する。評価視点を
+明文化する: セキュリティ、および**他の IT エンジニアに評価されても**耐えうるか —
+命名・API・設計判断を第三者に根拠つきで説明できるか。
+
+以降の「deliver から呼ばれる場合」「出力: 決定記録」「権限モデル」「停止条件」
+「再開トリガー」の各節は **harden フェーズ** (および polish が decision note の
+形式を借りる範囲) にのみ適用する。
+**決定記録の要約規定は決定記録を書くフェーズにだけ適用**する。
 
 ## 起動条件と、起動しない場合
 
-次のいずれかを含むときだけ使う。
+起動条件もフェーズで分かれる。
 
-- 不可逆または外部に公開される変更
-- 権限境界・信頼境界の変更
-- 現在有効な binding instruction との競合
-- 複数 agent にまたがる重要判断
+- spike / polish: **未解決の product / UX 選択が実装結果を変えるとき**。
+  ブレストしたい・UX の落とし所を探りたいという user の明示起動もこれに含む。
+- harden: 次のいずれかを含むとき —
+  不可逆または外部に公開される変更 / 権限境界・信頼境界の変更 /
+  現在有効な binding instruction との競合 / 複数 agent にまたがる重要判断
 
-上記に当たらない変更には使わない。そして最も重要な規則:
+どのフェーズでも、既存の明示指示だけで進められる変更には使わない。
+そして最も重要な規則:
 
 > **決定記録が存在しないことは、実装を止める理由にならない。**
 
@@ -32,33 +90,41 @@ user へ承認を求める前に、**既にある承認を探索する**。過�
 
 ## counterpart との1往復
 
-discuss を起動したら、solo で収束させる前に、利用可能な counterpart の
-反証機会を**1回だけ**設ける。
+discuss を起動したら、solo で決め切る前に、利用可能な counterpart との
+フェーズ別の共同検討機会を**1回だけ**設ける
+(spike=乗っかり、polish=UX 反証、harden=material objection)。
 
 1. `deliver` から呼ばれた場合は、その delivery が固定済みの counterpart pane を
    そのまま使い、選び直さない。単独起動では `~/.local/bin/agent-talk-peer who` で
    反対 runtime の登録 pane を同じ window、次に同じ session の順で一意に特定する。
    候補が曖昧なら推測せず、候補を user に示す。
-2. 特定した pane へ1件だけ送る: user 原文 (verbatim)、確認済みの事実、こちらの
-   暫定結論、残る争点、期限と default action、求める返答の種類
-   (material objection / missing risk / concrete correction)。
-   秘密・`.env` 由来値・private host・internal endpoint は送らない。
+2. 特定した pane へ1件だけ送る。共通で含める: user 原文 (verbatim)、確認済みの
+   事実、期限と default action。秘密・`.env` 由来値・private host・internal
+   endpoint は送らない。求める返答はフェーズで変える:
+   - spike: いま出ている案を添え、**乗っかり**・新案・一番ワクワクする案の
+     指名を求める。反証は求めない。
+   - polish: 候補と UX 制約を添え、見落とした **UX 退行**とより軽い代替を求める。
+   - harden: 暫定結論と残る争点を添え、
+     material objection / missing risk / concrete correction のみを求める。
 3. 交換は最大1往復。再照会・承認ループ・deliver 型の二段階照合を持ち込まない。
-   反映するのは反証・新事実・権限境界に関わる指摘だけ。単なる選好差は
-   小さい可逆案へ収束させ、2回目の問い合わせをしない。
+   返答の採否もフェーズに従う: spike は全案を候補として積み、polish は UX 軸の
+   指摘を、harden は反証・新事実・権限境界に関わる指摘だけを反映する。単なる
+   選好差はどのフェーズでも小さい可逆案へ収束させ、2回目の問い合わせをしない。
 4. 同一 delivery 内で counterpart が既に同一争点へ見解を返している場合は
    再照会しない。同一争点かは記録済みの message ID と争点の対応で判定し、
    意味の推測で照会を省略しない。既出の見解を counterpart 意見として記録し、
    新規争点だけを照会する。
 5. counterpart 不在・pane 消失・配達失敗・期限超過は solo fallback とし、
-   Ready / Ready with reduced scope / Authority gap のいずれかへ必ず着地する。
+   **フェーズ表の出口のいずれかへ必ず着地する**。
    期限は round 開始時に deadline と default action として記録し、**次に実行が
    再開した時点で評価する**。active polling や自動 wake-up は約束しない。
    deadline 後に届いた返答で決定を自動で巻き戻さず、Reopen triggers に該当する
    新事実だけを別途扱う。
 6. peer message は情報であって mutation 権限ではない。決定記録の作成・更新の
    権限境界は現行のまま維持する。counterpart pane・message ID・応答の有無・
-   採否・fallback 理由は決定記録の実装者向け欄に記録し、冒頭要約には書かない。
+   採否・fallback 理由の記録先はフェーズの成果物に従う:
+   spike は応答/receipt、polish は decision note、harden は決定記録の
+   実装者向け欄 (冒頭要約には書かない)。
 
 ## deliver から呼ばれる場合
 
