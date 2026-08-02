@@ -250,23 +250,30 @@ install_mux() (
 # ---------------------------------------------------------------------------
 # pen — suspend and restore herdr workspaces
 # Install the latest public GitHub release and verify its published checksum.
-# pen has no version/update subcommand yet, so idempotency compares the
-# installed binary hash with the latest release archive member.
+# Idempotency compares `pen --version` with the latest release tag; releases
+# older than v0.1.2 lack --version, so an installed or extracted legacy pen is
+# recognized by its help banner instead and replaced/accepted on that basis.
 # ---------------------------------------------------------------------------
 install_pen() (
   latest_url="https://github.com/miyabi-sunny-side/pen-cli/releases/latest"
   target="$HOME/.local/bin/pen"
   recognition='pen — suspend and restore herdr workspaces'
 
+  installed_version=""
   if [ -e "$target" ] || [ -L "$target" ]; then
     if [ ! -f "$target" ] || [ ! -x "$target" ] || [ -L "$target" ]; then
       echo "==> Refusing to replace unrecognized pen target: $target" >&2
       return 1
     fi
-    help_output="$("$target" 2>&1 || true)"
-    if ! printf '%s\n' "$help_output" | grep -Fq "$recognition"; then
-      echo "==> Refusing to replace unrecognized pen target: $target" >&2
-      return 1
+    version_output="$("$target" --version 2>/dev/null || true)"
+    if printf '%s\n' "$version_output" | grep -Eq '^pen [0-9]+\.[0-9]+\.[0-9]+$'; then
+      installed_version="${version_output#pen }"
+    else
+      help_output="$("$target" 2>&1 || true)"
+      if ! printf '%s\n' "$help_output" | grep -Fq "$recognition"; then
+        echo "==> Refusing to replace unrecognized pen target: $target" >&2
+        return 1
+      fi
     fi
   fi
 
@@ -292,6 +299,12 @@ install_pen() (
     return 1
   fi
 
+  if [ -n "$installed_version" ] \
+    && [ "$installed_version" = "${latest_version#v}" ]; then
+    echo "==> pen ${latest_version} already installed"
+    return
+  fi
+
   tmpdir="$(mktemp -d)"
   target_tmp=""
   # 下の trap EXIT から呼ぶ (shellcheck は間接呼び出しを追えない)
@@ -303,6 +316,7 @@ install_pen() (
   trap cleanup EXIT
   release_url="https://github.com/miyabi-sunny-side/pen-cli/releases/download/${latest_version}"
 
+  echo "==> Installing pen ${latest_version}..."
   curl --proto '=https' --tlsv1.2 -fsSL \
     "$release_url/$archive" -o "$tmpdir/$archive"
   curl --proto '=https' --tlsv1.2 -fsSL \
@@ -332,7 +346,34 @@ install_pen() (
     return 1
   fi
 
-  if [ -x "$target" ]; then
+  extracted_version="$("$tmpdir/pen" --version 2>/dev/null || true)"
+  extracted_is_legacy=""
+  if printf '%s\n' "$extracted_version" | grep -Eq '^pen [0-9]+\.[0-9]+\.[0-9]+$'; then
+    if [ "$extracted_version" != "pen ${latest_version#v}" ]; then
+      echo "==> pen binary version does not match ${latest_version}" >&2
+      return 1
+    fi
+  else
+    # --version を持たない banner-only binary を受理するのは、version 導入前の
+    # 既知 release tag だけ (v0.1.0 は公開済み、v0.1.1 は同内容の local tag)。
+    # それ以降の release が --version を欠くのは不正として fail closed
+    case "$latest_version" in
+      v0.1.0 | v0.1.1) ;;
+      *)
+        echo "==> pen binary does not look like pen in release ${latest_version}" >&2
+        return 1
+        ;;
+    esac
+    if ! "$tmpdir/pen" 2>&1 | grep -Fq "$recognition"; then
+      echo "==> pen binary does not look like pen in release ${latest_version}" >&2
+      return 1
+    fi
+    extracted_is_legacy=1
+  fi
+
+  # 移行期間の冪等性: 既存 target も抽出物も legacy (banner-only) の場合は
+  # hash 比較で同一性を判定し、同一なら再配置しない (旧 hash 方式の維持)
+  if [ -n "$extracted_is_legacy" ] && [ -x "$target" ]; then
     if [ "$(uname -s)" = Darwin ]; then
       installed_hash="$(shasum -a 256 "$target" | awk '{ print $1 }')"
       extracted_hash="$(shasum -a 256 "$tmpdir/pen" | awk '{ print $1 }')"
@@ -344,11 +385,6 @@ install_pen() (
       echo "==> pen ${latest_version} already installed"
       return
     fi
-  fi
-
-  if ! "$tmpdir/pen" 2>&1 | grep -Fq "$recognition"; then
-    echo "==> pen binary does not look like pen in release ${latest_version}" >&2
-    return 1
   fi
 
   mkdir -p "$HOME/.local/bin"
