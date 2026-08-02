@@ -14,13 +14,13 @@ description: >-
 Deliver a behavior-preserving consolidation as one verified local commit.
 Optimize for change locality and clear ownership, not deleted line count.
 
-Before acting, read `../deliver/SKILL.md` completely. Apply its delivery ledger,
+Before acting, read `../harden/SKILL.md` completely. Apply its delivery ledger,
 risk classification, evidence integrity, review gates, scope protection, commit
 gate, formatter applicability/classification rules, structured formatter receipt,
 failure output, and hard rules. This skill specializes those rules below and must
 not weaken or replace the inherited formatter gate.
 An explicit `$consolidate` invocation grants the same single-local-commit
-authorization as `$deliver`; it grants nothing beyond that.
+authorization as `$harden`; it grants nothing beyond that.
 
 ## Inputs
 
@@ -33,7 +33,7 @@ Free text alone means `target`.
 
 ## Definition of consolidated
 
-In addition to the `deliver` completion gate, require all applicable outcomes:
+In addition to the `harden` completion gate, require all applicable outcomes:
 
 1. An inventory identifies concrete duplicate sites and their callers.
 2. Each site is classified as `merge`, `share-primitive`, or `keep-separate`
@@ -156,7 +156,7 @@ canonical owner or shared contract concurrently.
 
 Require independent `rev` even if the textual diff is small. Give it the
 original target, inventory, baseline, ownership design, retired paths, complete
-diff, and executed checks. In addition to normal `deliver` review, require it to
+diff, and executed checks. In addition to normal `harden` review, require it to
 answer:
 
 - Were any `keep-separate` sites incorrectly merged?
@@ -168,7 +168,7 @@ answer:
 
 Consolidation that crosses trust, auth, tenant, serialization, SQL, URL,
 filesystem, command, secret, or destructive-data boundaries is
-security-sensitive. Run `deliver`'s two independent security reviews at the point
+security-sensitive. Run `harden`'s two independent security reviews at the point
 its route defines, after `formatter`; do not run them here.
 
 After fixes, rerun affected characterization/full checks and inspect retired
@@ -178,7 +178,7 @@ path searches again. Material ownership or API redesign requires a fresh full
 ## 6. Commit and report
 
 After the inherited review gates pass, run the exact formatter and closure gate
-defined by `deliver`. Do not restate or narrow it here. Mechanical formatter
+defined by `harden`. Do not restate or narrow it here. Mechanical formatter
 output elsewhere in an affected first-party implementation workspace is bounded
 maintenance, not an automatic reason to stop consolidation.
 
@@ -186,7 +186,7 @@ Pass the original structured formatter receipt—not a parent summary—to `comm
 Invoke `committer` only after that receipt and every consolidation condition pass.
 Provide the requested files, disclosed maintenance files, and the explicit
 `$consolidate` authorization. After its approved staging receipt, follow
-`deliver`'s parent-owned commit sequence exactly: verify the staged files and
+`harden`'s parent-owned commit sequence exactly: verify the staged files and
 cached diff against the receipt, use the proposed message verbatim, and create
 exactly one local Conventional Commit in the parent context, then verify it.
 Never push.

@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-deliver="$repo_root/agent/common/skills/deliver/SKILL.md"
+deliver="$repo_root/agent/common/skills/harden/SKILL.md"
 committer="$repo_root/agent/common/agents/committer.md"
 consolidate="$repo_root/agent/common/skills/consolidate/SKILL.md"
 
@@ -31,7 +31,7 @@ assert_contains "$committer" '"staged_files": ["path"]'
 assert_contains "$committer" '"cached_diff_check": "pass"'
 assert_contains "$committer" '"proposed_commit": {"subject": "type(scope): summary", "body": ""}'
 
-assert_contains "$consolidate" '`deliver`'"'"'s parent-owned commit sequence exactly'
+assert_contains "$consolidate" '`harden`'"'"'s parent-owned commit sequence exactly'
 assert_contains "$consolidate" 'use the proposed message verbatim'
 assert_contains "$consolidate" 'exactly one local Conventional Commit in the parent context'
 assert_contains "$consolidate" 'Never push.'

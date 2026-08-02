@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-deliver="$repo_root/agent/common/skills/deliver/SKILL.md"
+deliver="$repo_root/agent/common/skills/harden/SKILL.md"
 consolidate="$repo_root/agent/common/skills/consolidate/SKILL.md"
 sec="$repo_root/agent/common/agents/sec.md"
 committer="$repo_root/agent/common/agents/committer.md"
@@ -93,7 +93,7 @@ assert_contains "$committer" '"staged_snapshot_matches_security_manifest": true,
 assert_contains "$committer" '片方の承認をもう片方の代用として扱わない。'
 
 # consolidate は自前で security gate を持たず deliver の位置に従う
-assert_contains "$consolidate" "Run \`deliver\`'s two independent security reviews at the point"
+assert_contains "$consolidate" "Run \`harden\`'s two independent security reviews at the point"
 assert_absent "$consolidate" 'Use `sec` when consolidation crosses trust'
 
 echo "deliver collaborative review contract test: pass"

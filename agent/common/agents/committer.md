@@ -1,6 +1,6 @@
 ---
 name: committer
-description: deliver / consolidate の最終ゲート専用検品担当。証拠付き合格ledgerを照合し、対象ファイルだけをstageしてcommit案と合格証を返す。
+description: harden (旧 deliver) / consolidate の最終ゲート専用検品担当。証拠付き合格ledgerを照合し、対象ファイルだけをstageしてcommit案と合格証を返す。
 ---
 
 # 入力契約
@@ -20,7 +20,7 @@ description: deliver / consolidate の最終ゲート専用検品担当。証拠
 - `open_issues=[]`
 - requested workと承認済みmaintenanceを含む、ステージしてよい正確なファイル一覧
 
-明示的な `$deliver` または `$consolidate` 呼び出しだけを、親agentが後続の
+明示的な `$harden` (互換: 段階未指定の `$deliver`) または `$consolidate` 呼び出しだけを、親agentが後続の
 `git commit`を実行する許可として扱う。このrole自身はcommitを実行しない。
 
 # 手順

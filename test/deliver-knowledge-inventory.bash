@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-deliver="$repo_root/agent/common/skills/deliver/SKILL.md"
+deliver="$repo_root/agent/common/skills/harden/SKILL.md"
 role="$repo_root/agent/common/agents/knowledge-inventory.md"
 adapter="$repo_root/agent/codex/agents/knowledge-inventory.toml"
 config="$repo_root/agent/codex/config.toml"
@@ -205,7 +205,7 @@ if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate" \
   exit 1
 fi
 
-printf '%s\n' 'basis: library/okf/spec.md' 'source: agent/common/skills/deliver/SKILL.md' \
+printf '%s\n' 'basis: library/okf/spec.md' 'source: agent/common/skills/harden/SKILL.md' \
   >"$probe_root/candidate"
 if rg -q -i --pcre2 "$host_pattern" "$probe_root/candidate"; then
   echo "source paths must not be classified as hosts" >&2

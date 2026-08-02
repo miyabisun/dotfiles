@@ -5,7 +5,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 docs="$repo_root/agent/common/agents/docs.md"
-deliver="$repo_root/agent/common/skills/deliver/SKILL.md"
+deliver="$repo_root/agent/common/skills/harden/SKILL.md"
 
 assert_contains() {
   local file="$1"
