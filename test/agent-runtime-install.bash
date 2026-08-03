@@ -21,7 +21,7 @@ HOME="$fake_home" PATH="$tool_bin:/usr/bin:/bin" "$installer"
 runtime_bin="$fake_home/.local/bin"
 rules_file="$fake_home/.codex/rules/agent-talk.rules"
 
-for runtime_name in agent-talk-peer emit-turn-end.sh notify-file-permission.sh; do
+for runtime_name in emit-turn-end.sh notify-file-permission.sh; do
   test -f "$runtime_bin/$runtime_name"
   test -x "$runtime_bin/$runtime_name"
   test ! -L "$runtime_bin/$runtime_name"
@@ -30,48 +30,36 @@ test -f "$runtime_bin/.dotfiles-agent-runtime"
 test ! -L "$runtime_bin/.dotfiles-agent-runtime"
 test -f "$rules_file"
 test ! -L "$rules_file"
-grep -Fq "$runtime_bin/agent-talk-peer" "$rules_file"
 grep -Fq "$runtime_bin/notify-file-permission.sh" "$rules_file"
-if grep -Fq '@AGENT_TALK_PEER@' "$rules_file"; then
-  echo 'installed rule still contains a dispatcher placeholder' >&2
+
+# 旧 peer dispatcher は撤去済み。配置も、それを許可する rule も残ってはならない
+if test -e "$runtime_bin/agent-talk-peer"; then
+  echo 'installer must not place the retired peer dispatcher' >&2
   exit 1
 fi
-
-# Fresh install succeeds without the later install-apps broker. Until that
-# regular broker arrives, the dispatcher fails closed.
-if "$runtime_bin/agent-talk-peer" who 2>/dev/null; then
-  echo 'dispatcher must fail closed before agent-talk is installed' >&2
+if grep -Fq 'agent-talk-peer' "$rules_file"; then
+  echo 'installed rule must not allow the retired peer dispatcher' >&2
   exit 1
 fi
-
-cat >"$runtime_bin/agent-talk" <<'AGENT_TALK'
-#!/bin/bash
-printf '%s\n' "$*" >>"$FRESH_INSTALL_AGENT_TALK_LOG"
-AGENT_TALK
-chmod 0755 "$runtime_bin/agent-talk"
-export FRESH_INSTALL_AGENT_TALK_LOG="$test_root/agent-talk.log"
-: >"$FRESH_INSTALL_AGENT_TALK_LOG"
-"$runtime_bin/agent-talk-peer" who
-grep -Fx 'who' "$FRESH_INSTALL_AGENT_TALK_LOG" >/dev/null
 
 result="$(codex execpolicy check --rules "$rules_file" \
-  "$runtime_bin/agent-talk-peer" who 2>/dev/null)"
+  "$runtime_bin/notify-file-permission.sh" codex 619 2>/dev/null)"
 python3 - "$result" <<'PY'
 import json
 import sys
 
 if json.loads(sys.argv[1]).get("decision") != "allow":
-    raise SystemExit("installed absolute dispatcher rule must allow who")
+    raise SystemExit("installed absolute notifier rule must allow the call")
 PY
 
 result="$(codex execpolicy check --rules "$rules_file" \
-  agent-talk-peer who 2>/dev/null)"
+  notify-file-permission.sh codex 619 2>/dev/null)"
 python3 - "$result" <<'PY'
 import json
 import sys
 
 if json.loads(sys.argv[1]).get("decision") == "allow":
-    raise SystemExit("basename dispatcher must stay outside the absolute rule")
+    raise SystemExit("basename notifier must stay outside the absolute rule")
 PY
 
 # bin/install must propagate a runtime-installer failure instead of continuing
@@ -101,6 +89,18 @@ ln -s "$tool_bin/tmux" "$no_curl_bin/tmux"
 HOME="$no_curl_home" PATH="$no_curl_bin" "$installer"
 grep -Fx 'CURL_BIN=' \
   "$no_curl_home/.local/bin/.dotfiles-agent-runtime" >/dev/null
-test -x "$no_curl_home/.local/bin/agent-talk-peer"
+test -x "$no_curl_home/.local/bin/notify-file-permission.sh"
+
+# 既に配置済みの旧 dispatcher は、再インストールで撤去されなければならない。
+# 残すと PATH 上で生き続け、ack できない経路が復活する
+stale_home="$test_root/stale-home"
+mkdir -p "$stale_home/.local/bin"
+printf '#!/bin/sh\nexit 0\n' >"$stale_home/.local/bin/agent-talk-peer"
+chmod 0755 "$stale_home/.local/bin/agent-talk-peer"
+HOME="$stale_home" PATH="$tool_bin:/usr/bin:/bin" "$installer"
+if test -e "$stale_home/.local/bin/agent-talk-peer"; then
+  echo 'installer must remove a previously installed peer dispatcher' >&2
+  exit 1
+fi
 
 echo 'agent runtime fresh install test: pass'

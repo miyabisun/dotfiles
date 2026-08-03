@@ -50,7 +50,7 @@ chmod 0644 "$RUNTIME_PATHS_TEMP"
 mv "$RUNTIME_PATHS_TEMP" "$RUNTIME_PATHS"
 trap - EXIT
 
-for RUNTIME_NAME in emit-turn-end.sh agent-talk-peer notify-file-permission.sh; do
+for RUNTIME_NAME in emit-turn-end.sh notify-file-permission.sh; do
     RUNTIME_TARGET="$RUNTIME_BIN/$RUNTIME_NAME"
     if [[ -L "$RUNTIME_TARGET" ]]; then
         unlink "$RUNTIME_TARGET"
@@ -58,13 +58,14 @@ for RUNTIME_NAME in emit-turn-end.sh agent-talk-peer notify-file-permission.sh; 
 done
 cp "$SOURCE_ROOT/agent/common/bin/emit-turn-end.sh" \
     "$RUNTIME_BIN/emit-turn-end.sh"
-cp "$SOURCE_ROOT/agent/common/bin/agent-talk-peer" \
-    "$RUNTIME_BIN/agent-talk-peer"
 cp "$SOURCE_ROOT/agent/common/bin/notify-file-permission.sh" \
     "$RUNTIME_BIN/notify-file-permission.sh"
 chmod 0755 "$RUNTIME_BIN/emit-turn-end.sh" \
-    "$RUNTIME_BIN/agent-talk-peer" \
     "$RUNTIME_BIN/notify-file-permission.sh"
+
+# MCP (agent-talk-mcp) が peer 会話の唯一の経路になったので、旧 CLI dispatcher は
+# 配置しない。以前の配置が残っていると PATH 上で生き続けるため明示的に撤去する。
+rm -f "$RUNTIME_BIN/agent-talk-peer"
 
 RULES_TARGET="$RULES_DIR/agent-talk.rules"
 if [[ -L "$RULES_TARGET" ]]; then
@@ -73,7 +74,6 @@ fi
 RULES_TEMP="$(mktemp "$RULES_DIR/.agent-talk.rules.XXXXXX")"
 trap 'rm -f "$RULES_TEMP"' EXIT
 sed \
-    -e "s|@AGENT_TALK_PEER@|$RUNTIME_BIN/agent-talk-peer|g" \
     -e "s|@NOTIFY_FILE_PERMISSION@|$RUNTIME_BIN/notify-file-permission.sh|g" \
     "$SOURCE_ROOT/agent/codex/rules/agent-talk.rules" >"$RULES_TEMP"
 mv "$RULES_TEMP" "$RULES_TARGET"

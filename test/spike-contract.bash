@@ -38,8 +38,8 @@ assert_contains "$spike" '黙ってゴールから除外しない'
 # formatter / linter は機械的に実行する
 assert_contains "$spike" '**formatter / linter を機械的に叩く**'
 
-# レビュワーは counterpart を who で一意に固定してから1往復する
-assert_contains "$spike" 'agent-talk-peer who'
+# レビュワーは counterpart を list_peers で一意に固定してから1往復する
+assert_contains "$spike" 'agent-talk MCP の `list_peers`'
 assert_contains "$spike" '同じ window、次に同じ session'
 assert_contains "$spike" '不在・pane 消失・配達失敗のときだけ self review'
 

@@ -14,9 +14,9 @@ assert_contains() {
   }
 }
 
-assert_contains '~/.local/bin/agent-talk-peer send codex --no-reply'
+assert_contains 'When the outbound message itself should end the exchange, set `no_reply`.'
 assert_contains 'The daemon makes the one-way intent authoritative'
-assert_contains 'Make that result terminal with `--no-reply`'
+assert_contains 'Make that result terminal with `no_reply`'
 assert_contains 'do not send routine acknowledgement, thanks, receipt'
 assert_contains 'Reply to a no-reply brief only when silence would cause material harm'
 assert_contains 'Send at most one veto'

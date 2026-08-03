@@ -16,8 +16,8 @@ assert_contains() {
   }
 }
 
-# polish: レビュワー解決手順 (who → same-window → same-session → fallback 限定)
-assert_contains "$polish" 'agent-talk-peer who'
+# polish: レビュワー解決手順 (list_peers → same-window → same-session → fallback 限定)
+assert_contains "$polish" 'agent-talk MCP の `list_peers`'
 assert_contains "$polish" '同じ window、次に同じ session'
 
 # polish: spike と横並びの検査項目

@@ -58,7 +58,7 @@ assert_contains "$discuss" 'harden フェーズ'
 assert_contains "$discuss" '決定記録の要約規定は決定記録を書くフェーズにだけ適用'
 
 # counterpart 1往復: 共通部 (pane 解決・権限境界) + phase 別 payload
-assert_contains "$discuss" 'agent-talk-peer who'
+assert_contains "$discuss" 'agent-talk MCP の `list_peers`'
 assert_contains "$discuss" '乗っかり'
 assert_contains "$discuss" 'UX 退行'
 assert_contains "$discuss" 'material objection / missing risk / concrete correction'

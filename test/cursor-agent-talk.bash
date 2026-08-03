@@ -8,9 +8,12 @@ trap 'rm -rf "$test_root"' EXIT
 fake_bin="$test_root/bin"
 fake_home="$test_root/home"
 event_log="$test_root/events.log"
-mkdir -p "$fake_bin" "$fake_home/.local/bin"
+# broker は systemd 管理サービスの release layout 側に居る。PATH には載らないので
+# wrapper は絶対パスで呼ぶ。fixture も同じ場所に置く (~/.local/bin は旧 layout)
+broker_dir="$fake_home/.local/share/agent-talk/current"
+mkdir -p "$fake_bin" "$fake_home/.local/bin" "$broker_dir"
 
-cat >"$fake_bin/agent-talk" <<'AGENT_TALK'
+cat >"$broker_dir/agent-talk" <<'AGENT_TALK'
 #!/usr/bin/env bash
 printf 'agent-talk argc=%s' "$#" >>"$CURSOR_AGENT_TALK_TEST_LOG"
 printf ' <%s>' "$@" >>"$CURSOR_AGENT_TALK_TEST_LOG"
@@ -38,11 +41,12 @@ printf '\n' >>"$CURSOR_AGENT_TALK_TEST_LOG"
 exit "${CURSOR_AGENT_TALK_TEST_STATUS:-0}"
 CODEX
 
-chmod +x "$fake_bin/agent-talk" "$fake_bin/cursor-agent" "$fake_bin/codex"
+chmod +x "$broker_dir/agent-talk" "$fake_bin/cursor-agent" "$fake_bin/codex"
 ln -s cursor-agent "$fake_bin/agent"
 
 run_zsh() {
   PATH="$fake_bin:/usr/bin:/bin" \
+    HOME="$fake_home" \
     CURSOR_AGENT_TALK_TEST_LOG="$event_log" \
     CURSOR_AGENT_TALK_TEST_STATUS="${CURSOR_AGENT_TALK_TEST_STATUS:-0}" \
     zsh -f -c 'source "$1"; shift; "$@"' zsh \
@@ -90,14 +94,14 @@ if [[ "$status" -ne 23 ]]; then
   exit 1
 fi
 
-mv "$fake_bin/agent-talk" "$test_root/agent-talk"
+mv "$broker_dir/agent-talk" "$test_root/agent-talk"
 : >"$event_log"
 if run_zsh codex "missing broker" 2>"$test_root/missing-agent-talk.err"; then
   echo "codex wrapper must fail when agent-talk is unavailable" >&2
   exit 1
 fi
 test ! -s "$event_log"
-mv "$test_root/agent-talk" "$fake_bin/agent-talk"
+mv "$test_root/agent-talk" "$broker_dir/agent-talk"
 
 rm "$fake_bin/agent"
 cat >"$fake_bin/agent" <<'OTHER_AGENT'
@@ -113,19 +117,19 @@ if grep -F 'agent-talk ' "$event_log" >/dev/null; then
   exit 1
 fi
 
-cat >"$fake_home/.local/bin/agent-talk" <<'FAILING_AGENT_TALK'
+cat >"$broker_dir/agent-talk" <<'FAILING_AGENT_TALK'
 #!/usr/bin/env bash
 exit 42
 FAILING_AGENT_TALK
-chmod +x "$fake_home/.local/bin/agent-talk"
+chmod +x "$broker_dir/agent-talk"
 HOME="$fake_home" bash "$repo_root/agent/cursor/hooks/agent-talk-busy.sh"
 
 : >"$event_log"
-cat >"$fake_home/.local/bin/agent-talk" <<'LOGGING_AGENT_TALK'
+cat >"$broker_dir/agent-talk" <<'LOGGING_AGENT_TALK'
 #!/usr/bin/env bash
 printf 'agent-talk %s\n' "$*" >>"$CURSOR_AGENT_TALK_TEST_LOG"
 LOGGING_AGENT_TALK
-chmod +x "$fake_home/.local/bin/agent-talk"
+chmod +x "$broker_dir/agent-talk"
 printf '%s\n' '{"hook_event_name":"sessionStart","cursor_version":"2026.07"}' \
   | HOME="$fake_home" CURSOR_AGENT_TALK_TEST_LOG="$event_log" \
     bash "$repo_root/agent/claude/hooks/register-agent-talk.sh"

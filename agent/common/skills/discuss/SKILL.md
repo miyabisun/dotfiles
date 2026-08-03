@@ -95,7 +95,7 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
 (spike=乗っかり、polish=UX 反証、harden=material objection)。
 
 1. `deliver` から呼ばれた場合は、その delivery が固定済みの counterpart pane を
-   そのまま使い、選び直さない。単独起動では `~/.local/bin/agent-talk-peer who` で
+   そのまま使い、選び直さない。単独起動では agent-talk MCP の `list_peers` で
    反対 runtime の登録 pane を同じ window、次に同じ session の順で一意に特定する。
    候補が曖昧なら推測せず、候補を user に示す。
 2. 特定した pane へ1件だけ送る。共通で含める: user 原文 (verbatim)、確認済みの

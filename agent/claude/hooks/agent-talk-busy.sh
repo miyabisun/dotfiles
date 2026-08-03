@@ -10,5 +10,5 @@ elif [[ "${HOOK_INPUT}" == *'"cursor_version"'* ]]; then
     exit 0
 fi
 
-"${HOME}/.local/bin/agent-talk" busy > /dev/null 2>&1 || true
+"${HOME}/.local/share/agent-talk/current/agent-talk" busy > /dev/null 2>&1 || true
 exit 0

@@ -52,7 +52,7 @@ assert_contains "$deliver" 'knowledge-inventory'
 assert_contains "$deliver" '棚卸し前後のHEAD hashと`git status --short`を比較する'
 assert_contains "$deliver" '1 deliverにつき最大1 batch'
 assert_contains "$deliver" 'knowledge/codex'
-assert_contains "$deliver" '--no-reply'
+assert_contains "$deliver" '`no_reply`'
 assert_contains "$deliver" '自動再送queueを作らない'
 assert_contains "$deliver" 'pendingでもdelivery本体の成功を取り消さない'
 assert_contains "$deliver" '"knowledge_inventory"'
@@ -78,16 +78,28 @@ assert_contains "$role" '再走査にも候補が残る場合は送信しない'
 assert_contains "$role" '該当itemだけを除外またはredact'
 assert_contains "$role" 'test "$scan_status" -eq 1 || exit 2'
 assert_contains "$role" 'test "$host_status" -eq 1 || exit 2'
-assert_contains "$role" 'hash_line="$(sha256sum "$candidate_file")" || exit 2'
-assert_contains "$role" '[[ "$validated_hash" =~ ^[0-9a-f]{64}$ ]] || exit 2'
-assert_contains "$role" 'test "$validated_hash" = "$send_hash" || exit 1'
 assert_contains "$role" 'candidate_file="$(mktemp /tmp/agent-knowledge.XXXXXX)"'
 assert_contains "$role" 'host_file="$(mktemp /tmp/agent-knowledge-hosts.XXXXXX)"'
-assert_contains "$role" "~/.local/bin/agent-talk-peer send 'knowledge/codex' --no-reply"
-assert_contains "$role" '--body-file "$candidate_file" --sha256 "$send_hash"'
-if grep -Fq -- 'agent-talk-peer send' "$role" \
-  && grep -Fq -- '< "$candidate_file"' "$role"; then
-  echo 'knowledge handoff must not require shell redirection' >&2
+
+# 送信は MCP の send_message 1回。旧 dispatcher の file-body 経路は撤去済みで、
+# その代わりに「scan 後に本文を変えない」規律と、失われた保証の明示が要る。
+assert_contains "$role" "\`send_message\` (\`to: 'knowledge/codex'\`, \`no_reply: true\`)"
+assert_contains "$role" 'scan後に本文を追記・整形・置換・要約しない'
+
+# exact-body の機械保証が transport から失われている間は fail-closed。
+# decision 0002 の受容範囲は lateral agent takeover 限定で、secret 弱体化を
+# polish の内側で受容できない (この根拠まで含めて固定する)
+assert_contains "$role" '**ただし現在この送信は行わない。`pending`を返して終える。**'
+assert_contains "$role" 'lateral agent takeoverに限定'
+assert_contains "$role" 'userがこのsecret-risk弱体化を明示承認し、hardenで記録・検証する'
+if grep -Fq -- 'agent-talk-peer' "$role"; then
+  echo 'knowledge handoff must not use the retired CLI dispatcher' >&2
+  exit 1
+fi
+# 撤去したのは呼び出しであって言及ではない (「失われた保証」節は --body-file に
+# 触れる)。実際の起動形だけを禁止する
+if grep -Fq -- '--body-file "$candidate_file"' "$role"; then
+  echo 'knowledge handoff must not invoke the removed --body-file form' >&2
   exit 1
 fi
 

@@ -9,9 +9,12 @@ trap 'rm -rf "$test_root"' EXIT
 stub="$test_root/bin"
 talk_log="$test_root/agent-talk.log"
 cli_log="$test_root/cli.log"
-mkdir -p "$stub"
+# broker は systemd 管理サービスの release layout 側 (~/.local/bin は旧 layout)。
+# PATH には載らないので、wrapper も hooks も絶対パスで呼ぶ
+broker_dir="$test_root/.local/share/agent-talk/current"
+mkdir -p "$stub" "$broker_dir"
 
-cat >"$stub/agent-talk" <<STUB
+cat >"$broker_dir/agent-talk" <<STUB
 #!/usr/bin/env bash
 printf '%s\n' "\$*" >>"$talk_log"
 STUB
@@ -21,11 +24,12 @@ for name in codex claude; do
 printf '$name skip=%s args=%s\n' "\${CLAUDE_AGENT_TALK_SKIP:-}" "\$*" >>"$cli_log"
 STUB
 done
-chmod +x "$stub"/agent-talk "$stub"/codex "$stub"/claude
+chmod +x "$broker_dir"/agent-talk "$stub"/codex "$stub"/claude
 
 run_wrapped() {
   : >"$talk_log"; : >"$cli_log"
-  PATH="$stub:/usr/bin:/bin" zsh -f -c "source '$functions_zsh'; $1" 2>/dev/null || true
+  PATH="$stub:/usr/bin:/bin" HOME="$test_root" \
+    zsh -f -c "source '$functions_zsh'; $1" 2>/dev/null || true
 }
 
 # codex: 管理・headless command は登録 wrapper を通らない (pane 登録を守る)
@@ -74,8 +78,7 @@ done
 
 # hooks: broker stub は skip テストより前に置く。後置すると skip guard を外しても
 # 「broker 不在で何も記録されない」だけで PASS してしまい偽陽性になる
-mkdir -p "$test_root/.local/bin"
-cp "$stub/agent-talk" "$test_root/.local/bin/agent-talk"
+: "$broker_dir/agent-talk"  # hooks は既にこの実体を見る
 
 # skip なしなら従来どおり register/unregister を実行する (stub が呼ばれる証拠)
 for pair in 'register-agent-talk.sh:register claude' 'unregister-agent-talk.sh:unregister'; do

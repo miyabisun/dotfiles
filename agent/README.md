@@ -59,21 +59,51 @@ Cursor CLI also imports Claude-compatible lifecycle hooks, so Claude's
 lifecycle adapters ignore payloads containing `cursor_version` and leave
 registration and turn state to the Cursor wrapper/hooks.
 
-Peer `who`, `read`, safe send, and `reply` calls are standing-authority
-conversation operations. They use the `~/.local/bin/agent-talk-peer` dispatcher, whose send
-path rejects `--skill` and `--from` before calling the broker; direct
-`agent-talk send` is not promptless. Claude allows the dispatcher explicitly,
-while Codex loads the
-narrow rules in `agent/codex/rules/agent-talk.rules`; other broker maintenance
-commands remain outside that allow list. The installer copies this
-installer-owned policy and dispatcher into machine-local runtime state rather
-than linking either back to the writable repository. The dispatcher calls only
-the adjacent regular `agent-talk` executable, never a PATH-resolved substitute.
-Peer messages never carry user authority for workspace changes.
+Peer conversation is a standing-authority operation carried entirely by the
+`agent-talk` MCP server (`list_peers`, `send_message`, `read_message`,
+`ack_message`). The server runs in-process from each runtime's own MCP config,
+so no shell command and no allow rule is involved, and Codex's sandbox never
+sees the multiplexer socket. The `agent-talk-peer` dispatcher that used to
+carry this traffic is retired: it exposed no `ack` subcommand, so a shell-only
+agent could read a message but never report receipt. The broker binary's
+`register` / `unregister` / `busy` / `run` subcommands stay with the session
+hooks and zsh wrappers; other broker maintenance commands remain outside every
+allow list. Peer messages never carry user authority for workspace changes.
 When a change needs direct approval,
 `~/.local/bin/notify-file-permission.sh` rings the pane, emits one sanitized MOCA notice when
 configured, and leaves the agent waiting without blocking the normal
 turn-end/idle lifecycle.
+
+### Where the broker itself comes from
+
+`bin/install-apps` no longer installs the broker, and nothing here writes
+`~/.local/bin/agent-talk`. The broker is a resident service, so it follows the
+home-server layout: immutable `~/.local/share/agent-talk/releases/vX.Y.Z/` with
+an atomically switched `current` symlink. `~/.local/bin/<service>` is the
+retired layout that `moca-server` and `shoebox` already migrated away from; the
+only thing that ever put a copy there was this repository's deleted
+`install_agent_talk`.
+
+Every caller in this repository — the Claude and Cursor lifecycle hooks, the
+Codex busy hook, `emit-turn-end.sh`, and the zsh wrappers — therefore invokes
+`~/.local/share/agent-talk/current/agent-talk` by absolute path. The broker is
+not on `PATH`. `emit-turn-end.sh` keeps its non-symlink trust check: `current`
+is a symlink but the binary leaf under it is a regular file, so the check still
+holds without being relaxed.
+
+The `agent-talk.service` user unit runs that binary as a daemon and
+`agent-talk-update.timer` fetches new releases; both units, plus
+`agent-talk-update.sh` and `agent-talk-takeover.sh`, are installed from the
+home-server repository (`make -C systemd install-agent-talk`), not from here.
+Do not run `agent-talk update` on such a host: self-update rewrites the release
+directory in place, which desynchronizes the timer's recorded version.
+
+`agent-talk-mcp` is **not** part of the release tarball, which ships only the
+`agent-talk` binary and its LICENSE. It is a local `cargo build` artifact from
+the agent-talkd checkout, so the release timer updates the daemon while the MCP
+adapter stays where it was. After a broker upgrade, rebuild and reinstall
+`agent-talk-mcp` from the same tag; otherwise the only supported agent
+interface silently runs a different version than the daemon it talks to.
 
 ## Agents (`common/agents`)
 

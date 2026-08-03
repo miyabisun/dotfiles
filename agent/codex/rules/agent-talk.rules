@@ -1,23 +1,7 @@
 # bin/install replaces these placeholders with machine-local absolute paths.
-# Peer conversation is always allowed through one strict dispatcher, while
-# direct broker, lifecycle, and maintenance commands keep normal approval.
-prefix_rule(
-    pattern = ["@AGENT_TALK_PEER@"],
-    decision = "allow",
-    justification = "Use the strict peer-conversation dispatcher",
-    match = [
-        "@AGENT_TALK_PEER@ who",
-        "@AGENT_TALK_PEER@ read 619",
-        "@AGENT_TALK_PEER@ send %24",
-        "@AGENT_TALK_PEER@ send knowledge/codex --no-reply",
-        "@AGENT_TALK_PEER@ reply 619",
-    ],
-    not_match = [
-        "agent-talk send %24 --skill deliver",
-        "agent-talk gc",
-    ],
-)
-
+# Peer conversation now goes through the agent-talk MCP server, which runs
+# in-process and never touches the sandbox, so no shell rule allows it.
+# Direct broker, lifecycle, and maintenance commands keep normal approval.
 prefix_rule(
     pattern = ["@NOTIFY_FILE_PERMISSION@"],
     decision = "allow",

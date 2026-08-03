@@ -7,7 +7,11 @@ SELF_PATH="${BASH_SOURCE[0]}"
 SELF_PARENT="${SELF_PATH%/*}"
 SELF_DIR="$(cd -- "$SELF_PARENT" && pwd -P)"
 RUNTIME_PATHS="$SELF_DIR/.dotfiles-agent-runtime"
-BROKER="$SELF_DIR/agent-talk"
+# broker は systemd 管理の常駐サービスであり、その実体は home-server の規約で
+# releases/vX.Y.Z + current に不変配置される (`~/.local/bin/<service>` は
+# moca-server / shoebox と同様に廃止済みの旧 layout)。current は symlink だが
+# leaf は通常ファイルなので、下の非 symlink 検査はそのまま成立する。
+BROKER="${HOME}/.local/share/agent-talk/current/agent-talk"
 AGENT="${1:-unknown}"
 STATUS="${2:-success}"
 

@@ -137,6 +137,20 @@ claude() {
   fi
 }
 
+# broker は systemd 管理の常駐サービスで、実体は home-server の規約どおり
+# releases/vX.Y.Z + current に不変配置される (`~/.local/bin/<service>` は
+# moca-server / shoebox と同じく廃止済みの旧 layout)。PATH には載らないので
+# 絶対パスで呼ぶ。broker 不在時に素の CLI へ落とさないのは既存契約 —
+# 未登録 pane は peer から不可視な上に MCP tool が全て拒否されるので、
+# 黙って起動するより起動しない方が安全。
+_AGENT_TALK_BIN="$HOME/.local/share/agent-talk/current/agent-talk"
+
+_agent_talk_run() {
+  local pane_name="$1"
+  shift
+  "$_AGENT_TALK_BIN" run "$pane_name" "$@"
+}
+
 # Codex には session lifecycle hook がないため wrapper で登録する。
 # 委譲先の agent-talk run は v0.5.1 以降が必要。
 # 管理・headless command は対話paneではないため登録しない。透過実行しないと
@@ -162,7 +176,7 @@ _codex_is_interactive() {
 
 codex() {
   if _codex_is_interactive "$@"; then
-    command agent-talk run codex codex "$@"
+    _agent_talk_run codex codex "$@"
   else
     command codex "$@"
   fi
@@ -189,7 +203,7 @@ _cursor_agent_is_interactive() {
 
 cursor-agent() {
   if _cursor_agent_is_interactive "$@"; then
-    command agent-talk run cursor cursor-agent "$@"
+    _agent_talk_run cursor cursor-agent "$@"
   else
     command cursor-agent "$@"
   fi
@@ -207,7 +221,7 @@ agent() {
   fi
 
   if _cursor_agent_is_interactive "$@"; then
-    command agent-talk run cursor agent "$@"
+    _agent_talk_run cursor agent "$@"
   else
     command agent "$@"
   fi

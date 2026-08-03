@@ -49,7 +49,7 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
 4. **formatter / linter を機械的に叩く**: repo に設定があればそのまま実行し、
    指摘を修正する。未導入で stack に標準のゼロ設定ツールがあるなら導入して
    よい (導入・実施コストが低く効果が大きい。user-origin の標準方針)。
-5. **レビュー1回**: レビュー前に `~/.local/bin/agent-talk-peer who` を1回
+5. **レビュー1回**: レビュー前に agent-talk MCP の `list_peers` を1回
    実行し、反対 runtime の登録 pane を同じ window、次に同じ session の順で
    一意に固定して、diff・テスト・実行証拠を送り1往復だけ受ける。
    不在・pane 消失・配達失敗のときだけ self review へ fallback し、下記の

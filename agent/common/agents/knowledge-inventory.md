@@ -88,12 +88,9 @@ itemはinbox/司書向けと明記する。1 deliverの候補は1 batchにまと
    `candidate_file`をpattern scanとhost分類の両方で再検査する。
 6. 再走査にも候補が残る場合は送信しない。残存内容をjournalへ流したり、安全itemだけの
    別batchを追加送信したりせず、`pending`と安全に一般化した理由を返す。
-7. 最終再走査とhost分類がcleanになった直後に`sha256sum "$candidate_file"`で
-   `validated_hash`を記録する。それ以降は本文を追記・整形・置換しない。send直前に
-   `send_hash`を再計算し、byte単位で一致しなければ送信せず`pending`を返す。
-
-   最終shellではclean scanとhost分類の直後にhashを固定し、その後に本文を扱う処理を
-   置かず、send直前で再照合してから同じfileを渡す。
+7. 最終再走査とhost分類がcleanになったら、その`candidate_file`の内容を**そのまま**
+   `send_message`のbodyとして送る。scan後に本文を追記・整形・置換・要約しない。
+   scanを通していない文字列をbodyへ足さない。
 
    ```bash
    if rg -q -i --pcre2 "$sensitive_pattern" "$candidate_file"; then
@@ -109,17 +106,27 @@ itemはinbox/司書向けと明記する。1 deliverの候補は1 batchにまと
      test "$host_status" -eq 1 || exit 2  # extractor failure: pending / no-send
    fi
    # host_fileの全候補が確認済みpublicまたはsource pathであることを検証する
-   hash_line="$(sha256sum "$candidate_file")" || exit 2
-   validated_hash="${hash_line%% *}"
-   [[ "$validated_hash" =~ ^[0-9a-f]{64}$ ]] || exit 2
-   # ここからsendまではcandidate_fileを変更しない
-   hash_line="$(sha256sum "$candidate_file")" || exit 2
-   send_hash="${hash_line%% *}"
-   [[ "$send_hash" =~ ^[0-9a-f]{64}$ ]] || exit 2
-   test "$validated_hash" = "$send_hash" || exit 1
-   ~/.local/bin/agent-talk-peer send 'knowledge/codex' --no-reply \
-     --body-file "$candidate_file" --sha256 "$send_hash"
    ```
+
+   clean判定が出た`candidate_file`を読み、その内容をbodyにして
+   `send_message` (`to: 'knowledge/codex'`, `no_reply: true`) を1回だけ呼ぶ。
+
+   **ただし現在この送信は行わない。`pending`を返して終える。**
+   旧経路は`--body-file` + `--sha256`でscan済みbyte列そのものをbrokerへ渡し、
+   scanとsendの間に本文が変わっていないことを機械的に強制していた。MCPのbodyは
+   引数として組み立てられるため、この不変性はagentの規律でしか保てない。
+   失われるのは永続journalへのsecret混入を防ぐ機械保証であり、
+   `docs/decisions/0002-development-stages.md`は閉域LAN受容を
+   **lateral agent takeoverに限定**し、secretと権限境界の弱体化をharden強制昇格と
+   定めている。したがってこの弱体化をpolishの内側で受容することはできない。
+
+   送信を再開できるのは次のどちらかが成立した時だけ:
+   - brokerが受信bodyを再scanしてfail-closedする等、exact-bodyの機械保証が
+     transport側に戻る
+   - userがこのsecret-risk弱体化を明示承認し、hardenで記録・検証する
+
+   それまでは棚卸し結果をpending理由とともに返す。安全なitemだけを別経路で
+   送り直したり、保管fileをrepositoryに作ったりしない。
 
 このscanは受け側policyの前倒しであり、完全なsecret検出を保証しない。`mykey`のような
 任意の連結名は通常語と機械的に区別できないため、provider形式、親preflight、受け側の
@@ -127,9 +134,9 @@ itemはinbox/司書向けと明記する。1 deliverの候補は1 batchにまと
 
 # 送信
 
-scanがcleanで、保存itemが1件以上あり、`validated_hash`と`send_hash`が一致する場合だけ、
-同じ自己完結shell呼び出しの中で、workspace sandbox自体は広げず、`agent-talk` command
-だけをruntimeのescalated経路で実行する。
+送信経路はagent-talk MCPの`send_message`だけで、MCP serverはin-processで動くため
+workspace sandboxもescalated command経路も関与しない。ただし上記のexact-body保証が
+戻るまで、この送信は行わず`pending`を返す。
 
 - 送信は最大1回。成功・失敗にかかわらず同じdelivery内で自動再送しない。
 - `sent ->`または`queued (busy) ->`に含まれるbroker `#<message-id>`を記録する。

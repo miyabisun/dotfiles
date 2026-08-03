@@ -90,7 +90,10 @@ chmod +x "$fake_bin/tmux" "$fake_bin/curl" "$fake_bin/dirname" \
   "$trusted_bin/agent-talk" \
   "$notifier" "$emitter"
 cp "$emitter" "$fake_home/.local/bin/emit-turn-end.sh"
-cp "$trusted_bin/agent-talk" "$fake_home/.local/bin/agent-talk"
+# broker は systemd 管理サービスの release layout 側に居る (~/.local/bin は旧 layout)
+mkdir -p "$fake_home/.local/share/agent-talk/current"
+cp "$trusted_bin/agent-talk" \
+  "$fake_home/.local/share/agent-talk/current/agent-talk"
 cp "$trusted_bin/.dotfiles-agent-runtime" \
   "$fake_home/.local/bin/.dotfiles-agent-runtime"
 

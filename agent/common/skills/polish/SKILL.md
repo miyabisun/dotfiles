@@ -34,7 +34,7 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
      困難なら理由を receipt に1行で書く。
    - formatter/linter は repo に既存の設定があれば直接実行する。独立 formatter
      ゲートは立てない。
-4. **レビュー1回**: レビュー前に `~/.local/bin/agent-talk-peer who` を1回
+4. **レビュー1回**: レビュー前に agent-talk MCP の `list_peers` を1回
    実行し、反対 runtime の登録 pane を同じ window、次に同じ session の順で
    一意に固定して、user 原文 (verbatim)・diff・実行済みチェックを送り実装
    レビューを1往復だけ受ける。blocking は修正して focused closure、それ以外は
