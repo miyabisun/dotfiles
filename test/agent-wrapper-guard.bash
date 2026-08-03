@@ -32,28 +32,50 @@ run_wrapped() {
     zsh -f -c "source '$functions_zsh'; $1" 2>/dev/null || true
 }
 
-# codex: 管理・headless command は登録 wrapper を通らない (pane 登録を守る)
-for cmd in 'codex mcp list' 'codex review fix it' 'codex plugin list' \
-  'codex update' 'codex doctor' 'codex archive x' 'codex exec task' \
-  'codex mcp-server' 'codex --version' \
-  'codex --strict-config doctor' 'codex -c key=value mcp list' \
-  'codex --cd /tmp update' 'codex --oss mcp list' 'codex --search review x' \
-  'codex --local-provider ollama mcp list' 'codex --enable foo doctor' \
-  'codex -a never update' 'codex --add-dir /tmp plugin list'; do
+# 素の `codex` は shadow されない — これが今回の主 acceptance。
+# wrapper が同名を占有していると herdr で素の起動が邪魔される
+# function だけでなく alias / autoload も弾くため、種別を完全一致で見る
+codex_kind="$(PATH="$stub:/usr/bin:/bin" HOME="$test_root" \
+  zsh -f -c "source '$functions_zsh'; whence -w codex" 2>/dev/null)"
+if [ "$codex_kind" != 'codex: command' ]; then
+  echo "plain codex must resolve to the native command, got: ${codex_kind:-<none>}" >&2
+  exit 1
+fi
+
+# 素の codex は broker を一切通さず実体へ届く (bare / prompt とも)
+for cmd in 'codex' 'codex do the thing'; do
   run_wrapped "$cmd"
   if [ -s "$talk_log" ]; then
-    echo "non-interactive codex must bypass agent-talk run: $cmd" >&2
+    echo "plain codex must not touch agent-talk: $cmd" >&2
     exit 1
   fi
-  grep -q '^codex ' "$cli_log" || { echo "codex passthrough missing: $cmd" >&2; exit 1; }
+  grep -q '^codex ' "$cli_log" \
+    || { echo "plain codex must reach the real executable: $cmd" >&2; exit 1; }
 done
 
-# codex: 対話起動 (bare / prompt / resume / fork) は従来どおり登録 wrapper 経由
-for cmd in 'codex' 'codex resume' 'codex fork' 'codex do the thing' \
-  'codex -- mcp' 'codex -- --help' 'codex -- -V'; do
+# codet: 管理・headless command は登録 wrapper を通らない (pane 登録を守る)
+for cmd in 'codet mcp list' 'codet review fix it' 'codet plugin list' \
+  'codet update' 'codet doctor' 'codet archive x' 'codet exec task' \
+  'codet mcp-server' 'codet --version' \
+  'codet --strict-config doctor' 'codet -c key=value mcp list' \
+  'codet --cd /tmp update' 'codet --oss mcp list' 'codet --search review x' \
+  'codet --local-provider ollama mcp list' 'codet --enable foo doctor' \
+  'codet -a never update' 'codet --add-dir /tmp plugin list'; do
+  run_wrapped "$cmd"
+  if [ -s "$talk_log" ]; then
+    echo "non-interactive codet must bypass agent-talk run: $cmd" >&2
+    exit 1
+  fi
+  grep -q '^codex ' "$cli_log" || { echo "codet passthrough missing: $cmd" >&2; exit 1; }
+done
+
+# codet: 対話起動 (bare / prompt / resume / fork) は従来どおり登録 wrapper 経由。
+# 登録 pane 名も実行 executable も codex のままで、変わるのは入口だけ
+for cmd in 'codet' 'codet resume' 'codet fork' 'codet do the thing' \
+  'codet -- mcp' 'codet -- --help' 'codet -- -V'; do
   run_wrapped "$cmd"
   grep -q '^run codex codex' "$talk_log" \
-    || { echo "interactive codex must go through agent-talk run: $cmd" >&2; exit 1; }
+    || { echo "interactive codet must go through agent-talk run: $cmd" >&2; exit 1; }
 done
 
 # claude: 管理・headless command は skip 変数つきで実行される (hooks が登録を触らない)

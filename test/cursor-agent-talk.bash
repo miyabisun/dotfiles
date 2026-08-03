@@ -61,7 +61,7 @@ EXPECTED
 cmp "$test_root/expected" "$event_log"
 
 : >"$event_log"
-run_zsh codex "preserve wrapper"
+run_zsh codet "preserve wrapper"
 cat >"$test_root/expected" <<'EXPECTED'
 agent-talk argc=4 <run> <codex> <codex> <preserve wrapper>
 codex argc=1 <preserve wrapper>
@@ -86,21 +86,32 @@ fi
 
 : >"$event_log"
 set +e
-CURSOR_AGENT_TALK_TEST_STATUS=23 run_zsh codex "failing turn"
+CURSOR_AGENT_TALK_TEST_STATUS=23 run_zsh codet "failing turn"
 status=$?
 set -e
 if [[ "$status" -ne 23 ]]; then
-  echo "codex wrapper must preserve status 23, got $status" >&2
+  echo "codet wrapper must preserve status 23, got $status" >&2
   exit 1
 fi
 
 mv "$broker_dir/agent-talk" "$test_root/agent-talk"
 : >"$event_log"
-if run_zsh codex "missing broker" 2>"$test_root/missing-agent-talk.err"; then
-  echo "codex wrapper must fail when agent-talk is unavailable" >&2
+if run_zsh codet "missing broker" 2>"$test_root/missing-agent-talk.err"; then
+  echo "codet wrapper must fail when agent-talk is unavailable" >&2
   exit 1
 fi
 test ! -s "$event_log"
+
+# broker が居なくても素の codex は使えなければならない — user が求めたのは
+# 「ラッピングコードに邪魔されずに codex を起動できること」そのもの
+: >"$event_log"
+run_zsh codex "unwrapped while broker is gone"
+grep -Fx 'codex argc=1 <unwrapped while broker is gone>' "$event_log" >/dev/null
+if grep -F 'agent-talk ' "$event_log" >/dev/null; then
+  echo "plain codex must not emit agent-talk events" >&2
+  exit 1
+fi
+
 mv "$test_root/agent-talk" "$broker_dir/agent-talk"
 
 rm "$fake_bin/agent"

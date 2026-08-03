@@ -174,7 +174,11 @@ _codex_is_interactive() {
   return 0
 }
 
-codex() {
+# 素の `codex` は shadow しない。herdr へ移る際に、登録 wrapper が同名を占有して
+# いると素の起動が邪魔される。agent-talk 登録つきの起動は opt-in の `codet`
+# (code + talk) に分ける。登録される pane 名と実行される executable はどちらも
+# 従来どおり `codex` のままで、変わるのは入口の名前だけ。
+codet() {
   if _codex_is_interactive "$@"; then
     _agent_talk_run codex codex "$@"
   else
