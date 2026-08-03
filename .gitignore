@@ -3,3 +3,7 @@ config/tmux/plugins/
 
 # per-machine colorscheme choice
 config/nvim/colorscheme.txt
+
+# herdr writes its integration scripts through the ~/.claude/hooks symlink and
+# overwrites them on every reinstall, so the checkout must not track them
+agent/claude/hooks/herdr-*.sh

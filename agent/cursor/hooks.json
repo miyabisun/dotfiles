@@ -1,10 +1,14 @@
 {
-  "version": 1,
   "hooks": {
     "beforeShellExecution": [
       {
         "command": "./hooks/block-git-discard.sh",
         "matcher": "git "
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "./hooks/agent-talk-busy.sh"
       }
     ],
     "preToolUse": [
@@ -13,20 +17,21 @@
         "matcher": "Grep|Glob"
       }
     ],
-    "subagentStart": [
+    "sessionStart": [
       {
-        "command": "./hooks/guard-subagent-dirty-tree.sh"
-      }
-    ],
-    "beforeSubmitPrompt": [
-      {
-        "command": "./hooks/agent-talk-busy.sh"
+        "command": "bash '/home/miyabi/.cursor/herdr-agent-state.sh' session"
       }
     ],
     "stop": [
       {
         "command": "./hooks/stop-turn-end.sh"
       }
+    ],
+    "subagentStart": [
+      {
+        "command": "./hooks/guard-subagent-dirty-tree.sh"
+      }
     ]
-  }
+  },
+  "version": 1
 }

@@ -1,26 +1,37 @@
 {
   "hooks": {
-    "UserPromptSubmit": [
+    "PreToolUse": [
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "~/.local/share/agent-talk/current/agent-talk busy",
+            "command": "bash ~/.dotfiles/agent/codex/hooks/block-git-discard.sh",
+            "statusMessage": "git 破棄コマンドチェック",
             "timeout": 10,
-            "statusMessage": "agent-talk busy 宣言"
+            "type": "command"
+          }
+        ],
+        "matcher": "^Bash$"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bash '/home/miyabi/.codex/herdr-agent-state.sh' session",
+            "timeout": 10,
+            "type": "command"
           }
         ]
       }
     ],
-    "PreToolUse": [
+    "UserPromptSubmit": [
       {
-        "matcher": "^Bash$",
         "hooks": [
           {
-            "type": "command",
-            "command": "bash ~/.dotfiles/agent/codex/hooks/block-git-discard.sh",
+            "command": "~/.local/share/agent-talk/current/agent-talk busy",
+            "statusMessage": "agent-talk busy 宣言",
             "timeout": 10,
-            "statusMessage": "git 破棄コマンドチェック"
+            "type": "command"
           }
         ]
       }
