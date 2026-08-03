@@ -1,3 +1,4 @@
+onboarding = false
 # herdr 設定 (dotfiles 管理; bin/install が ~/.config/herdr/config.toml へ
 # ファイル単位で symlink する。~/.config/herdr 自体は herdr ランタイムの
 # 実ディレクトリ (sock/log/session) なので dir 単位では張らない)
@@ -43,3 +44,17 @@ type = "popup"
 command = "pen picker"
 width = "90%"
 height = "90%"
+
+[ui]
+agent_panel_sort = "priority"
+show_agent_labels_on_pane_borders = true
+
+[ui.toast]
+delivery = "herdr"
+
+[ui.sound]
+enabled = false
+
+[theme]
+name = "catppuccin"
+auto_switch = false
