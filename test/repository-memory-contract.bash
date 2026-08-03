@@ -117,7 +117,11 @@ assert_contains "$inventory" 'project repoへ退避しない'
 # binding instruction に現状を焼くと、直った後も古い指示が全 runtime に残る)
 assert_contains "$global_rules" 'safe intake route'
 assert_contains "$global_rules" 'owns whether that route is safe and available'
-assert_contains "$global_rules" 'Never send to knowledge'
+# 預け入れの専権は role にある。一方で「質問」まで禁じると、共通仕様を
+# 訊きに行く経路まで塞がる。両者を別の文として pin する
+assert_contains "$global_rules" 'Depositing findings into knowledge is that'
+assert_contains "$global_rules" 'Asking knowledge a question is ordinary peer conversation'
+assert_contains "$global_rules" 'do not use a question to hand findings over'
 assert_contains "$global_rules" 'do not restate its current status here'
 assert_absent "$global_rules" 'That role is currently'
 # bypass の口実を塞ぐのは機構の性質であって現状ではないので GLOBAL に残す

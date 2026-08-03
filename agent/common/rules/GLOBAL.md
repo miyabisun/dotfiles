@@ -69,9 +69,11 @@ for, in a place only this project can see.
 - Findings that only matter to the work in hand belong in the
   **conversation receipt**. Findings worth reusing later go to **knowledge**,
   and only through the **safe intake route** — the `knowledge-inventory` role
-  owns whether that route is safe and available. Never send to knowledge
-  directly from anywhere else, and do not restate its current status here;
-  ask the role.
+  owns whether that route is safe and available, so
+  do not restate its current status here; ask the role.
+  **Depositing findings into knowledge is that role's alone.**
+  Asking knowledge a question is ordinary peer conversation and stays allowed —
+  but do not use a question to hand findings over.
 - Shortening the payload is not a way around it:
   a hand-written summary is text the secret scan never saw, and a SHA-256
   identifies the source, not the bytes you typed.

@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # assert する文字列は対象ファイルの literal なので、$ や ` を展開させない
-# shellcheck disable=SC2016
+# private path が本文に無いことも literal で見るので tilde も展開させない
+# shellcheck disable=SC2016,SC2088
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 spike="$repo_root/agent/common/skills/spike/SKILL.md"
+global_rules="$repo_root/agent/common/rules/GLOBAL.md"
 
 assert_contains() {
   local file="$1"
@@ -100,8 +102,63 @@ assert_contains "$spike" 'リリースを妨げる既知事項'
 assert_contains "$spike" 'knowledge セクション'
 assert_contains "$spike" '共通開発仕様'
 assert_contains "$spike" 'rust-svelte-template'
-assert_contains "$spike" '不要なものを削る'
 assert_contains "$spike" 'LICENSE は MIT'
+
+# A1. 推奨であって必須ではない。命令形で書くと agent は導入を blocker にする
+assert_contains "$spike" '推奨する (必須ではない)'
+assert_contains "$spike" '合わないなら使わなくてよい'
+assert_contains "$spike" '土台が無いことを着手の障害にしない'
+assert_absent "$spike" '導入し、今回の要件に'
+
+# A2. 適用は2分岐。DESIGN.md は「名前が一致したら消す」ではなく
+# 「template 由来の web 設計文書なら消す」— project 自身の現在形 docs は残す
+assert_contains "$spike" 'Rust + Svelte の web service ならそのまま'
+assert_contains "$spike" 'Rust だけのプロジェクト'
+assert_contains "$spike" 'client/'
+# provenance ではなく今の中身で判定する (既存 repo では由来が辿れない)
+assert_contains "$spike" '削除する web frontend のことしか書いていない'
+assert_contains "$spike" '**今の中身**で判定する'
+assert_absent "$spike" 'DESIGN.md を削除'
+
+# A3. private path を binding instruction に焼かない (GLOBAL の Project Memory
+# Boundary と同じ理由)。場所は knowledge ヒアリングが解決する
+assert_absent "$spike" '~/projects/sunny-side/rust-svelte-template'
+assert_absent "$spike" '/home/miyabi/'
+# 既存プロジェクトは土台を入れ替えない。ただし「飛ばす」だけだと推奨は
+# 既存 repo へ永久に届かないので、read-only の突き合わせを置く
+assert_contains "$spike" '既存プロジェクトでは土台を入れ替えない'
+assert_absent "$spike" '既存プロジェクトでは飛ばす'
+assert_contains "$spike" '推奨 gap'
+# audit が本題を乗っ取ると spike の軽さが壊れる。3つとも不変条件
+assert_contains "$spike" 'read-only'
+assert_contains "$spike" '今回の本題を止めない'
+assert_contains "$spike" '自動で直さない'
+
+# 「適用済み」を固定のファイル一覧で定義すると template の drift で嘘になる
+assert_contains "$spike" '固定のファイル一覧ではない'
+assert_contains "$spike" 'non-applicable と判定済み'
+
+# 比較範囲に境界が無いと、既存 product の source まで gap 扱いになる。
+# 既存が template から分岐しているのは当たり前なので、偽の指摘で溢れて
+# 「最短で動かす」が死ぬ。役割で線を引く (ファイル名一覧では引かない)
+assert_contains "$spike" 'foundation surface'
+assert_contains "$spike" 'product 固有の source'
+assert_contains "$spike" '比べない'
+
+# 土台は Rust 向け。非 Rust を突き合わせても意味がない
+assert_contains "$spike" 'Rust プロジェクトだけ'
+# 見出しが「新規なら」だと、既存 repo の agent は step 0 ごと非該当として
+# 飛ばせてしまう。配下に既存向けの文を置いても scope 見出しが優先される
+assert_contains "$spike" '土台を確認する'
+assert_absent "$spike" '新規プロジェクトなら土台を整える'
+
+# knowledge への問い合わせは「質問」であって「預け入れ」ではない。
+# GLOBAL は預け入れだけを intake role の専権にしており、質問は通常の peer 会話。
+# 質問に findings を紛れ込ませる抜け道だけを塞ぐ
+assert_contains "$spike" '預け入れではない'
+assert_contains "$global_rules" 'Depositing findings'
+assert_contains "$global_rules" 'Asking knowledge a question is ordinary peer conversation'
+assert_contains "$global_rules" 'do not use a question to hand findings over'
 
 # 昇格モデル: 昇格は polish まで。harden は user の v1.0.0 宣言か既存 version が根拠
 assert_contains "$spike" '**polish への切り替えを'
