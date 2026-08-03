@@ -48,10 +48,11 @@ a short announcement such as `完了しました`. Codex uses `notify` for compl
 Its notification wrapper identifies subagent rollout threads and suppresses
 their completion announcements, including automatic approval reviewers.
 
-Agent-to-agent messages use the Rust `agent-talk` CLI from
+Agent-to-agent messages go through the Rust broker from
 [`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd).
-`bin/install-apps` installs the latest release binary, while the TPM entry in
-`config/tmux/tmux.conf` starts its per-tmux-server daemon. Claude hooks and the
+One systemd-managed daemon serves both multiplexers (see *Where the broker
+itself comes from* below); the TPM entry in `config/tmux/tmux.conf` supplies the
+tmux-side integration. Claude hooks and the
 Codex/Cursor shell wrappers register each interactive pane automatically.
 Cursor's prompt and stop hooks mirror the same busy/turn-end lifecycle, while
 `@agent_talkd_skill_syntax=cursor=slash` enables skill-prefixed delivery.
@@ -98,12 +99,14 @@ home-server repository (`make -C systemd install-agent-talk`), not from here.
 Do not run `agent-talk update` on such a host: self-update rewrites the release
 directory in place, which desynchronizes the timer's recorded version.
 
-`agent-talk-mcp` is **not** part of the release tarball, which ships only the
-`agent-talk` binary and its LICENSE. It is a local `cargo build` artifact from
-the agent-talkd checkout, so the release timer updates the daemon while the MCP
-adapter stays where it was. After a broker upgrade, rebuild and reinstall
-`agent-talk-mcp` from the same tag; otherwise the only supported agent
-interface silently runs a different version than the daemon it talks to.
+Since v0.8.0 the release tarball carries `agent-talk-mcp` alongside the
+`agent-talk` binary and its LICENSE, and the updater refuses to switch `current`
+for an archive that lacks the adapter. Both runtimes therefore point their MCP
+config at `~/.local/share/agent-talk/current/agent-talk-mcp`, so the daemon and
+the adapter always come from one release and advance together. Do not reinstate
+a hand-built copy under `~/.local/bin`: the timer would keep upgrading the
+daemon while that copy stood still, which is the version skew this layout
+removes.
 
 ## Agents (`common/agents`)
 

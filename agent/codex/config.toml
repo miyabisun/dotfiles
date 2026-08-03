@@ -78,11 +78,17 @@ command = "obscura"
 args = ["mcp"]
 required = false
 
-# agent-talk broker (v0.7.0+, tmux/herdr dual-backend)。Codex は MCP server を
+# agent-talk broker (v0.8.3+, tmux/herdr dual-backend)。Codex は MCP server を
 # env_clear() で起動し既定7変数しか渡さないため、pane 特定に必要な変数を
 # 明示 forward する (これが無いと接続先を導出できず全 tool が使えない)
+#
+# adapter は v0.8.0 から release tarball に同梱され、daemon と同じ release に
+# 並ぶ。`current` は update.timer の atomic swap で版が進む安定パスなので、
+# ここを指すことで daemon と adapter の版が常に揃う。PATH 解決や
+# `~/.local/bin` の複製に戻すと version skew が復活する。MCP の command は
+# shell の command line ではないため `~` や `$HOME` は展開されない。
 [mcp_servers.agent_talk]
-command = "agent-talk-mcp"
+command = "/home/miyabi/.local/share/agent-talk/current/agent-talk-mcp"
 env_vars = ["TMUX", "TMUX_PANE", "HERDR_PANE_ID", "HERDR_SOCKET_PATH", "XDG_RUNTIME_DIR"]
 required = false
 
