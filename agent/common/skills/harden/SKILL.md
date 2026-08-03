@@ -88,7 +88,10 @@ checks; never append it as routine cleanup to an unrelated delivery.
 
 ## Operating model
 
-Maintain a compact delivery ledger in the parent context:
+Maintain a compact delivery ledger in the **parent conversation context only**.
+判断履歴・TODO・plan・ledger・review log を **project repo へ file として残さない** —
+経緯は receipt と knowledge が持つ (GLOBAL.md「Project Memory Boundary」)。
+Ledger fields:
 
 ```json
 {

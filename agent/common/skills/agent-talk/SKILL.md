@@ -8,7 +8,7 @@ description: >-
   in the prompt. The only interface is the agent-talk MCP tools
   (list_peers / send_message / read_message / ack_message); the
   agent-talk-peer CLI dispatcher has been retired. Requires agent-talkd
-  v0.8.3 or newer.
+  v0.9.0 or newer.
 ---
 
 # Agent Talk
@@ -133,9 +133,17 @@ The broker journal is persistent. Never put a credential, token, private-key,
 3. Send with `send_message`. Addressing:
    - `codex` — nearest match **within your own backend**: same window first,
      then same session. Never crosses sessions implicitly.
-   - tmux の session と herdr の workspace は**別の名前空間**。backend を
-     またぐときは `w1/codex` のような明示 scope か pane id が要る。素の
-     `codex` では解決できない。
+   - `knowledge/codex` — **明示 scope は backend をまたいで解決する**。
+     herdr の workspace **label** が tmux の session 名の対応物なので、tmux
+     pane から herdr の `knowledge` workspace へ名前だけで届く (v0.9.0 で実装。
+     それ以前は workspace id しか見ておらず、移設で名前解決が壊れていた)。
+     旧 `w2/codex` (workspace id) と cwd の basename も互換 alias として通る。
+   - 素の `codex` は**自 backend 限定**の近接解決で、暗黙には backend を
+     またがない。またぎたいなら scope を明示する。
+   - tmux の session 名と herdr の label が**同名の場合は曖昧エラー**になり、
+     正式名称 `tmux/<scope>/<name>` / `herdr/<scope>/<name>` を案内される。
+   - `/`・`:`・空白を含む label は宛先に使えず workspace id へ fallback する。
+     agent の居る label を重複させない運用が前提。
    - `%35` (tmux) / `w1:p2` (herdr) — direct pane IDs; the two formats never
      collide, so either can be given directly. Only registered panes are
      accepted.

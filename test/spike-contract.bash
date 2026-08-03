@@ -78,7 +78,10 @@ assert_contains "$spike" 'formatter / linter の実行確認'
 
 # DRY blocking は今回 diff 由来の有害な重複に限定 (試作の意図的重複は polish TODO)
 assert_contains "$spike" '機構追加なしの局所抽出で消せる'
-assert_contains "$spike" 'non-blocking の polish TODO'
+# TODO を repo へ残す許可は撤去した。落とした案は receipt の follow-up として
+# user へ返す (GLOBAL.md「Project Memory Boundary」)
+assert_contains "$spike" 'non-blocking の follow-up として'
+assert_absent "$spike" 'non-blocking の polish TODO'
 
 # 段階分割の境界: dispatcher 自動判断の受け入れ・commit 授権
 assert_contains "$spike" '`$deliver` からの自動判断'

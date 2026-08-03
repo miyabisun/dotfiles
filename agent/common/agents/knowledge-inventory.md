@@ -127,6 +127,8 @@ itemはinbox/司書向けと明記する。1 deliverの候補は1 batchにまと
 
    それまでは棚卸し結果をpending理由とともに返す。安全なitemだけを別経路で
    送り直したり、保管fileをrepositoryに作ったりしない。
+   **pendingを理由にproject repoへ退避しない** — 送れないことは、repoを
+   記憶媒体にしてよい理由にならない (GLOBAL.md「Project Memory Boundary」)。
 
 このscanは受け側policyの前倒しであり、完全なsecret検出を保証しない。`mykey`のような
 任意の連結名は通常語と機械的に区別できないため、provider形式、親preflight、受け側の

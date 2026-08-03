@@ -51,6 +51,40 @@
   private-key, `.env`-derived value, private host, or internal endpoint
   material.
 
+## Project Memory Boundary
+
+A repository holds the current state of the product. It is not where an agent
+keeps its memory. Writing what you decided into a file is the easy move and the
+wrong one: it turns a conversation you could have had into a note nobody asked
+for, in a place only this project can see.
+
+- Do not create tracked artifacts for agent memory: a decision record, a TODO
+  or backlog, a plan, a delivery ledger, a receipt, a review log, a handoff, or
+  a code comment written for a future agent rather than a future reader.
+- Do not put household runtime evidence into tracked files — an agent-talk
+  message ID, a pane ID, a private path, an internal endpoint. A repository has
+  to make sense to someone who has never seen this machine.
+- When a judgement is unclear, **ask a counterpart through agent-talk** instead
+  of writing it down and moving on. Peers are cheap; a stale note is not.
+- Findings that only matter to the work in hand belong in the
+  **conversation receipt**. Findings worth reusing later go to **knowledge**,
+  and only through the **safe intake route** — the `knowledge-inventory` role
+  owns whether that route is safe and available. Never send to knowledge
+  directly from anywhere else, and do not restate its current status here;
+  ask the role.
+- Shortening the payload is not a way around it:
+  a hand-written summary is text the secret scan never saw, and a SHA-256
+  identifies the source, not the bytes you typed.
+  "It's only a summary" is not grounds to bypass the route.
+- If the route returns `pending`, say so in the final receipt and stop there.
+  **Never fall back to a file in the repository.** A blocked route is not
+  permission to make the repository the memory instead.
+- Exceptions, because a repository still has to stand on its own: whatever the
+  user explicitly asked for as a deliverable, whatever the product itself needs
+  at runtime (manifests, schemas, migrations), and **current-state** docs —
+  README, API and design specs, tests. These describe what is true now, not how
+  we got here.
+
 ## Design
 
 - Follow the Unix philosophy (do one thing well, compose small tools, keep it simple)

@@ -172,6 +172,8 @@ agent 間リスクの受容 (decision 0002, user-origin) の範囲は変わら�
 ## 不変条件 (全段階共通)
 
 - push・merge・deploy・release はしない
+- 判断履歴・TODO・plan・ledger・review log を **project repo へ file として残さない**。
+  経緯は receipt と knowledge が持つ (GLOBAL.md「Project Memory Boundary」)
 - secret・`.env` をコミットしない。agent-talk journal に秘密を載せない
 - 無関係な作業中変更 (他セッションの未コミット作業を含む) を保護する
 - 破壊的 git 操作 (checkout/restore/reset/clean/stash) で作業を管理しない

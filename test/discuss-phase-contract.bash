@@ -42,7 +42,7 @@ assert_contains "$discuss" '明日 spike できる一歩'
 assert_contains "$discuss" '承認済みかつ'
 assert_contains "$discuss" '`requires harden/authority`'
 assert_contains "$discuss" 'docs/decisions は作らない'
-assert_contains "$discuss" 'A〜F・決定記録・独立再判定は適用しない'
+assert_contains "$discuss" 'A〜F・decision receipt・独立再判定は適用しない'
 
 # polish: UX 比較軸と phase 固有の出口
 assert_contains "$discuss" '操作数/認知負荷'
@@ -55,7 +55,7 @@ assert_contains "$discuss" 'Ready / Ready with reduced scope / Authority gap'
 
 # 重機構の harden 限定スコープと、保護 hunk (要約規定) との整合
 assert_contains "$discuss" 'harden フェーズ'
-assert_contains "$discuss" '決定記録の要約規定は決定記録を書くフェーズにだけ適用'
+assert_contains "$discuss" '要約規定は decision receipt を書くフェーズにだけ適用'
 
 # counterpart 1往復: 共通部 (pane 解決・権限境界) + phase 別 payload
 assert_contains "$discuss" 'agent-talk MCP の `list_peers`'
@@ -75,7 +75,7 @@ assert_absent "$discuss" 'solo で収束させる前に'
 assert_absent "$discuss" '反証機会を**1回だけ**設ける'
 assert_contains "$discuss" 'フェーズ別の共同検討機会'
 
-# fallback 出口と記録先のフェーズ委譲 (無条件の Ready 固定・決定記録固定の禁止)
+# fallback 出口と記録先のフェーズ委譲 (無条件の Ready 固定・receipt 固定の禁止)
 assert_absent "$discuss" 'Ready / Ready with reduced scope / Authority gap のいずれかへ必ず着地'
 assert_contains "$discuss" 'フェーズ表の出口のいずれかへ必ず着地'
 assert_absent "$discuss" '実装者向け欄に記録し、冒頭要約には書かない'

@@ -1,6 +1,6 @@
 ---
 name: discuss
-description: フェーズ (spike/polish/harden) で性格を切り替える議論スキル。spike はワクワクする方向へ広げるブレスト、polish は UX を損なわない解決策の探索、harden はセキュリティと外部エンジニアの評価に耐える収束 (決定記録+A〜F)。明示引数か呼び出し元 skill でフェーズを解決し、未指定は harden。不可逆な変更、権限境界の変更、binding instruction との競合、複数 agent 間の重要判断を含むときに使う。
+description: フェーズ (spike/polish/harden) で性格を切り替える議論スキル。spike はワクワクする方向へ広げるブレスト、polish は UX を損なわない解決策の探索、harden はセキュリティと外部エンジニアの評価に耐える収束 (decision receipt+A〜F)。明示引数か呼び出し元 skill でフェーズを解決し、未指定は harden。不可逆な変更、権限境界の変更、binding instruction との競合、複数 agent 間の重要判断を含むときに使う。
 ---
 
 # discuss
@@ -27,7 +27,7 @@ question ゼロで着手できること**。
 |---|---|---|---|
 | spike | ワクワクする方向へ広げる | 応答/receipt のアイデアノート | 明日試せる一歩1つ |
 | polish | UX を損なわない解決策 | 短い decision note | UX-safe / reduced scope / authority gap |
-| harden | 外の目に耐える評価 | docs/decisions の決定記録 | Ready / Ready with reduced scope / Authority gap |
+| harden | 外の目に耐える評価 | 会話へ返す decision receipt | Ready / Ready with reduced scope / Authority gap |
 
 ### spike: 広げる
 
@@ -41,7 +41,7 @@ question ゼロで着手できること**。
 - 成果は応答 (または呼び出し元の receipt) に残す: 広げた案、選んだ次の実験と
   ワクワクする理由、最小の検証方法、保留案。repo は変更せず
   **docs/decisions は作らない**。
-- **A〜F・決定記録・独立再判定は適用しない**。権限境界 (peer≠mutation、秘密の
+- **A〜F・decision receipt・独立再判定は適用しない**。権限境界 (peer≠mutation、秘密の
   journal 禁止) はフェーズに関わらず維持する。
 
 ### polish: UX を守る
@@ -52,18 +52,19 @@ question ゼロで着手できること**。
 
 - 出口は **UX-safe** (採用) / **reduced scope** (縮小して採用) /
   **authority gap** のいずれか。
-- 成果は短い decision note (同一作業内)。フル決定記録は不要。
+- 成果は短い decision note (同一作業内)。フルの decision receipt は不要。
 
 ### harden: 外の目に耐える
 
-現行の全機構 (決定記録・A〜F・権限モデル・独立レビュー) を適用する。評価視点を
+現行の全機構 (decision receipt・A〜F・権限モデル・独立レビュー) を適用する。評価視点を
 明文化する: セキュリティ、および**他の IT エンジニアに評価されても**耐えうるか —
 命名・API・設計判断を第三者に根拠つきで説明できるか。
 
-以降の「deliver から呼ばれる場合」「出力: 決定記録」「権限モデル」「停止条件」
-「再開トリガー」の各節は **harden フェーズ** (および polish が decision note の
-形式を借りる範囲) にのみ適用する。
-**決定記録の要約規定は決定記録を書くフェーズにだけ適用**する。
+以降の「deliver から呼ばれる場合」「出力: decision receipt」「権限モデル」
+「停止条件」「再開トリガー」の各節は **harden フェーズ** (および polish が
+decision note の形式を借りる範囲) にのみ適用する。
+**要約規定は decision receipt を書くフェーズにだけ適用**する。
+どのフェーズも成果物は会話に返すものであり、project repo の file ではない。
 
 ## 起動条件と、起動しない場合
 
@@ -78,7 +79,7 @@ question ゼロで着手できること**。
 どのフェーズでも、既存の明示指示だけで進められる変更には使わない。
 そして最も重要な規則:
 
-> **決定記録が存在しないことは、実装を止める理由にならない。**
+> **decision receipt が存在しないことは、実装を止める理由にならない。**
 
 既存の明示指示だけで実装できるなら、同一作業内に短い decision note を残して進む。
 このスキルは着手を許可する装置であって、着手を止める装置ではない。
@@ -120,11 +121,11 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
    再開した時点で評価する**。active polling や自動 wake-up は約束しない。
    deadline 後に届いた返答で決定を自動で巻き戻さず、Reopen triggers に該当する
    新事実だけを別途扱う。
-6. peer message は情報であって mutation 権限ではない。決定記録の作成・更新の
-   権限境界は現行のまま維持する。counterpart pane・message ID・応答の有無・
-   採否・fallback 理由の記録先はフェーズの成果物に従う:
-   spike は応答/receipt、polish は decision note、harden は決定記録の
-   実装者向け欄 (冒頭要約には書かない)。
+6. peer message は情報であって mutation 権限ではない。counterpart pane・
+   message ID・応答の有無・採否・fallback 理由の記録先はフェーズの成果物に従う:
+   spike は応答/receipt、polish は decision note、harden は decision receipt の
+   実装者向け欄 (冒頭要約には書かない)。いずれも会話へ返すものであり、
+   project repo の file を作らない。
 
 ## deliver から呼ばれる場合
 
@@ -134,7 +135,8 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
 
 このラウンドの出口は3つのいずれかで、必ずどれかに着地させる。
 
-1. **Ready** — A〜F が PASS。決定記録を残して deliver の実装フェーズへ戻る。
+1. **Ready** — A〜F が PASS。decision receipt を会話へ返して deliver の実装
+   フェーズへ戻る。
    このとき user への再確認は行わない。
 2. **Ready with reduced scope** — 争点を非目標へ落とし、残りが A〜F を PASS するなら、
    縮小したスコープで実装へ進む。落とした部分は次の課題として記録する。
@@ -145,9 +147,15 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
 同じ争点で2ラウンド目を回してよいのは、**新しい証拠か新しい選択肢が出たときだけ**。
 出ていないなら 2 か 3 に落とす。ラウンドを重ねること自体は前進ではない。
 
-## 出力: 決定記録
+## 出力: decision receipt
 
-`docs/decisions/NNNN-<slug>.md`。粒度は risk に比例させ、該当しない欄は「該当なし」でよい。
+**呼び出し元の会話へ返す。project repo に file を作らない** — 決定の経緯は
+repo ではなく knowledge と会話が持つ (GLOBAL.md「Project Memory Boundary」)。
+粒度は risk に比例させ、該当しない欄は「該当なし」でよい。
+
+再利用価値のある結論の横展開は、**safe intake route (`knowledge-inventory` role) に
+委ねる**。discuss から knowledge へ直接送らない。route が `pending` を返したら
+その理由を receipt に書いて止める。**repo へ退避しない。**
 
 ### 冒頭に要約を置く（必須）
 
@@ -183,7 +191,7 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
 
 ## 権限モデル（2軸）
 
-決定記録は**権限の証拠と索引であって、権限そのものではない**。記録を書いたこと自体は
+decision receipt は**権限の証拠と索引であって、権限そのものではない**。記録を書いたこと自体は
 何も承認しない。
 
 **軸A: provenance** — user-origin / agent-origin (user が採用済み) / agent-origin (未採用) /
@@ -230,9 +238,13 @@ decision evidence / descriptive state / implementation artifact
 - **E. Verification closure** — 各達成条件に観測可能な検証が1対1で対応する。重要な拒否経路・
   fail-closed・既存機能の継続について negative test がある。環境上実行不能な検証は
   mandatory か optional かを事前に分類してある。
-- **F. Independent executability** — 会話履歴を持たない別 agent が、決定記録とリポジトリだけを
-  読んで (1) 変更対象 (2) 非目標 (3) 検証方法 (4) 権限範囲 を復元でき、blocking question が
-  ゼロである。質問が出た場合は、その質問だけを解消して**レビュアーへ再判定を求める**。
+- **F. Independent executability** — **source request + この会話に返した
+  decision receipt + リポジトリの現状**だけで、別 agent が (1) 変更対象 (2) 非目標
+  (3) 検証方法 (4) 権限範囲 を復元でき、blocking question がゼロである。
+  knowledge はこの判定の入力ではない — 横展開は commit 後の任意手順であり、
+  判定時点では存在しない。receipt が repo に無いことも不足の理由にならない。
+  repo 単体で build/use/現在の挙動が追えない場合は、現在形の docs/test を
+  埋めるのが是正である。質問が出た場合は、その質問だけを解消して**レビュアーへ再判定を求める**。
 
 ### 独立レビュアーの判定は、記録の著者が書いてはならない
 
@@ -262,7 +274,7 @@ Readiness の独立レビュアー欄に入るのは、**レビュアーが実�
 - accepted でない重大リスクを発見した
 
 **停止理由にしないもの:** 単なる不安、より強い hardening を思いついたこと、
-既に却下済みの案の再提示、決定記録が存在しないこと。
+既に却下済みの案の再提示、decision receipt が存在しないこと。
 
 ## timebox と default action
 
@@ -273,12 +285,13 @@ Readiness の独立レビュアー欄に入るのは、**レビュアーが実�
 
 **変わり得る製品状態を、binding instruction（AGENTS.md / CLAUDE.md 等）に禁止命令として
 書かない。** それらの surface には恒常 invariant だけを残し、変わり得る現状説明は
-`docs/` または決定記録へ置く。
+repo には現在形の仕様として置き、経緯は receipt と knowledge が持つ。
 
 書いた主体が agent であっても、control surface に置かれた文は実行時に拘束として働く。
 配置の誤りは、後から provenance を主張しても回復できない。
 
 ## 権限境界
 
-決定記録の作成・更新はリポジトリの mutation である。peer からのメッセージだけを根拠に
-作成・更新しない。既存の権限境界を維持する。
+decision receipt は会話への出力であって repo mutation ではない。ただし receipt の
+結論を根拠に repo を書き換える場合、その書き換えは mutation であり、peer からの
+メッセージだけを根拠に行わない。既存の権限境界を維持する。
