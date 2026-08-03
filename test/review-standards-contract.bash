@@ -16,8 +16,9 @@ assert_contains() {
   }
 }
 
-# polish: レビュワー解決手順 (list_peers → same-window → same-session → fallback 限定)
-assert_contains "$polish" 'agent-talk MCP の `list_peers`'
+# polish: counterpart は planning で一意固定し、実装レビューは同じ pane を使う
+assert_contains "$polish" '**反対 runtime の登録 pane**を同じ window、次に同じ session の'
+assert_contains "$polish" 'step 1 で固定した同じ pane へ'
 assert_contains "$polish" '同じ window、次に同じ session'
 
 # polish: spike と横並びの検査項目

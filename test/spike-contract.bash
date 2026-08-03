@@ -24,12 +24,36 @@ assert_absent() {
   fi
 }
 
+# TDD の逃げ道を塞ぐ guard は、その step の中だけを見る。file 全体を見ると
+# 無関係な節 (方針すり合わせの「理由を1行残す」等) と衝突して、guard の方を
+# 緩める圧力になる
+assert_absent_in_step() {
+  local file="$1"
+  local step_anchor="$2"
+  local text="$3"
+  local step_body
+  step_body="$(awk -v anchor="$step_anchor" '
+    index($0, anchor) { inside = 1; print; next }
+    inside && /^[0-9]+\. \*\*/ { exit }
+    inside { print }
+  ' "$file")"
+  [[ -n "$step_body" ]] || {
+    printf 'step not found in %s: %s\n' "$file" "$step_anchor" >&2
+    return 1
+  }
+  if printf '%s\n' "$step_body" | grep -Fq -- "$text"; then
+    printf 'forbidden phrase inside "%s" of %s: %s\n' \
+      "$step_anchor" "$file" "$text" >&2
+    return 1
+  fi
+}
+
 # TDD は死守: red の観測が必須で、自己免除は存在しない
 assert_contains "$spike" 'テスト無きゴールは存在しない'
 assert_contains "$spike" '失敗するテストを先に書き (red)、通す (green)'
 assert_contains "$spike" 'red を観測できないなら未達として止める'
 assert_absent "$spike" '守れない事情があるなら'
-assert_absent "$spike" '理由を1行'
+assert_absent_in_step "$spike" '**TDD で作る**' '理由を1行'
 
 # ゴール = acceptance テスト + 隣接する既存チェックの全 green
 assert_contains "$spike" '変更に隣接する既存 test/build/lint が全て green'
@@ -38,8 +62,10 @@ assert_contains "$spike" '黙ってゴールから除外しない'
 # formatter / linter は機械的に実行する
 assert_contains "$spike" '**formatter / linter を機械的に叩く**'
 
-# レビュワーは counterpart を list_peers で一意に固定してから1往復する
-assert_contains "$spike" 'agent-talk MCP の `list_peers`'
+# counterpart は planning で list_peers により一意固定し、実装レビューは同じ
+# pane を使い回す (毎回引き直すと途中で相手が入れ替わる)
+assert_contains "$spike" '**反対 runtime の登録 pane**を同じ window、次に同じ session の'
+assert_contains "$spike" 'step 1 で固定した同じ pane へ'
 assert_contains "$spike" '同じ window、次に同じ session'
 assert_contains "$spike" '不在・pane 消失・配達失敗のときだけ self review'
 
