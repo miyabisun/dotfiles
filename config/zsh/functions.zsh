@@ -2,22 +2,6 @@
 # Shell functions (recognized as commands, version-controlled)
 # ==================================================
 
-# tmuxinator: pick a project with fzf, then start it
-mux() {
-  command -v tmuxinator > /dev/null 2>&1 || { echo "tmuxinator not found" >&2; return 1; }
-  local config_dir="${TMUXINATOR_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/tmuxinator}"
-  [[ -d "$config_dir" ]] || { echo "no tmuxinator projects" >&2; return 1; }
-  local -a projects
-  local file
-  for file in "$config_dir"/*.yml(N) "$config_dir"/*.yaml(N); do
-    projects+=("${${file:t}%.*}")
-  done
-  (( ${#projects} )) || { echo "no tmuxinator projects" >&2; return 1; }
-  local project
-  project="$(printf '%s\n' "${projects[@]}" | sort -u | fzf)" || return
-  [[ -n "$project" ]] && tmuxinator start "$project"
-}
-
 # Clipboard copy: read stdin and send to the system clipboard.
 # Picks an OS-appropriate backend: pbcopy / wl-copy / xclip / xsel.
 copy() {

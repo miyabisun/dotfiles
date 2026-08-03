@@ -1,5 +1,7 @@
 # 0001: tmuxinator YAML 向けの runtime 中立エクスポート
 
+> **Superseded (2026-07-31)**: user の直接指示「私の扱うマシンからはtmuxinatorを完全に取り除きましょう」により、本決定の成果物 (tmuxinator-export skill、export test、`mux` zsh 関数、設定ディレクトリ作成) はリポジトリから削除された。セッションの snapshot/再構築は Rust 製単一バイナリ `mux` (github.com/miyabisun/mux) が独自 TOML で担う。本書は履歴として保持する。
+
 ## Decision
 
 **Ready with reduced scope** とする。今回の delivery は runtime 中立資産だけを残す。対象は、現在の tmux セッションを fail-closed で検査する script、安全な tmuxinator YAML 候補を作る skill、排他的に project を作成する writer、設定ディレクトリの作成、既存 `mux` の堅牢化、および関連 export test である。
