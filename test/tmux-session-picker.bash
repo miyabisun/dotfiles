@@ -20,11 +20,7 @@ case "$1" in
     printf '%s\n' current
     ;;
   list-sessions)
-    if [[ "$*" == *'@agent_bell'* ]]; then
-      printf '%s\n' 0current 0normal-one 1bell-one 0_internal 1bell-two 0normal-two
-    else
-      printf '%s\n' current normal-one _internal normal-two
-    fi
+    printf '%s\n' current normal-one _internal normal-two
     ;;
   switch-client|attach)
     printf '%s\n' "$*" >>"$TMUX_SESSION_PICKER_TMUX_LOG"
@@ -50,16 +46,17 @@ PATH="$fake_bin:/usr/bin:/bin" \
   TMUX_SESSION_PICKER_TMUX_LOG="$tmux_log" \
   bash "$repo_root/config/tmux/bin/tmux-session-picker"
 
-sed 's/\x1b\[[0-9;]*m//g' "$fzf_input" >"$test_root/plain-input"
+# 自セッションと _internal を除いた素の一覧。装飾 (ANSI) は使わない。
 cat >"$test_root/expected-picker" <<'EXPECTED'
-bell-one
-bell-two
 normal-one
 normal-two
 EXPECTED
-cmp "$test_root/expected-picker" "$test_root/plain-input"
-grep -F $'\033[1;38;5;255;48;5;24mbell-one\033[0m' "$fzf_input" >/dev/null
-grep -Fx 'switch-client -t =bell-one' "$tmux_log" >/dev/null
+cmp "$test_root/expected-picker" "$fzf_input"
+if grep -q $'\033\[' "$fzf_input"; then
+  echo 'picker must not colour sessions any more' >&2
+  exit 1
+fi
+grep -Fx 'switch-client -t =normal-one' "$tmux_log" >/dev/null
 
 rm -f "$fzf_input" "$tmux_log"
 env -u TMUX PATH="$fake_home/.fzf/bin:$fake_bin:/usr/bin:/bin" \

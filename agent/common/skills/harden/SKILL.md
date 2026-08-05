@@ -169,7 +169,7 @@ criteria, scope, verification commands, and important failure modes.
 ### 1a. Co-author the contract with the counterpart
 
 Before implementation, use the agent-talk MCP `list_peers` tool to look for the
-opposite interactive application in the current tmux session:
+opposite interactive application in the current herdr workspace:
 
 - Claude Code's counterpart is Codex.
 - Codex's counterpart is Claude Code.

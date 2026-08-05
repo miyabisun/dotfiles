@@ -9,13 +9,11 @@ fake_home="$test_root/home"
 tool_bin="$test_root/tools"
 mkdir -p "$fake_home" "$tool_bin"
 
-for tool_name in tmux curl; do
-  cat >"$tool_bin/$tool_name" <<'TOOL'
+cat >"$tool_bin/curl" <<'TOOL'
 #!/bin/bash
 exit 0
 TOOL
-  chmod 0755 "$tool_bin/$tool_name"
-done
+chmod 0755 "$tool_bin/curl"
 
 HOME="$fake_home" PATH="$tool_bin:/usr/bin:/bin" "$installer"
 runtime_bin="$fake_home/.local/bin"
@@ -28,6 +26,11 @@ for runtime_name in emit-turn-end.sh notify-file-permission.sh; do
 done
 test -f "$runtime_bin/.dotfiles-agent-runtime"
 test ! -L "$runtime_bin/.dotfiles-agent-runtime"
+# tmux backend は撤去済み。pin が tmux 依存を運び直してはならない
+if grep -q '^TMUX_BIN=' "$runtime_bin/.dotfiles-agent-runtime"; then
+  echo 'runtime pin must not carry a tmux dependency' >&2
+  exit 1
+fi
 test -f "$rules_file"
 test ! -L "$rules_file"
 grep -Fq "$runtime_bin/notify-file-permission.sh" "$rules_file"
@@ -64,7 +67,7 @@ PY
 
 # bin/install must propagate a runtime-installer failure instead of continuing
 # with a stale policy. This PATH provides bootstrap tools but deliberately no
-# tmux, so the helper exits nonzero at its first runtime dependency check.
+# hash tool, so the helper exits nonzero at its runtime dependency check.
 bootstrap_bin="$test_root/bootstrap-tools"
 bootstrap_home="$test_root/bootstrap-home"
 mkdir -p "$bootstrap_bin" "$bootstrap_home"
@@ -77,15 +80,14 @@ if HOME="$bootstrap_home" PATH="$bootstrap_bin" \
   exit 1
 fi
 
-# curl is optional because it is only a MOCA sink. A host with tmux and a hash
-# tool but no curl must still receive a working dispatcher and rules.
+# curl is optional because it is only a MOCA sink. A host with a hash tool but
+# no curl — and no tmux at all — must still receive a working runtime.
 no_curl_bin="$test_root/no-curl-tools"
 no_curl_home="$test_root/no-curl-home"
 mkdir -p "$no_curl_bin" "$no_curl_home"
 for tool_name in dirname mkdir cp chmod unlink mktemp sed mv rm sha256sum stat; do
   ln -s "/usr/bin/$tool_name" "$no_curl_bin/$tool_name"
 done
-ln -s "$tool_bin/tmux" "$no_curl_bin/tmux"
 HOME="$no_curl_home" PATH="$no_curl_bin" "$installer"
 grep -Fx 'CURL_BIN=' \
   "$no_curl_home/.local/bin/.dotfiles-agent-runtime" >/dev/null

@@ -78,9 +78,9 @@ command = "obscura"
 args = ["mcp"]
 required = false
 
-# agent-talk broker (v0.8.3+, tmux/herdr dual-backend)。Codex は MCP server を
-# env_clear() で起動し既定7変数しか渡さないため、pane 特定に必要な変数を
-# 明示 forward する (これが無いと接続先を導出できず全 tool が使えない)
+# agent-talk broker (v0.10.1+, herdr-only)。daemon が接続元から pane を特定する
+# ため forward は Linux では必須ではないが、非標準 runtime root・named
+# session・macOS では要るので残している (残置は無害)
 #
 # adapter は v0.8.0 から release tarball に同梱され、daemon と同じ release に
 # 並ぶ。`current` は update.timer の atomic swap で版が進む安定パスなので、
@@ -89,15 +89,15 @@ required = false
 # shell の command line ではないため `~` や `$HOME` は展開されない。
 [mcp_servers.agent_talk]
 command = "/home/miyabi/.local/share/agent-talk/current/agent-talk-mcp"
-env_vars = ["TMUX", "TMUX_PANE", "HERDR_PANE_ID", "HERDR_SOCKET_PATH", "XDG_RUNTIME_DIR"]
+env_vars = ["HERDR_PANE_ID", "HERDR_SOCKET_PATH", "XDG_RUNTIME_DIR"]
 required = false
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"
 
 [tui]
-# Completion and approval notifications use emit-turn-end.sh so tmux's
-# @agent_bell and MOCA_URL share one path without duplicate TUI BELs.
+# Completion and approval notifications use emit-turn-end.sh so MOCA_URL
+# stays the one notification path without duplicate TUI BELs.
 notifications = false
 
 [sandbox_workspace_write]

@@ -6,7 +6,6 @@ RUNTIME_BIN="$HOME/.local/bin"
 RULES_DIR="$HOME/.codex/rules"
 mkdir -p "$RUNTIME_BIN" "$RULES_DIR"
 
-TMUX_RUNTIME="$(command -v tmux)" || exit 1
 CURL_RUNTIME="$(command -v curl || true)"
 if SHA256_RUNTIME="$(command -v sha256sum)"; then
     SHA256_MODE=sha256sum
@@ -25,13 +24,12 @@ elif "$STAT_RUNTIME" -f %Lp "$SOURCE_ROOT" >/dev/null 2>&1; then
 else
     exit 1
 fi
-case "$TMUX_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
 case "$CURL_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
 case "$SHA256_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
 case "$COPY_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
 case "$REMOVE_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
 case "$STAT_RUNTIME" in "$SOURCE_ROOT"/*) exit 1 ;; esac
-for RUNTIME_PATH in "$TMUX_RUNTIME" "$CURL_RUNTIME" "$SHA256_RUNTIME" \
+for RUNTIME_PATH in "$CURL_RUNTIME" "$SHA256_RUNTIME" \
     "$COPY_RUNTIME" "$REMOVE_RUNTIME" "$STAT_RUNTIME"; do
     [[ "$RUNTIME_PATH" != *[$' \t\r\n']* ]] || exit 1
 done
@@ -42,8 +40,8 @@ if [[ -L "$RUNTIME_PATHS" ]]; then
 fi
 RUNTIME_PATHS_TEMP="$(mktemp "$RUNTIME_BIN/.dotfiles-agent-runtime.XXXXXX")"
 trap 'rm -f "$RUNTIME_PATHS_TEMP"' EXIT
-printf 'TMUX_BIN=%s\nCURL_BIN=%s\nSHA256_BIN=%s\nSHA256_MODE=%s\nCP_BIN=%s\nRM_BIN=%s\nSTAT_BIN=%s\nSTAT_MODE=%s\n' \
-    "$TMUX_RUNTIME" "$CURL_RUNTIME" "$SHA256_RUNTIME" "$SHA256_MODE" \
+printf 'CURL_BIN=%s\nSHA256_BIN=%s\nSHA256_MODE=%s\nCP_BIN=%s\nRM_BIN=%s\nSTAT_BIN=%s\nSTAT_MODE=%s\n' \
+    "$CURL_RUNTIME" "$SHA256_RUNTIME" "$SHA256_MODE" \
     "$COPY_RUNTIME" "$REMOVE_RUNTIME" "$STAT_RUNTIME" "$STAT_MODE" \
     >"$RUNTIME_PATHS_TEMP"
 chmod 0644 "$RUNTIME_PATHS_TEMP"

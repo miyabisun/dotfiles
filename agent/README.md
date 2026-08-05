@@ -45,25 +45,21 @@ agent/
 | `~/.grok/config.toml` | seeded copy of `agent/grok/config.toml` (not a symlink) |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
-Agent completion events call `~/.local/bin/emit-turn-end.sh`. In tmux this
-raises a silent `@agent_bell` session/window marker;
-when `MOCA_URL` is set, it also asks MOCA to announce the event. The full
-session/agent name is used in the background; the currently viewed session gets
-a short announcement such as `完了しました`. Codex uses `notify` for completion.
-Its notification wrapper identifies subagent rollout threads and suppresses
-their completion announcements, including automatic approval reviewers.
+Agent completion events call `~/.local/bin/emit-turn-end.sh`. When
+`MOCA_URL` is set it asks MOCA to announce the event (agent-talk-initiated
+turns stay silent on success); it always reports the turn end to the broker.
+Codex uses `notify` for completion. Its notification wrapper identifies
+subagent rollout threads and suppresses their completion announcements,
+including automatic approval reviewers.
 
 Agent-to-agent messages go through the Rust broker from
-[`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd).
-One systemd-managed daemon serves both multiplexers (see *Where the broker
-itself comes from* below); the TPM entry in `config/tmux/tmux.conf` supplies the
-tmux-side integration. Claude hooks and the
-Codex/Cursor shell wrappers register each interactive pane automatically.
-Cursor's prompt and stop hooks mirror the same busy/turn-end lifecycle, while
-`@agent_talkd_skill_syntax=cursor=slash` enables skill-prefixed delivery.
+[`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd),
+a systemd-managed daemon (see *Where the broker itself comes from* below).
+Registration is the daemon's pull sync over herdr's native agent detection —
+an interactive agent in a herdr pane is addressable without any wrapper. The
+lifecycle hooks report busy/turn-end so queued doorbells drain promptly.
 Cursor CLI also imports Claude-compatible lifecycle hooks, so Claude's
-lifecycle adapters ignore payloads containing `cursor_version` and leave
-registration and turn state to the Cursor wrapper/hooks.
+lifecycle adapters ignore payloads containing `cursor_version`.
 
 Peer conversation is a standing-authority operation carried entirely by the
 `agent-talk` MCP server (`list_peers`, `send_message`, `read_message`,

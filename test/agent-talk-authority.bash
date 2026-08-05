@@ -41,12 +41,12 @@ assert_contains "$global_rules" '`list_peers`'
 assert_contains "$global_rules" '`send_message`'
 assert_contains "$global_rules" '`read_message`'
 assert_contains "$global_rules" '`ack_message`'
-assert_contains "$global_rules" 'both tmux and herdr'
+assert_contains "$global_rules" 'own agent detection'
 assert_contains "$talk_skill" 'list_peers'
 assert_contains "$talk_skill" 'ack_message'
 assert_contains "$talk_skill" 'w1:p2'
-assert_contains "$talk_skill" 'tmux と herdr'
-assert_contains "$talk_skill" 'herdr が積極的に idle と判定した pane にだけ'
+assert_contains "$talk_skill" 'herdr is the only multiplexer'
+assert_contains "$talk_skill" 'as `idle` or `done`'
 
 # v0.8.3 の配達契約。旧記述 (pane.send_text / ガードは agent-talkd 側だけ) が
 # 復活すると、agent は「入力欄に置くだけで turn が始まる」と誤解する
@@ -68,8 +68,8 @@ assert_absent "$talk_skill" 'both count as successfully dispatched'
 # 対概念2: 再試行は同一 ID。新 ID を振ると受け手の ack が迷子になる
 assert_contains "$talk_skill" 'under the same message ID'
 assert_contains "$talk_skill" 'never mints a new ID'
-# 再試行は backend 非依存 (herdr 限定と書くと tmux 側の挙動を見誤る)
-assert_contains "$talk_skill" 'on either backend'
+# dual-backend 時代の再試行記述は撤去済み
+assert_absent "$talk_skill" 'on either backend'
 # FIFO の粒度を broker 全体と誤読させない
 assert_contains "$talk_skill" '**per target pane**'
 
@@ -81,8 +81,8 @@ assert_contains "$talk_skill" '**one aggregated notice**'
 # 身に覚えのない呼び鈴を異常と誤認する
 assert_contains "$talk_skill" 'unreceipted work is chased'
 
-# ミラーは表示用で、欠落は登録削除の根拠にならない (tmux 側のみ)
-assert_contains "$talk_skill" 'never evicts a live registration'
+# 登録は herdr の検出からの pull で、agent 側の仕込みを要求しない
+assert_contains "$talk_skill" 'pull registration'
 # ack の罠 (E2E #1065 で実測): reply_to は ack 前に控える。human 宛返信は不可
 assert_contains "$talk_skill" 'reply_to` を控えてから'
 assert_contains "$talk_skill" '送信者が human (未登録 pane) の場合、返信は構造的に不可'
@@ -100,7 +100,8 @@ assert_absent "$codex_config" 'command = "agent-talk-mcp"'
 assert_absent "$codex_config" '.local/bin/agent-talk-mcp'
 assert_contains "$codex_config" 'HERDR_PANE_ID'
 assert_contains "$codex_config" 'HERDR_SOCKET_PATH'
-assert_contains "$codex_config" '"TMUX", "TMUX_PANE"'
+# tmux backend 撤去後、TMUX 系の forward は復活させない
+assert_absent "$codex_config" '"TMUX"'
 
 grok_config="$repo_root/agent/grok/config.toml"
 assert_contains "$grok_config" '[mcp_servers.agent-talk]'
@@ -145,7 +146,7 @@ assert_contains "$talk_skill" 'credential, token, private-key,'
 assert_contains "$talk_skill" '`.env`-derived value, private host, or internal endpoint'
 assert_contains "$talk_skill" 'set `no_reply`'
 assert_contains "$talk_skill" 'Reply to a no-reply brief only when silence would cause material harm'
-# broker binary の register/run 系は hooks と wrapper のもので、agent は触らない
+# broker binary の register/run 系は hooks のもので、agent は触らない
 assert_contains "$talk_skill" 'belong to the session'
 
 # broker の実体は systemd 管理サービスの release layout 側にある。
@@ -161,8 +162,7 @@ for caller in \
   "$repo_root/agent/grok/hooks/unregister-agent-talk.sh" \
   "$repo_root/agent/grok/hooks/agent-talk-busy.sh" \
   "$repo_root/agent/codex/hooks.json" \
-  "$repo_root/agent/common/bin/emit-turn-end.sh" \
-  "$repo_root/config/zsh/functions.zsh"; do
+  "$repo_root/agent/common/bin/emit-turn-end.sh"; do
   assert_contains "$caller" "$canonical_broker"
   if grep -Fq '.local/bin/agent-talk' "$caller"; then
     echo "broker caller still points at the retired bin layout: $caller" >&2

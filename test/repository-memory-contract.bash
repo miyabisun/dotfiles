@@ -137,14 +137,12 @@ assert_contains "$inventory" 'pending'
 # 経路が塞がっていることは repo を記憶にしてよい理由にならない
 assert_contains "$global_rules" 'A blocked'
 
-# 宛先が古いままだと、横展開しようにも相手へ届かない (v0.9.0)
+# 宛先が古いままだと、横展開しようにも相手へ届かない (v0.10.1)
 talk_skill="$repo_root/agent/common/skills/agent-talk/SKILL.md"
-assert_contains "$talk_skill" '明示 scope は backend をまたいで解決する'
-assert_contains "$talk_skill" 'workspace **label** が tmux の session 名の対応物'
-assert_contains "$talk_skill" '自 backend 限定'
-assert_contains "$talk_skill" 'tmux/<scope>/<name>'
+assert_contains "$talk_skill" 'workspace の人間向けの名前'
 assert_contains "$talk_skill" 'workspace id へ fallback'
 # 退役した主張だけを1行で塞ぐ (改行を含むリテラルは grep -F が別パターンに割る)
 assert_absent "$talk_skill" 'は**別の名前空間**'
+assert_absent "$talk_skill" 'tmux/<scope>/<name>'
 
 echo 'repository memory contract test: pass'

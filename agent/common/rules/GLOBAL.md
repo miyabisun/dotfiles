@@ -14,11 +14,11 @@
 
 - The only agent interface is the `agent-talk` MCP server
   (`agent-talk-mcp`): `list_peers`, `send_message`, `read_message`, and
-  `ack_message`. One daemon serves both tmux and herdr panes with one registry
-  and one journal, so peers on either multiplexer are addressable. tmux
-  sessions and herdr workspaces are separate namespaces: a bare name like
-  `codex` resolves only within your own backend; use an explicit scope
-  (`w1/codex`) or a pane id (`%5`, `w1:p2`) to cross.
+  `ack_message`. Peers run in herdr panes; the daemon learns them from herdr's
+  own agent detection, so a running agent is addressable without any wrapper
+  or setup. A bare name like `codex` resolves to the nearest match (own
+  workspace first); use a workspace scope (`knowledge/codex`) or a pane id
+  (`w1:p2`) to reach elsewhere.
 - Use these tools without asking the user for permission each time — peer
   consultation, questions, reviews, information sharing, and result
   notifications are all standing-authority work.
