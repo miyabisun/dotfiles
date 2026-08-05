@@ -37,7 +37,8 @@ agent/
 ├── common/   # shared: agents, designs, skills, rules, bin
 ├── claude/   # Claude Code only (hooks, workflows, settings)
 ├── cursor/   # Cursor only (rules, hooks)
-└── codex/    # Codex CLI only (hooks, config)
+├── codex/    # Codex CLI only (hooks, config)
+└── grok/     # Grok CLI only (hooks, config)
 ```
 
 See `agent/README.md` for details.
@@ -55,6 +56,19 @@ See `agent/README.md` for details.
 - `~/.cursor/designs` -> `agent/common/designs`
 - `~/.cursor/rules` -> `agent/cursor/rules`
 - `~/.cursor/hooks`, `hooks.json` -> `agent/cursor/hooks*`
+
+#### Codex (`~/.codex`)
+- `~/.codex/AGENTS.md` -> `agent/common/rules/GLOBAL.md`
+- `~/.codex/agents`, `hooks.json` -> `agent/codex/*`
+- `~/.codex/config.toml` — machine-local copy seeded from `agent/codex/config.toml`
+
+#### Grok (`~/.grok`)
+- `~/.grok/skills` -> `agent/common/skills`
+- `~/.grok/agents` -> `agent/common/agents`
+- `~/.grok/designs` -> `agent/common/designs`
+- `~/.grok/AGENTS.md` -> `agent/common/rules/GLOBAL.md`
+- `~/.grok/hooks` -> `agent/grok/hooks`
+- `~/.grok/config.toml` — machine-local copy seeded from `agent/grok/config.toml`
 
 #### `~/.local/bin`
 - `emit-turn-end.sh` -> `agent/common/bin/emit-turn-end.sh`

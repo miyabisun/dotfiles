@@ -64,6 +64,26 @@ link "agent/codex/agents" "$HOME/.codex"
 link "agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md"
 agent/common/bin/install-agent-runtime || exit 1
 
+# Grok: config.toml is machine-local (auth/marketplace/runtime stay out of the
+# repo). Seed from the portable template when missing; never overwrite an
+# existing file. Hooks/skills/agents/rules are pure symlinks.
+mkdir -p "$HOME/.grok"
+grok_config="$HOME/.grok/config.toml"
+grok_config_source="$(pwd)/agent/grok/config.toml"
+if [ -L "$grok_config" ] && [ "$(readlink "$grok_config")" = "$grok_config_source" ]; then
+  grok_config_tmp="${grok_config}.tmp.$$"
+  cp -L "$grok_config" "$grok_config_tmp"
+  unlink "$grok_config"
+  mv "$grok_config_tmp" "$grok_config"
+elif [ ! -e "$grok_config" ] && [ ! -L "$grok_config" ]; then
+  cp "$grok_config_source" "$grok_config"
+fi
+link "agent/grok/hooks" "$HOME/.grok"
+link "agent/common/skills" "$HOME/.grok"
+link "agent/common/agents" "$HOME/.grok"
+link "agent/common/designs" "$HOME/.grok"
+link "agent/common/rules/GLOBAL.md" "$HOME/.grok/AGENTS.md"
+
 mkdir -p "$HOME/.agents"
 link "agent/common/skills" "$HOME/.agents"
 link "agent/common/agents" "$HOME/.agents"

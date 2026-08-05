@@ -21,23 +21,28 @@ agent/
 │   ├── rules/       # .mdc alwaysApply rules
 │   ├── hooks/ + hooks.json
 │   └── agents → ../common/agents
-└── codex/           # Codex CLI only
-    ├── agents/      # Codex subagent TOML role adapters
-    ├── hooks/ + hooks.json
-    └── config.toml
+├── codex/           # Codex CLI only
+│   ├── agents/      # Codex subagent TOML role adapters
+│   ├── hooks/ + hooks.json
+│   └── config.toml
+└── grok/            # Grok CLI only
+    ├── hooks/       # lifecycle + guards (JSON + shell adapters)
+    └── config.toml  # portable template → seed ~/.grok/config.toml
 ```
 
 `bin/install` symlinks:
 
 | Home | Source |
 |------|--------|
-| `~/.claude/skills`, `~/.cursor/skills` | `agent/common/skills` |
-| `~/.claude/agents`, `~/.cursor/agents` | `agent/common/agents` |
-| `~/.claude/designs`, `~/.cursor/designs` | `agent/common/designs` |
+| `~/.claude/skills`, `~/.cursor/skills`, `~/.grok/skills` | `agent/common/skills` |
+| `~/.claude/agents`, `~/.cursor/agents`, `~/.grok/agents` | `agent/common/agents` |
+| `~/.claude/designs`, `~/.cursor/designs`, `~/.grok/designs` | `agent/common/designs` |
 | `~/.claude/*` (hooks, settings, …) | `agent/claude/*` |
 | `~/.cursor/*` (rules, hooks, …) | `agent/cursor/*` |
 | `~/.codex/config.toml`, `~/.codex/hooks.json` | `agent/codex/*` |
-| `~/.codex/AGENTS.md` | `agent/common/rules/GLOBAL.md` |
+| `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md` | `agent/common/rules/GLOBAL.md` |
+| `~/.grok/hooks` | `agent/grok/hooks` |
+| `~/.grok/config.toml` | seeded copy of `agent/grok/config.toml` (not a symlink) |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
 Agent completion events call `~/.local/bin/emit-turn-end.sh`. In tmux this
@@ -85,8 +90,8 @@ retired layout that `moca-server` and `shoebox` already migrated away from; the
 only thing that ever put a copy there was this repository's deleted
 `install_agent_talk`.
 
-Every caller in this repository — the Claude and Cursor lifecycle hooks, the
-Codex busy hook, `emit-turn-end.sh`, and the zsh wrappers — therefore invokes
+Every caller in this repository — the Claude, Cursor, and Grok lifecycle hooks,
+the Codex busy hook, `emit-turn-end.sh`, and the zsh wrappers — therefore invokes
 `~/.local/share/agent-talk/current/agent-talk` by absolute path. The broker is
 not on `PATH`. `emit-turn-end.sh` keeps its non-symlink trust check: `current`
 is a symlink but the binary leaf under it is a regular file, so the check still
@@ -101,12 +106,19 @@ directory in place, which desynchronizes the timer's recorded version.
 
 Since v0.8.0 the release tarball carries `agent-talk-mcp` alongside the
 `agent-talk` binary and its LICENSE, and the updater refuses to switch `current`
-for an archive that lacks the adapter. Both runtimes therefore point their MCP
+for an archive that lacks the adapter. Claude, Codex, and Grok therefore point their MCP
 config at `~/.local/share/agent-talk/current/agent-talk-mcp`, so the daemon and
 the adapter always come from one release and advance together. Do not reinstate
 a hand-built copy under `~/.local/bin`: the timer would keep upgrading the
 daemon while that copy stood still, which is the version skew this layout
 removes.
+
+Grok owns lifecycle under `agent/grok/hooks` and turns off Claude/Cursor
+compat for skills, rules, agents, mcps, and hooks so it does not register as
+`claude` or double-fire busy/turn-end. Claude Code plugins under
+`~/.claude/plugins` may still appear in `grok inspect` (Grok has no separate
+compat cell for plugins); their skills are disabled when `compat.claude.skills`
+is off, and Grok's own hooks remain the lifecycle source of truth.
 
 ## Agents (`common/agents`)
 
@@ -122,7 +134,7 @@ tokens. Do not copy the full template into every app.
 ## Adding a new skill
 
 1. Create `agent/common/skills/<name>/SKILL.md`
-2. Existing symlinks pick it up for Claude Code, Cursor, and Codex
+2. Existing symlinks pick it up for Claude Code, Cursor, Codex, and Grok
 
 Notable skills:
 

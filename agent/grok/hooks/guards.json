@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|run_terminal_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./block-git-discard.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Grep|Glob|grep|list_dir",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./prefer-semble.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

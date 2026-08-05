@@ -35,7 +35,7 @@ assert_absent() {
 }
 
 # --- A1: 全 runtime 共通の memory boundary --------------------------------
-# AGENTS.md / CLAUDE.md は GLOBAL.md への symlink なので、3箇所へ複製せず
+# AGENTS.md / CLAUDE.md は GLOBAL.md への symlink なので、複製せず
 # 1ファイルに書く。複製は将来必ず drift する
 claude_md_target="$(readlink "$repo_root/agent/claude/CLAUDE.md" || true)"
 [ "$claude_md_target" = "../common/rules/GLOBAL.md" ] || {
@@ -43,6 +43,9 @@ claude_md_target="$(readlink "$repo_root/agent/claude/CLAUDE.md" || true)"
     "${claude_md_target:-<not a symlink>}" >&2
   exit 1
 }
+# install は ~/.codex/AGENTS.md と ~/.grok/AGENTS.md を GLOBAL.md に張る
+assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md'
+assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.grok/AGENTS.md'
 
 assert_contains "$global_rules" '## Project Memory Boundary'
 # repo が何の正なのか

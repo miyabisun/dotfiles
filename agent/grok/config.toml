@@ -1,0 +1,106 @@
+# Personal Grok defaults. Authentication, sessions, marketplace state, and
+# runtime databases intentionally stay outside this repository.
+# bin/install seeds ~/.grok/config.toml from this file when missing; an existing
+# machine-local copy is left alone (same contract as Codex).
+
+[models]
+default = "grok-4.5"
+
+[ui]
+permission_mode = "auto"
+screen_mode = "fullscreen"
+
+[features]
+telemetry = false
+
+[subagents]
+enabled = true
+
+# Claude Code's installed plugins under ~/.claude/plugins still surface via
+# Grok's Claude-compat plugin discovery (no separate compat cell). Disable
+# them so lifecycle/guards stay owned by agent/grok/hooks; re-enable one by
+# one if a specific plugin is needed.
+[plugins]
+disabled = [
+  "claude-code-setup",
+  "claude-md-management",
+  "code-review",
+  "code-simplifier",
+  "commit-commands",
+  "explanatory-output-style",
+  "feature-dev",
+  "frontend-design",
+  "hookify",
+  "learning-output-style",
+  "plugin-dev",
+  "pr-review-toolkit",
+  "ralph-loop",
+  "security-guidance",
+  "skill-creator",
+]
+
+# Claude/Cursor lifecycle hooks register as the wrong pane name and double-fire
+# busy/turn-end. Own those under ~/.grok/hooks instead. Skills, agents, and
+# GLOBAL rules are installed as native ~/.grok/* links, so vendor scans stay off.
+[compat.claude]
+skills = false
+rules = false
+agents = false
+mcps = false
+hooks = false
+sessions = true
+
+[compat.cursor]
+skills = false
+rules = false
+agents = false
+mcps = false
+hooks = false
+sessions = true
+
+[permission]
+deny = [
+  "Bash(bw:*)",
+  "Bash(rbw:*)",
+  "Read(~/.config/.secrets*)",
+  "Read(~/.config/cloudflare/**)",
+  "Edit(~/.config/cloudflare/**)",
+  "Read(**/.env)",
+  "Read(**/.env.local)",
+  "Read(**/.env.development)",
+  "Read(**/.env.development.local)",
+  "Read(**/.env.test)",
+  "Read(**/.env.test.local)",
+  "Read(**/.env.staging)",
+  "Read(**/.env.production)",
+  "Read(**/.env.production.local)",
+  "Edit(**/.env)",
+  "Edit(**/.env.local)",
+  "Edit(**/.env.development)",
+  "Edit(**/.env.development.local)",
+  "Edit(**/.env.test)",
+  "Edit(**/.env.test.local)",
+  "Edit(**/.env.staging)",
+  "Edit(**/.env.production)",
+  "Edit(**/.env.production.local)",
+]
+allow = [
+  "Bash(~/.local/bin/notify-file-permission.sh:*)",
+]
+
+# adapter は daemon と同じ release から動かす。PATH 解決や ~/.local/bin の
+# 複製へ戻すと、update.timer が daemon だけ進めて version skew が復活する。
+# MCP の command は shell ではないため `~` や `$HOME` は展開されない。
+[mcp_servers.agent-talk]
+command = "/home/miyabi/.local/share/agent-talk/current/agent-talk-mcp"
+enabled = true
+
+[mcp_servers.obscura]
+command = "obscura"
+args = ["mcp"]
+enabled = true
+
+[mcp_servers.semble]
+command = "uvx"
+args = ["--from", "semble[mcp]", "semble"]
+enabled = true

@@ -47,9 +47,21 @@ install_codex() {
   echo "==> Codex CLI installed"
 }
 
+install_grok() {
+  if command -v grok >/dev/null 2>&1; then
+    echo "==> Grok CLI already installed ($(grok --version 2>/dev/null | head -1))"
+    return
+  fi
+
+  echo "==> Installing Grok CLI..."
+  run_remote_installer "Grok CLI" "https://x.ai/cli/install.sh"
+  echo "==> Grok CLI installed"
+}
+
 install_agent_clis() {
   install_cursor
   install_codex
+  install_grok
 }
 
 # ---------------------------------------------------------------------------
