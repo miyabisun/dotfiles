@@ -7,9 +7,8 @@ description: >
   users never read them on e-paper pair Sumi (dark, primary) with
   Kinari (light) instead of Washi. Warm unbleached-cloth surfaces,
   sepia ink, and gentle accent sprinkles replace Washi's stark
-  contrast-first paper. Consumed the same way as Sumi: a project's
-  docs/DESIGN.md declares "dark = Sumi, light = Kinari" and records
-  only its accents, data colors, and domain components.
+  contrast-first paper. Use it with Sumi as bootstrap input, then adapt the
+  applicable rules into the project's self-contained root DESIGN.md.
 colors:
   # --- Neutral chrome: Kinari (light). Unsuffixed tokens = Kinari. ---
   # Dark theme tokens are NOT defined here — the dark theme is always
@@ -65,7 +64,7 @@ photocopy.
   Washi; they do not adopt Kinari.
 
 A project pairs exactly one light theme with Sumi — Kinari *or* Washi,
-never both. The choice is declared in the project's docs/DESIGN.md.
+never both. The choice is declared in the project root `DESIGN.md`.
 
 ## Colors
 

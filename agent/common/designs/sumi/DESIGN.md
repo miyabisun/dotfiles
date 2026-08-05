@@ -7,9 +7,8 @@ description: >
   themes — Washi (和紙, light) and Sumi (墨, dark) — up to two accent
   colors per project (a required primary and an optional secondary,
   each carrying a distinct persistent role), functional color reserved
-  for data semantics. Projects consume this template via a
-  docs/DESIGN.md that declares "follows Sumi" and records only
-  project-specific overrides (accents, data colors, domain components).
+  for data semantics. Projects use this file as bootstrap input and adapt the
+  relevant rules into a self-contained project root DESIGN.md.
 colors:
   # --- Neutral chrome: Washi theme (light). Unsuffixed tokens = Washi. ---
   surface: "#fafafa"
@@ -184,13 +183,12 @@ secondary marks a *background of state*. Additional colors appear only
 when they encode data (unread state, rating levels, ID frequency) and are
 defined per project on top of these accents.
 
-**How projects consume this template:** this file
-(`~/.claude/designs/sumi/DESIGN.md`) is the canonical original and the only
-place where the shared rules are maintained. Each project keeps a small
-`docs/DESIGN.md` that (1) declares it follows Sumi, (2) declares its accent
-values, and (3) documents its project-specific data colors and domain
-components. Project files never restate the shared rules; on conflict, the
-project file wins for its own domain, this template wins for the chrome.
+**How projects consume this template:** use this file as bootstrap material,
+then copy and adapt the applicable rules into a self-contained project root
+`DESIGN.md`. That project-owned file becomes the sole ongoing authority for
+chrome, accents, data colors, and domain components. Future template changes do
+not update a Project implicitly; adopt them through an explicit review of the
+Project document and implementation.
 
 ## Colors
 
@@ -234,10 +232,10 @@ values are live.
   a subtle background tint (danger-subtle) for error banners. The Washi
   value is ≥7:1 against surface.
 
-**Per-project accent rule:** a project adopts this template wholesale and
-declares its primary accent (as a Washi/Sumi pair) in its own
-docs/DESIGN.md — that file is the sole authority for the project's
-accents. Optionally, the project may also declare a secondary accent
+**Per-project accent rule:** after using this template as bootstrap input, a
+project declares its primary accent (as a Washi/Sumi pair) in its own project
+root `DESIGN.md` — that file is the sole authority for the project's accents.
+Optionally, the project may also declare a secondary accent
 alongside it, together with the role secondary carries in this project;
 without an explicit role secondary must not be declared. Pick primary so
 sibling projects are tellable apart at a glance; pick secondary so it is
@@ -247,7 +245,7 @@ else stays identical so the tools feel like one family.
 
 **Functional data colors** (unread markers, per-ID heat levels, star-rating
 bars, live/shorts badges…) are project-domain tokens layered on top and
-documented in each project's docs/DESIGN.md. They must: (1) never be used
+documented in each project's root `DESIGN.md`. They must: (1) never be used
 for chrome, (2) come in Washi+Sumi pairs, (3) stay readable against
 surface-raised in both themes. On Washi, design them as a **darkness ramp**:
 low relative luminance first (so they read as ink and survive grayscale),
@@ -382,5 +380,5 @@ Default size `1.2em`, aligned to the text baseline.
   hue is a secondary cue at best on e-paper.
 - Do keep gesture affordances (pull-to-refresh, swipe-back) visually quiet:
   muted text panels, accent only at the "release" threshold.
-- Don't restate template rules in a project's docs/DESIGN.md — record only
-  the project's accent, data colors, and domain components there.
+- Do keep the project root `DESIGN.md` self-contained after bootstrap; do not
+  leave essential rules dependent on this external template.

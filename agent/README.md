@@ -126,9 +126,11 @@ Role definitions shared by Claude Code and Cursor. Frontmatter keeps only
 defaults to `inherit`). Claude-specific `model` / `effort` / `tools` are
 intentionally omitted.
 
-Google-style `DESIGN.md` templates live once here. Projects only keep a thin
-`docs/DESIGN.md` that declares which template they follow plus project-specific
-tokens. Do not copy the full template into every app.
+Google-style `DESIGN.md` templates live here as bootstrap inputs. Each project
+owns a self-contained root `DESIGN.md` after adopting and adapting a template;
+shared templates do not remain an external authority. Existing projects that
+only have `docs/DESIGN.md` may read it as a legacy fallback until an explicit
+migration, but root and docs are never merged implicitly.
 
 ## Adding a new skill
 

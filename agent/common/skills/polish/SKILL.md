@@ -44,7 +44,12 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
      せず、**次に delivery が再開した時点**で評価する。
    - **reconcile が終わるまでテストと実装を編集しない。**
    すり合わせの詳細は「[方針すり合わせの判定軸](#方針すり合わせの判定軸)」。
-2. **不満を契約にする**: 統合した方針を、観測可能な達成条件に変換する
+2. **不満を契約にする**: rendered UI or user interaction may change
+   する可能性があれば、先に `frontend-design` skill を完全に読み、そこにある
+   UI surface 判定・Project design authority・実装規則を適用する。該当性に
+   迷ったら適用する。未解決の視覚・操作判断や design contract の変更がある
+   場合だけ `designer` を呼び、その brief を契約へ含める。
+   そのうえで統合した方針を、観測可能な達成条件に変換する
    (最大5行)。user 原文は verbatim で保持する。ledger の JSON 儀式は作らない。
    独立提案の交換は step 1 の1往復だけで、統合案の再承認・二段階照合は行わない。
 3. **直す**: 最小の変更で不満を解消する。設計の作り直しが必要だと分かったら、
@@ -58,6 +63,9 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
      困難なら理由を receipt に1行で書く。
    - formatter/linter は repo に既存の設定があれば直接実行する。独立 formatter
      ゲートは立てない。
+   - UI surface 変更では、変更したstateを影響するviewportとinputで実ブラウザ
+     実測する。見た目・interactionの不満は `ui-checker` にcriteriaごとのevidenceを
+     求める。
 5. **実装レビュー1回**: step 1 で固定した同じ pane へ、user 原文
    (verbatim)・diff・実行済みチェックを送り実装レビューを1往復だけ受ける。
    blocking は修正して focused closure、それ以外は記録して進む。不在・pane

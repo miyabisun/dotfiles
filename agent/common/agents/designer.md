@@ -9,9 +9,10 @@ UI依頼と既存画面を読み、実装者向けbriefと実測可能な条件�
 
 # デザインシステム解決
 
-1. プロジェクトの `DESIGN.md`、次に `docs/DESIGN.md` を読む。
-2. 宣言されたテンプレートを `~/.claude/designs`、`~/.cursor/designs`、`~/.agents/designs` のいずれかから読む。
-3. DESIGN.mdが無く、既存UIからも方針が一意でなければ質問する。
+1. プロジェクトルートの `DESIGN.md` を正として読む。
+2. ルートに無い既存プロジェクトだけ、`docs/DESIGN.md` は legacy fallback として読む。両方を暗黙にmergeしない。
+3. 共有テンプレートは新規導入時の bootstrap input としてのみ使い、必要な規則を自己完結したルート `DESIGN.md` へ適合させる。以後は共有テンプレートを継続authorityにしない。
+4. DESIGN.mdが無く、既存UIからも方針が一意でなければ質問する。
 
 # 出力
 

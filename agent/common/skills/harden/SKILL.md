@@ -165,6 +165,12 @@ criteria, scope, verification commands, and important failure modes.
 - For non-trivial behavior, prefer a failing regression test before the fix.
 - A separate strategist is optional; use it only when the contract itself is
   difficult, cross-cutting, UI-heavy, externally integrated, or high risk.
+- If rendered UI or user interaction may change, first read the complete
+  `frontend-design` skill and apply its UI-surface boundary, Project design
+  authority, and implementation rules. When applicability is uncertain,
+  迷ったら適用する. Invoke `designer` only for unresolved visual or interaction
+  decisions or a change to the design contract, and include its brief in the
+  acceptance criteria.
 
 ### 1a. Co-author the contract with the counterpart
 
@@ -328,9 +334,12 @@ security-sensitive:   implement → full checks → counterpart implementation
 The implementing agent's own inspection never substitutes for either independent
 security receipt.
 
-UI behavior additionally requires `ui-checker` evidence for observable visual
-and interaction criteria. Use `designer` only when visual/product decisions are
-actually unresolved.
+UI behavior additionally requires `ui-checker` evidence for every observable
+visual and interaction criterion. Exercise affected states, viewports, and
+input methods in a 実ブラウザ, including loading/empty/error, keyboard/focus,
+touch, overflow, contrast, and reduced motion when relevant. `designer` remains
+limited to unresolved visual/product decisions; `frontend-design` is an
+implementation capability, not an approval gate.
 
 The parent may implement directly or delegate to `dev`. Delegate when isolation,
 parallel exploration, context preservation, or specialist instructions improve
