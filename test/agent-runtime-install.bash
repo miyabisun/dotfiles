@@ -31,6 +31,9 @@ if grep -q '^TMUX_BIN=' "$runtime_bin/.dotfiles-agent-runtime"; then
   echo 'runtime pin must not carry a tmux dependency' >&2
   exit 1
 fi
+# workspace 静穏ゲート用の herdr / jq は optional pin として常に鍵が載る
+grep -q '^HERDR_BIN=' "$runtime_bin/.dotfiles-agent-runtime"
+grep -q '^JQ_BIN=' "$runtime_bin/.dotfiles-agent-runtime"
 test -f "$rules_file"
 test ! -L "$rules_file"
 grep -Fq "$runtime_bin/notify-file-permission.sh" "$rules_file"

@@ -27,6 +27,8 @@ fi
 [[ -f "$BROKER" && -x "$BROKER" && ! -L "$BROKER" ]] || exit 126
 [[ -f "$RUNTIME_PATHS" && ! -L "$RUNTIME_PATHS" ]] || exit 126
 CURL_BIN=""
+HERDR_BIN=""
+JQ_BIN=""
 SHA256_BIN=""
 SHA256_MODE=""
 CP_BIN=""
@@ -34,6 +36,8 @@ RM_BIN=""
 STAT_BIN=""
 STAT_MODE=""
 SEEN_CURL=0
+SEEN_HERDR=0
+SEEN_JQ=0
 SEEN_SHA256=0
 SEEN_SHA256_MODE=0
 SEEN_CP=0
@@ -46,6 +50,16 @@ while IFS= read -r RUNTIME_LINE || [[ -n "$RUNTIME_LINE" ]]; do
             [[ "$SEEN_CURL" -eq 0 ]] || exit 126
             CURL_BIN="${RUNTIME_LINE#CURL_BIN=}"
             SEEN_CURL=1
+            ;;
+        HERDR_BIN=*)
+            [[ "$SEEN_HERDR" -eq 0 ]] || exit 126
+            HERDR_BIN="${RUNTIME_LINE#HERDR_BIN=}"
+            SEEN_HERDR=1
+            ;;
+        JQ_BIN=*)
+            [[ "$SEEN_JQ" -eq 0 ]] || exit 126
+            JQ_BIN="${RUNTIME_LINE#JQ_BIN=}"
+            SEEN_JQ=1
             ;;
         SHA256_BIN=*)
             [[ "$SEEN_SHA256" -eq 0 ]] || exit 126
@@ -80,15 +94,17 @@ while IFS= read -r RUNTIME_LINE || [[ -n "$RUNTIME_LINE" ]]; do
         *) exit 126 ;;
     esac
 done <"$RUNTIME_PATHS"
-[[ "$SEEN_CURL" -eq 1 \
+[[ "$SEEN_CURL" -eq 1 && "$SEEN_HERDR" -eq 1 && "$SEEN_JQ" -eq 1 \
     && "$SEEN_SHA256" -eq 1 && "$SEEN_SHA256_MODE" -eq 1 \
     && "$SEEN_CP" -eq 1 && "$SEEN_RM" -eq 1 \
     && "$SEEN_STAT" -eq 1 && "$SEEN_STAT_MODE" -eq 1 ]] || exit 126
-for RUNTIME_VALUE in "$CURL_BIN" "$SHA256_BIN" \
+for RUNTIME_VALUE in "$CURL_BIN" "$HERDR_BIN" "$JQ_BIN" "$SHA256_BIN" \
     "$CP_BIN" "$RM_BIN" "$STAT_BIN"; do
     [[ "$RUNTIME_VALUE" != *[$' \t\r\n']* ]] || exit 126
 done
 [[ -z "$CURL_BIN" || "$CURL_BIN" == /* ]] || exit 126
+[[ -z "$HERDR_BIN" || "$HERDR_BIN" == /* ]] || exit 126
+[[ -z "$JQ_BIN" || "$JQ_BIN" == /* ]] || exit 126
 [[ "$SHA256_BIN" == /* ]] || exit 126
 [[ "$CP_BIN" == /* && "$RM_BIN" == /* ]] || exit 126
 [[ "$STAT_BIN" == /* ]] || exit 126
@@ -98,17 +114,38 @@ done
 CONTEXT="${PWD##*/}"
 [[ -n "${CONTEXT}" ]] || CONTEXT="project"
 
-# 第3引数 "talk" = agent-talk の呼び鈴で始まったターン。
-# 判定は呼び出し元 (claude: Stop フックが transcript の最終ユーザー入力を、
-# codex: notify-turn-end.sh が payload の input-messages を見る) が行う。
-TALK="${3:-}"
+# 完了通知は workspace が静穏になったときだけ出す。協働 (agent-talk の往復)
+# の途中では誰かが working なので黙り、最後のターンが終わって全員 done/idle
+# になった1回だけ鳴る。判定不能 (herdr/jq/env の欠落・照会失敗) は従来どおり
+# 通知する — herdr の不調で完了通知が消える方を避ける (fail-open)。
+workspace_quiescent() {
+    [[ -n "$HERDR_BIN" && -x "$HERDR_BIN" ]] || return 0
+    [[ -n "$JQ_BIN" && -x "$JQ_BIN" ]] || return 0
+    [[ -n "${HERDR_PANE_ID:-}" && -n "${HERDR_WORKSPACE_ID:-}" ]] || return 0
+    local agents statuses
+    agents="$("$HERDR_BIN" agent list 2>/dev/null)" || return 0
+    # $ws / $self は jq 側の変数 (shell 展開ではない)
+    # shellcheck disable=SC2016
+    statuses="$(printf '%s' "$agents" | "$JQ_BIN" -r \
+        --arg ws "$HERDR_WORKSPACE_ID" --arg self "$HERDR_PANE_ID" '
+        .result.agents[]?
+        | select(.workspace_id == $ws and .pane_id != $self)
+        | .agent_status' 2>/dev/null)" || return 0
+    # unknown は「herdr が判定できた結果」なので静穏には数えない。
+    case "$statuses" in
+        *working* | *blocked* | *unknown*) return 1 ;;
+    esac
+    return 0
+}
 
 # MOCA_URL があれば /notify に通知する (moca-server が喋る。失敗は無視)
-# agent-talk の呼び鈴で始まったターンの成功完了は通知しない — peer 往復の
-# たびに完了音声が飛ぶのは過剰。確認待ち・許可待ち・異常終了は起点に関係
-# なく人間の対応が要るので残す
+# 確認待ち・許可待ち・異常終了は静穏と無関係に人間の対応が要るので常に通知する
+NOTIFY=1
+if [[ "$STATUS" == "success" ]] && ! workspace_quiescent; then
+    NOTIFY=0
+fi
 if [[ -n "${MOCA_URL:-}" && -n "$CURL_BIN" && -x "$CURL_BIN" \
-    && ( -z "${TALK}" || "${STATUS}" != "success" ) ]]; then
+    && "$NOTIFY" -eq 1 ]]; then
     case "${STATUS}" in
         success) MSG="${AGENT}が完了しました" ;;
         waiting) MSG="${AGENT}が確認を求めています" ;;

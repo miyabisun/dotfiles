@@ -46,8 +46,11 @@ agent/
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
 Agent completion events call `~/.local/bin/emit-turn-end.sh`. When
-`MOCA_URL` is set it asks MOCA to announce the event (agent-talk-initiated
-turns stay silent on success); it always reports the turn end to the broker.
+`MOCA_URL` is set it asks MOCA to announce the event; a successful turn is
+announced only when every other agent in the same herdr workspace has
+settled to done/idle (so a claude↔codex review round produces one
+completion notice at the end instead of one per turn). It always reports
+the turn end to the broker.
 Codex uses `notify` for completion. Its notification wrapper identifies
 subagent rollout threads and suppresses their completion announcements,
 including automatic approval reviewers.

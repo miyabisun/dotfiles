@@ -38,7 +38,7 @@ set -euo pipefail
 printf '%s\n' "$*" >>"$NOTIFY_TEST_AGENT_TALK_LOG"
 AGENT_TALK
 
-printf 'CURL_BIN=%s\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
+printf 'CURL_BIN=%s\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
   "$fake_bin/curl" /usr/bin/sha256sum \
   >"$trusted_bin/.dotfiles-agent-runtime"
 chmod +x "$fake_bin/curl" "$fake_bin/dirname" \
@@ -72,19 +72,21 @@ test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 1
 test "$(grep -Fc 'turn-end' "$NOTIFY_TEST_AGENT_TALK_LOG")" -eq 0
 
 # Claude's generic waiting hook announces independently (the tmux dedupe
-# option left with the tmux backend). Completion still returns the pane to
-# agent-talk idle exactly once, and a talk turn stays silent on success.
+# option left with the tmux backend). Completion notifies (the herdr pin is
+# empty here, so the quiescence gate fail-opens) and returns the pane to
+# agent-talk idle exactly once.
 printf '%s\n' '{"message":"permission prompt"}' | bash "$claude_wait_hook"
 test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 2
 grep -F 'claudeが確認を求めています' "$NOTIFY_TEST_CURL_LOG" >/dev/null
-"$emitter" codex success talk
-test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 2
+"$emitter" codex success
+test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 3
+grep -F 'codexが完了しました' "$NOTIFY_TEST_CURL_LOG" >/dev/null
 test "$(grep -Fc 'turn-end' "$NOTIFY_TEST_AGENT_TALK_LOG")" -eq 1
 
 # Missing MOCA configuration still succeeds without a notification.
 unset MOCA_URL
 "$notifier" codex 620
-test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 2
+test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 3
 
 # A failed destination degrades safely.
 export MOCA_URL='https://notify.invalid'
@@ -93,7 +95,7 @@ export NOTIFY_TEST_CURL_FAIL=1
 unset NOTIFY_TEST_CURL_FAIL
 
 # curl is optional: permission handling still succeeds without a MOCA sink.
-printf 'CURL_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
+printf 'CURL_BIN=\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
   /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
 curl_count="$(wc -l <"$NOTIFY_TEST_CURL_LOG")"
 "$notifier" codex 623
@@ -101,7 +103,7 @@ test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq "$curl_count"
 
 # A broken notification pin must not wedge the agent-talk queue: success still
 # attempts exactly one adjacent broker turn-end through the EXIT trap.
-printf 'BROKEN=1\nCURL_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
+printf 'BROKEN=1\nCURL_BIN=\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
   /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
 turn_end_count="$(grep -Fc 'turn-end' "$NOTIFY_TEST_AGENT_TALK_LOG")"
 if "$emitter" codex success talk 2>/dev/null; then
@@ -113,7 +115,7 @@ test "$(grep -Fc 'turn-end' "$NOTIFY_TEST_AGENT_TALK_LOG")" \
 
 # The sidecar is parsed as strict data, never sourced as shell code.
 side_effect="$test_root/runtime-side-effect"
-printf 'CURL_BIN=$(touch %s)\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
+printf 'CURL_BIN=$(touch %s)\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
   "$side_effect" /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
 if "$notifier" codex 624 2>/dev/null; then
   echo 'malformed runtime sidecar must fail closed' >&2
