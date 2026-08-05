@@ -157,11 +157,14 @@ fi
 
 # MOCA_URL があれば /notify に通知する (moca-server が喋る。失敗は無視)
 # 目の前で見ている場合も反応は残し、セッション名・agent名だけ省略する
+# agent-talk の呼び鈴で始まったターンの成功完了は通知しない — peer 往復の
+# たびに完了音声が飛ぶのは過剰。確認待ち・許可待ち・異常終了は起点に関係
+# なく人間の対応が要るので残す
 if [[ -n "${MOCA_URL:-}" && -n "$CURL_BIN" && -x "$CURL_BIN" \
+    && ( -z "${TALK}" || "${STATUS}" != "success" ) \
     && ( -z "${SENT}" || "${STATUS}" != "success" ) \
     && ( -z "${PERMISSION_WAITING}" || "${STATUS}" == "permission" ) ]]; then
     DONE="完了しました"
-    [[ -n "${TALK}" ]] && DONE="agent-talkを完了しました"
     if [[ -n "${VIEWING}" ]]; then
         case "${STATUS}" in
             success) MSG="${DONE}" ;;
