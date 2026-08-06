@@ -13,13 +13,18 @@ onboarding = false
 # 下 (上下) 分割は既定の prefix+minus ではなく tmux と同じ prefix+s
 split_horizontal = "prefix+s"
 
-# option+hjkl navigation: タブは左右 (h/l)、space は上下 (j/k)。
+# split_horizontal=prefix+s が settings の既定キーを shadow するため、
+# iTerm の Cmd+, の指癖に合わせて prefix+comma へ明示移設する
+settings = "prefix+comma"
+
+# hjkl navigation は2層: alt+hjkl (直接・連打向き) と prefix+ctrl+hjkl
+# (prefix 標準の one-shot)。タブは左右 (h/l)、workspace は上下 (j/k)。
 # alt 層は readline/vim とほぼ衝突しない更地 (iTerm2 は Option=Esc+ 設定済み、
 # WT は native)。herdr 既定の prefix+p/n は array で温存する
-previous_tab = ["prefix+p", "alt+h"]
-next_tab = ["prefix+n", "alt+l"]
-next_workspace = "alt+j"
-previous_workspace = "alt+k"
+previous_tab = ["prefix+p", "alt+h", "prefix+ctrl+h"]
+next_tab = ["prefix+n", "alt+l", "prefix+ctrl+l"]
+next_workspace = ["alt+j", "prefix+ctrl+j"]
+previous_workspace = ["alt+k", "prefix+ctrl+k"]
 
 # pen — herdr workspace の仮死トグル (miyabi-sunny-side/pen-cli)
 # alt+s: 現在の workspace を TOML へ保存

@@ -17,15 +17,19 @@ with open(sys.argv[1], 'rb') as f:
 # pen の keys.command 3本。[keys] は完全一致で assert し退行検知する。
 # ([keys] 以外のテーブルは user が直接育てる領域なので assert しない)
 keys = data['keys']
-expected_keys = {'split_horizontal', 'command', 'next_tab', 'previous_tab',
-                 'next_workspace', 'previous_workspace'}
+expected_keys = {'split_horizontal', 'settings', 'command', 'next_tab',
+                 'previous_tab', 'next_workspace', 'previous_workspace'}
 assert set(keys.keys()) == expected_keys, set(keys.keys())
 assert keys['split_horizontal'] == 'prefix+s'
-# option+hjkl: タブは左右 (h/l)、space は上下 (j/k)。herdr 既定の prefix 系は残す
-assert keys['previous_tab'] == ['prefix+p', 'alt+h'], keys['previous_tab']
-assert keys['next_tab'] == ['prefix+n', 'alt+l'], keys['next_tab']
-assert keys['next_workspace'] == 'alt+j', keys['next_workspace']
-assert keys['previous_workspace'] == 'alt+k', keys['previous_workspace']
+# split_horizontal=prefix+s が既定の settings を shadow するため、iTerm の
+# Cmd+, の指癖に合わせて prefix+comma へ明示移設する
+assert keys['settings'] == 'prefix+comma', keys['settings']
+# 移動は2層: alt+hjkl (直接・連打向き) と prefix+ctrl+hjkl (one-shot)。
+# タブは左右 (h/l)、workspace は上下 (j/k)。herdr 既定の prefix 系は残す
+assert keys['previous_tab'] == ['prefix+p', 'alt+h', 'prefix+ctrl+h'], keys['previous_tab']
+assert keys['next_tab'] == ['prefix+n', 'alt+l', 'prefix+ctrl+l'], keys['next_tab']
+assert keys['next_workspace'] == ['alt+j', 'prefix+ctrl+j'], keys['next_workspace']
+assert keys['previous_workspace'] == ['alt+k', 'prefix+ctrl+k'], keys['previous_workspace']
 assert len(keys['command']) == 3, len(keys['command'])
 expected = [
     {'key': 'alt+s', 'type': 'shell', 'command': 'pen save'},
