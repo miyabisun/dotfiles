@@ -138,6 +138,34 @@ workspace_quiescent() {
     return 0
 }
 
+# success 通知の主語は workspace label (= user が見る session 名)。通知は
+# workspace 全体の静穏化を表すので、単位も名前も workspace に合わせる。
+# 解決できなければ workspace id、id も無ければ cwd basename — 名前解決の
+# 失敗を通知の消失に波及させない。呼ぶのは実際に通知するときだけ。
+workspace_display_name() {
+    if [[ -n "${HERDR_WORKSPACE_ID:-}" ]]; then
+        if [[ -n "$HERDR_BIN" && -x "$HERDR_BIN" && -n "$JQ_BIN" && -x "$JQ_BIN" ]]; then
+            local workspaces label
+            if workspaces="$("$HERDR_BIN" workspace list 2>/dev/null)"; then
+                # $ws は jq 側の変数 (shell 展開ではない)
+                # shellcheck disable=SC2016
+                label="$(printf '%s' "$workspaces" | "$JQ_BIN" -r \
+                    --arg ws "$HERDR_WORKSPACE_ID" '
+                    .result.workspaces[]?
+                    | select(.workspace_id == $ws)
+                    | .label // empty' 2>/dev/null)" || label=""
+                if [[ -n "$label" ]]; then
+                    printf '%s' "$label"
+                    return 0
+                fi
+            fi
+        fi
+        printf '%s' "$HERDR_WORKSPACE_ID"
+        return 0
+    fi
+    printf '%s' "$CONTEXT"
+}
+
 # MOCA_URL があれば /notify に通知する (moca-server が喋る。失敗は無視)
 # 確認待ち・許可待ち・異常終了は静穏と無関係に人間の対応が要るので常に通知する
 NOTIFY=1
@@ -147,7 +175,7 @@ fi
 if [[ -n "${MOCA_URL:-}" && -n "$CURL_BIN" && -x "$CURL_BIN" \
     && "$NOTIFY" -eq 1 ]]; then
     case "${STATUS}" in
-        success) MSG="${AGENT}が完了しました" ;;
+        success) MSG="$(workspace_display_name)が完了しました" ;;
         waiting) MSG="${AGENT}が確認を求めています" ;;
         permission) MSG="${CONTEXT}でファイル操作の許可が必要です" ;;
         *)       MSG="${AGENT}が${STATUS}で終了しました" ;;

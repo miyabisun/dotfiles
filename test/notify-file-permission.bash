@@ -55,6 +55,8 @@ cp "$trusted_bin/.dotfiles-agent-runtime" \
 export PATH="$fake_bin:$PATH"
 export HOME="$fake_home"
 export MOCA_URL='https://notify.invalid'
+# herdr 環境は継承させない (静穏ゲート・label 解決は emit 側の test が担う)
+unset HERDR_PANE_ID HERDR_WORKSPACE_ID HERDR_SOCKET_PATH
 export NOTIFY_TEST_CURL_LOG="$test_root/curl.log"
 export NOTIFY_TEST_AGENT_TALK_LOG="$test_root/agent-talk.log"
 export NOTIFY_TEST_PATH_LOG="$test_root/path.log"
@@ -80,7 +82,7 @@ test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 2
 grep -F 'claudeが確認を求めています' "$NOTIFY_TEST_CURL_LOG" >/dev/null
 "$emitter" codex success
 test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 3
-grep -F 'codexが完了しました' "$NOTIFY_TEST_CURL_LOG" >/dev/null
+grep -F 'project-alphaが完了しました' "$NOTIFY_TEST_CURL_LOG" >/dev/null
 test "$(grep -Fc 'turn-end' "$NOTIFY_TEST_AGENT_TALK_LOG")" -eq 1
 
 # Missing MOCA configuration still succeeds without a notification.

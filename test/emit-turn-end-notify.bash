@@ -13,6 +13,7 @@ trap 'rm -rf "$test_root"' EXIT
 
 log="$test_root/log"
 agents_json="$test_root/herdr-agents.json"
+workspaces_json="$test_root/herdr-workspaces.json"
 : >"$log"
 mkdir -p "$test_root/bin" "$test_root/home/.local/share/agent-talk/current"
 
@@ -27,8 +28,17 @@ EOF
 cat >"$test_root/bin/herdr" <<EOF
 #!/bin/bash
 echo "HERDR \$*" >>"$log"
-[[ -f "$agents_json" ]] || exit 1
-cat "$agents_json"
+case "\$1 \$2" in
+  "agent list")
+    [[ -f "$agents_json" ]] || exit 1
+    cat "$agents_json"
+    ;;
+  "workspace list")
+    [[ -f "$workspaces_json" ]] || exit 1
+    cat "$workspaces_json"
+    ;;
+  *) exit 1 ;;
+esac
 EOF
 chmod +x "$test_root/bin/curl" "$test_root/bin/herdr" \
   "$test_root/home/.local/share/agent-talk/current/agent-talk"
@@ -76,12 +86,22 @@ run() {
   run_as w9:p1 w9 "$@"
 }
 
+# success 通知の主語になる workspace label (user が見る session 名)。
+cat >"$workspaces_json" <<'JSON'
+{"result":{"workspaces":[
+  {"workspace_id":"w9","label":"settings"},
+  {"workspace_id":"workspace-settings","label":"opaque-session"}
+]}}
+JSON
+
 # 同 workspace に working が居る: 成功完了は通知しない。turn-end は生きている。
+# 通知しないなら label 照会もしない。
 peers "w9:p2=working"
 : >"$log"
 run claude success
 grep -q "CURL" "$log" && fail "他 agent working 中の完了が通知された"
 grep -q "BROKER turn-end" "$log" || fail "抑止時に turn-end が消えた"
+grep -q "HERDR workspace list" "$log" && fail "抑止時に workspace list を照会した"
 
 # blocked / unknown も静穏ではない。
 peers "w9:p2=blocked"
@@ -94,27 +114,28 @@ peers "w9:p2=unknown"
 run claude success
 grep -q "CURL" "$log" && fail "他 agent unknown 中の完了が通知された"
 
-# 全員 done/idle: 通知する。呼び鈴起点の旧 talk 引数が来ても同じ (静穏が唯一の門)。
+# 全員 done/idle: workspace label を主語に通知する。
+# 呼び鈴起点の旧 talk 引数が来ても同じ (静穏が唯一の門)。
 peers "w9:p2=done" "w9:p3=idle"
 : >"$log"
 run claude success
-grep -q "CURL.*claudeが完了しました" "$log" || fail "全員静穏の完了通知が消えた"
+grep -q "CURL.*settingsが完了しました" "$log" || fail "label 主語の完了通知が消えた"
 grep -q "BROKER turn-end" "$log" || fail "通知時に turn-end が消えた"
 
 : >"$log"
 run claude success talk
-grep -q "CURL.*claudeが完了しました" "$log" || fail "旧 talk 引数が通知を壊した"
+grep -q "CURL.*settingsが完了しました" "$log" || fail "旧 talk 引数が通知を壊した"
 
 # 他 workspace の working は無関係。単独 workspace は完了扱い。
 peers "w8:p2=working"
 : >"$log"
 run claude success
-grep -q "CURL.*claudeが完了しました" "$log" || fail "他 workspace の working に引きずられた"
+grep -q "CURL.*settingsが完了しました" "$log" || fail "他 workspace の working に引きずられた"
 
 peers
 : >"$log"
 run claude success
-grep -q "CURL.*claudeが完了しました" "$log" || fail "単独 workspace の完了通知が消えた"
+grep -q "CURL.*settingsが完了しました" "$log" || fail "単独 workspace の完了通知が消えた"
 
 # self 除外: hook 実行中の自分は herdr から working と観測され得る。
 # 自分を数えると最終通知が永久に抑止されるため、self 行は必ず除外する。
@@ -127,27 +148,48 @@ cat >"$agents_json" <<'JSON'
 JSON
 : >"$log"
 run_as opaque-self workspace-settings claude success
-grep -q "CURL.*claudeが完了しました" "$log" || fail "working 中の self が除外されていない"
+grep -q "CURL.*opaque-sessionが完了しました" "$log" || fail "working 中の self が除外されていない"
 
-# 判定不能は fail-open: herdr 照会失敗・env 欠落でも通知は失われない。
+# 判定不能は fail-open: herdr agent list 失敗でも通知は失われない
+# (label 解決は独立に生きているので主語は label のまま)。
 rm -f "$agents_json"
 : >"$log"
 run claude success
-grep -q "CURL.*claudeが完了しました" "$log" || fail "herdr 失敗時に fail-open しなかった"
+grep -q "CURL.*settingsが完了しました" "$log" || fail "herdr 失敗時に fail-open しなかった"
 
 # jq が読めない出力 (malformed JSON) も判定不能 → fail-open。turn-end も残る。
 printf 'not json at all' >"$agents_json"
 : >"$log"
 run claude success
-grep -q "CURL.*claudeが完了しました" "$log" || fail "malformed JSON で fail-open しなかった"
+grep -q "CURL.*settingsが完了しました" "$log" || fail "malformed JSON で fail-open しなかった"
 grep -q "BROKER turn-end" "$log" || fail "malformed JSON で turn-end が消えた"
 
-peers "w9:p2=working"
+# 名前解決の失敗は通知の消失に波及しない: label 無し → workspace id へ、
+# workspace list 失敗・malformed → id へ、id も無ければ cwd basename へ。
+peers "w9:p2=done"
+printf '{"result":{"workspaces":[{"workspace_id":"w9","label":null}]}}' >"$workspaces_json"
 : >"$log"
-(cd "$test_root" && env -i HOME="$test_root/home" PATH=/usr/bin:/bin \
+run claude success
+grep -q "CURL.*w9が完了しました" "$log" || fail "label 無しで id へ fallback しなかった"
+
+rm -f "$workspaces_json"
+: >"$log"
+run claude success
+grep -q "CURL.*w9が完了しました" "$log" || fail "workspace list 失敗で id へ fallback しなかった"
+
+printf 'broken' >"$workspaces_json"
+: >"$log"
+run claude success
+grep -q "CURL.*w9が完了しました" "$log" || fail "malformed workspaces で id へ fallback しなかった"
+
+# HERDR env 自体が無い環境: 静穏判定も id fallback も不能 → cwd basename 主語。
+peers "w9:p2=working"
+mkdir -p "$test_root/no-env-proj"
+: >"$log"
+(cd "$test_root/no-env-proj" && env -i HOME="$test_root/home" PATH=/usr/bin:/bin \
   MOCA_URL=http://moca.test \
   bash "$test_root/bin/emit-turn-end.sh" claude success >/dev/null 2>&1) || true
-grep -q "CURL.*claudeが完了しました" "$log" || fail "env 欠落時に fail-open しなかった"
+grep -q "CURL.*no-env-projが完了しました" "$log" || fail "env 欠落時に fail-open しなかった"
 
 # 人間の対応が要る状態は、他 agent が working でも即時通知する。
 peers "w9:p2=working"
