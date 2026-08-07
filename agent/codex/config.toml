@@ -88,7 +88,10 @@ required = false
 # `~/.local/bin` の複製に戻すと version skew が復活する。MCP の command は
 # shell の command line ではないため `~` や `$HOME` は展開されない。
 [mcp_servers.agent_talk]
-command = "/home/miyabi/.local/share/agent-talk/current/agent-talk-mcp"
+# Codex は MCP command を shell 非経由で spawn し ~/$HOME を展開しない。
+# sh が $HOME だけを展開し、exec で release 実体へ置き換わる (PATH 探索なし)
+command = "sh"
+args = ["-c", "exec \"$HOME/.local/share/agent-talk/current/agent-talk-mcp\""]
 env_vars = ["HERDR_PANE_ID", "HERDR_SOCKET_PATH", "XDG_RUNTIME_DIR"]
 required = false
 

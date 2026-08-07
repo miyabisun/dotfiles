@@ -92,7 +92,8 @@ allow = [
 # 複製へ戻すと、update.timer が daemon だけ進めて version skew が復活する。
 # MCP の command は shell ではないため `~` や `$HOME` は展開されない。
 [mcp_servers.agent-talk]
-command = "/home/miyabi/.local/share/agent-talk/current/agent-talk-mcp"
+# Grok は [mcp_servers.*] の文字列を load-time に ${VAR} 展開する (docs 契約)
+command = "${HOME}/.local/share/agent-talk/current/agent-talk-mcp"
 enabled = true
 
 [mcp_servers.obscura]

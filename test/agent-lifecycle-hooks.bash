@@ -97,6 +97,36 @@ printf '%s\n' '{"hook_event_name":"Stop","session_id":"test"}' \
     bash "$repo_root/agent/claude/hooks/stop-turn-end.sh"
 grep -Fx 'turn-end claude success' "$event_log" >/dev/null
 
+# herdr-agent-state hooks: $HOME 展開形の exact 契約。user-home 固定へ戻ると
+# portable-paths guard が拾うが、コマンド自体の消失・誤パス化はここで拾う。
+jq -e '.hooks.SessionStart[1].hooks[0].command == "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session"' \
+  "$repo_root/agent/claude/settings.json" >/dev/null
+jq -e '.hooks.sessionStart[0].command == "bash \"$HOME/.cursor/herdr-agent-state.sh\" session"' \
+  "$repo_root/agent/cursor/hooks.json" >/dev/null
+jq -e '.hooks.SessionStart[0].hooks[0].command == "bash \"$HOME/.codex/herdr-agent-state.sh\" session"' \
+  "$repo_root/agent/codex/hooks.json" >/dev/null
+
+# 空白入り HOME でも $HOME 展開形の command が実体へ届くこと (sh -c 実行)。
+space_home="$test_root/space home"
+state_log="$test_root/herdr-state.log"
+for state_dir in .claude/hooks .cursor .codex; do
+  mkdir -p "$space_home/$state_dir"
+  cat >"$space_home/$state_dir/herdr-agent-state.sh" <<'STATE'
+#!/usr/bin/env bash
+printf 'herdr-state %s %s\n' "$0" "$*" >>"$HERDR_STATE_TEST_LOG"
+STATE
+  chmod +x "$space_home/$state_dir/herdr-agent-state.sh"
+done
+: >"$state_log"
+for hook_json in \
+  "$repo_root/agent/claude/settings.json" \
+  "$repo_root/agent/cursor/hooks.json" \
+  "$repo_root/agent/codex/hooks.json"; do
+  cmd="$(jq -r '.. | .command? // empty' "$hook_json" | grep -F 'herdr-agent-state')"
+  HOME="$space_home" HERDR_STATE_TEST_LOG="$state_log" sh -c "$cmd"
+done
+test "$(grep -c 'herdr-state .* session$' "$state_log")" -eq 3
+
 # 配線: Cursor hooks.json と Claude settings.json が hooks を指していること。
 jq -e '.hooks.beforeSubmitPrompt[0].command == "./hooks/agent-talk-busy.sh"' \
   "$repo_root/agent/cursor/hooks.json" >/dev/null

@@ -94,10 +94,14 @@ fi
 codex_config="$repo_root/agent/codex/config.toml"
 assert_contains "$codex_config" '[mcp_servers.agent_talk]'
 # adapter は daemon と同じ release から動かす。PATH 解決や ~/.local/bin の
-# 複製へ戻すと、update.timer が daemon だけ進めて version skew が復活する
-assert_contains "$codex_config" 'command = "/home/miyabi/.local/share/agent-talk/current/agent-talk-mcp"'
+# 複製へ戻すと、update.timer が daemon だけ進めて version skew が復活する。
+# Codex は MCP command を shell 非経由で spawn するため、sh -c が $HOME を
+# 展開して exec で release 実体へ置き換わる (user-home 固定を持ち込まない)
+assert_contains "$codex_config" 'command = "sh"'
+assert_contains "$codex_config" 'exec \"$HOME/.local/share/agent-talk/current/agent-talk-mcp\"'
 assert_absent "$codex_config" 'command = "agent-talk-mcp"'
 assert_absent "$codex_config" '.local/bin/agent-talk-mcp'
+assert_absent "$codex_config" '/home/miyabi'
 assert_contains "$codex_config" 'HERDR_PANE_ID'
 assert_contains "$codex_config" 'HERDR_SOCKET_PATH'
 # tmux backend 撤去後、TMUX 系の forward は復活させない
@@ -105,9 +109,11 @@ assert_absent "$codex_config" '"TMUX"'
 
 grok_config="$repo_root/agent/grok/config.toml"
 assert_contains "$grok_config" '[mcp_servers.agent-talk]'
-assert_contains "$grok_config" 'command = "/home/miyabi/.local/share/agent-talk/current/agent-talk-mcp"'
+# Grok は [mcp_servers.*] の文字列を load-time に ${VAR} 展開する (docs 契約)
+assert_contains "$grok_config" 'command = "${HOME}/.local/share/agent-talk/current/agent-talk-mcp"'
 assert_absent "$grok_config" 'command = "agent-talk-mcp"'
 assert_absent "$grok_config" '.local/bin/agent-talk-mcp'
+assert_absent "$grok_config" '/home/miyabi'
 assert_contains "$grok_config" 'hooks = false'
 assert_contains "$grok_config" '[compat.claude]'
 assert_contains "$grok_config" '[compat.cursor]'

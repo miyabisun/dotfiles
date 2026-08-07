@@ -121,9 +121,9 @@ assert_contains "$spike" '**今の中身**で判定する'
 assert_absent "$spike" 'DESIGN.md を削除'
 
 # A3. private path を binding instruction に焼かない (GLOBAL の Project Memory
-# Boundary と同じ理由)。場所は knowledge ヒアリングが解決する
+# Boundary と同じ理由)。場所は knowledge ヒアリングが解決する。
+# user-home 絶対パスの禁止は repo 全体で test/portable-paths.bash が担う
 assert_absent "$spike" '~/projects/sunny-side/rust-svelte-template'
-assert_absent "$spike" '/home/miyabi/'
 # 既存プロジェクトは土台を入れ替えない。ただし「飛ばす」だけだと推奨は
 # 既存 repo へ永久に届かないので、read-only の突き合わせを置く
 assert_contains "$spike" '既存プロジェクトでは土台を入れ替えない'

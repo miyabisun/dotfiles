@@ -84,6 +84,52 @@ link "agent/common/agents" "$HOME/.grok"
 link "agent/common/designs" "$HOME/.grok"
 link "agent/common/rules/GLOBAL.md" "$HOME/.grok/AGENTS.md"
 
+# 旧 seed が user-home 絶対パスで焼いていた agent-talk adapter 行だけを
+# portable 形式へ移行する。一致は user home root (/home/<user>, /Users/<user>)
+# + 既知の adapter suffix に限定し、custom prefix やほかの machine-local
+# 編集には触れない (全体の調停は config-merge の領分)。root 直後で literal が
+# 途切れるため portable-paths guard には掛からない。
+legacy_adapter_re='^command = "(/home/|/Users/)[A-Za-z0-9_][A-Za-z0-9_-]*/\.local/share/agent-talk/current/agent-talk-mcp"$'
+migrate_legacy_mcp_command() {
+  cfg="$1"
+  mode="$2"
+  [ -f "$cfg" ] || return 0
+  [ -L "$cfg" ] && return 0
+  grep -Eq "$legacy_adapter_re" "$cfg" || return 0
+  # machine-local config は 0600 があり得る。mktemp + cp -p で mode を
+  # 引き継ぎ、redirect は truncate だけに使う。regex は awk -v だと実装
+  # 依存の backslash 展開を受けるので ENVIRON で bytes のまま渡す。
+  cfg_tmp="$(mktemp "${cfg}.XXXXXX")" || return 1
+  if ! cp -p "$cfg" "$cfg_tmp"; then
+    rm -f "$cfg_tmp"
+    return 1
+  fi
+  if [ "$mode" = codex ]; then
+    LEGACY_ADAPTER_RE="$legacy_adapter_re" awk '
+      BEGIN { re = ENVIRON["LEGACY_ADAPTER_RE"] }
+      $0 ~ re {
+        print "command = \"sh\""
+        print "args = [\"-c\", \"exec \\\"$HOME/.local/share/agent-talk/current/agent-talk-mcp\\\"\"]"
+        next
+      }
+      { print }
+    ' "$cfg" >"$cfg_tmp" || { rm -f "$cfg_tmp"; return 1; }
+  else
+    LEGACY_ADAPTER_RE="$legacy_adapter_re" awk '
+      BEGIN { re = ENVIRON["LEGACY_ADAPTER_RE"] }
+      $0 ~ re {
+        print "command = \"${HOME}/.local/share/agent-talk/current/agent-talk-mcp\""
+        next
+      }
+      { print }
+    ' "$cfg" >"$cfg_tmp" || { rm -f "$cfg_tmp"; return 1; }
+  fi
+  mv "$cfg_tmp" "$cfg"
+  echo "migrated legacy agent-talk adapter path in $cfg"
+}
+migrate_legacy_mcp_command "$HOME/.codex/config.toml" codex
+migrate_legacy_mcp_command "$HOME/.grok/config.toml" grok
+
 mkdir -p "$HOME/.agents"
 link "agent/common/skills" "$HOME/.agents"
 link "agent/common/agents" "$HOME/.agents"

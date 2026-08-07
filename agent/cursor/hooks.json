@@ -19,7 +19,7 @@
     ],
     "sessionStart": [
       {
-        "command": "bash '/home/miyabi/.cursor/herdr-agent-state.sh' session"
+        "command": "bash \"$HOME/.cursor/herdr-agent-state.sh\" session"
       }
     ],
     "stop": [

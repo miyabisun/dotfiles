@@ -80,4 +80,54 @@ test -f "$grok_config_source"
 grep -Fq '[compat.claude]' "$grok_config_source"
 grep -Fq '[compat.cursor]' "$grok_config_source"
 
+# 旧 seed の user-home 固定 adapter 行は install 再実行で portable 形式へ
+# 移行され、他の machine-local 編集は保持される。
+# (fixture の user-home literal は portable-paths guard に引っかからないよう
+#  連結で組み立てる)
+legacy_home="/home/""olduser"
+mac_legacy_home="/Users/""oldmac"
+custom_prefix="/opt/custom"
+cat >"$fake_home/.codex/config.toml" <<EOF
+# codex machine-local marker
+[mcp_servers.agent_talk]
+command = "$legacy_home/.local/share/agent-talk/current/agent-talk-mcp"
+env_vars = ["HERDR_PANE_ID"]
+
+# user-home ではない custom prefix は移行対象外
+[mcp_servers.custom]
+command = "$custom_prefix/.local/share/agent-talk/current/agent-talk-mcp"
+EOF
+cat >"$fake_home/.grok/config.toml" <<EOF
+# grok machine-local marker
+[mcp_servers.agent-talk]
+command = "$mac_legacy_home/.local/share/agent-talk/current/agent-talk-mcp"
+enabled = true
+EOF
+# machine-local config は 0600 があり得る。migration が mode を保持すること。
+chmod 0600 "$fake_home/.codex/config.toml" "$fake_home/.grok/config.toml"
+HOME="$fake_home" PATH="$tool_bin:/usr/bin:/bin" /bin/bash "$install_script" \
+  >/dev/null
+grep -Fq 'command = "sh"' "$fake_home/.codex/config.toml"
+grep -Fq 'exec \"$HOME/.local/share/agent-talk/current/agent-talk-mcp\"' \
+  "$fake_home/.codex/config.toml"
+grep -Fq '# codex machine-local marker' "$fake_home/.codex/config.toml"
+grep -Fq 'env_vars = ["HERDR_PANE_ID"]' "$fake_home/.codex/config.toml"
+grep -Fq "command = \"$custom_prefix/.local/share/agent-talk/current/agent-talk-mcp\"" \
+  "$fake_home/.codex/config.toml"
+grep -Fq 'command = "${HOME}/.local/share/agent-talk/current/agent-talk-mcp"' \
+  "$fake_home/.grok/config.toml"
+grep -Fq '# grok machine-local marker' "$fake_home/.grok/config.toml"
+if grep -Fq "$legacy_home" "$fake_home/.codex/config.toml" \
+  || grep -Fq "$mac_legacy_home" "$fake_home/.grok/config.toml"; then
+  echo 'legacy user-home adapter path must be migrated' >&2
+  exit 1
+fi
+for migrated in "$fake_home/.codex/config.toml" "$fake_home/.grok/config.toml"; do
+  perms="$(stat -c %a "$migrated" 2>/dev/null || stat -f %Lp "$migrated")"
+  if [ "$perms" != 600 ]; then
+    echo "migration must preserve config mode, got $perms for $migrated" >&2
+    exit 1
+  fi
+done
+
 echo 'grok agent install test: pass'
