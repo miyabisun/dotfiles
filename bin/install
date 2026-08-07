@@ -35,6 +35,9 @@ link "agent/claude/settings.json" "$HOME/.claude"
 # dir ごとではなく config.toml だけをファイル単位で張る
 mkdir -p "$HOME/.config/herdr"
 link "config/herdr/config.toml" "$HOME/.config/herdr"
+# keys.command から呼ぶ並び替え helper (PATH 経由)
+mkdir -p "$HOME/.local/bin"
+link "config/herdr/bin/herdr-swap" "$HOME/.local/bin"
 
 mkdir -p "$HOME/.cursor"
 link "agent/common/skills" "$HOME/.cursor"

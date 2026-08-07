@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Swap the focused herdr tab or workspace with its neighbor.
+
+Usage: herdr-swap tab previous|next
+       herdr-swap workspace previous|next
+
+herdr socket API (tab.move / workspace.move) の insert_index は「削除前の
+並びに対する位置」なので、next は現在位置+2、previous は現在位置-1 になる。
+端では wrap せず成功 no-op。障害時は stderr に理由を出して nonzero で返す。
+"""
+import json
+import os
+import socket
+import sys
+
+
+def fail(message):
+    print(f"herdr-swap: {message}", file=sys.stderr)
+    return 1
+
+
+def call(sock_path, method, params):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+        s.connect(sock_path)
+        payload = {"id": "herdr-swap", "method": method, "params": params}
+        s.sendall((json.dumps(payload) + "\n").encode())
+        raw = b""
+        while not raw.endswith(b"\n"):
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            raw += chunk
+    response = json.loads(raw.decode())
+    if response.get("error"):
+        detail = response["error"].get("message", str(response["error"]))
+        raise RuntimeError(f"{method}: {detail}")
+    return response["result"]
+
+
+def focused_workspace(sock_path):
+    workspaces = call(sock_path, "workspace.list", {})["workspaces"]
+    for index, workspace in enumerate(workspaces):
+        if workspace.get("focused"):
+            return workspaces, index
+    raise RuntimeError("workspace.list: no focused workspace")
+
+
+def main(argv):
+    if len(argv) != 3 or argv[1] not in ("tab", "workspace") \
+            or argv[2] not in ("previous", "next"):
+        return fail("usage: herdr-swap <tab|workspace> <previous|next>")
+    kind, direction = argv[1], argv[2]
+
+    sock_path = os.environ.get("HERDR_SOCKET_PATH")
+    if not sock_path:
+        return fail("HERDR_SOCKET_PATH is not set")
+
+    try:
+        if kind == "tab":
+            workspaces, ws_index = focused_workspace(sock_path)
+            workspace = workspaces[ws_index]
+            active_tab = workspace.get("active_tab_id")
+            tabs = call(sock_path, "tab.list", {})["tabs"]
+            siblings = [t["tab_id"] for t in tabs
+                        if t["workspace_id"] == workspace["workspace_id"]]
+            if active_tab not in siblings:
+                raise RuntimeError("tab.list: active tab not found")
+            index = siblings.index(active_tab)
+            method = "tab.move"
+            params = {"tab_id": active_tab}
+        else:
+            workspaces, index = focused_workspace(sock_path)
+            siblings = [w["workspace_id"] for w in workspaces]
+            method = "workspace.move"
+            params = {"workspace_id": siblings[index]}
+
+        if direction == "next":
+            if index >= len(siblings) - 1:
+                return 0
+            params["insert_index"] = index + 2
+        else:
+            if index == 0:
+                return 0
+            params["insert_index"] = index - 1
+
+        call(sock_path, method, params)
+    except (OSError, RuntimeError, ValueError, KeyError) as error:
+        return fail(str(error))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

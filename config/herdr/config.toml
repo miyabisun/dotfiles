@@ -17,14 +17,39 @@ split_horizontal = "prefix+s"
 # iTerm の Cmd+, の指癖に合わせて prefix+comma へ明示移設する
 settings = "prefix+comma"
 
-# hjkl navigation は2層: alt+hjkl (直接・連打向き) と prefix+ctrl+hjkl
-# (prefix 標準の one-shot)。タブは左右 (h/l)、workspace は上下 (j/k)。
+# hjkl は2層: alt+hjkl = 移動 (直接・連打向き)、prefix+ctrl+hjkl = 交換
+# (tmux 時代の並び替え層。下の [[keys.command]] herdr-swap を参照)。
+# タブは左右 (h/l)、workspace は上下 (j/k)。
 # alt 層は readline/vim とほぼ衝突しない更地 (iTerm2 は Option=Esc+ 設定済み、
 # WT は native)。herdr 既定の prefix+p/n は array で温存する
-previous_tab = ["prefix+p", "alt+h", "prefix+ctrl+h"]
-next_tab = ["prefix+n", "alt+l", "prefix+ctrl+l"]
-next_workspace = ["alt+j", "prefix+ctrl+j"]
-previous_workspace = ["alt+k", "prefix+ctrl+k"]
+previous_tab = ["prefix+p", "alt+h"]
+next_tab = ["prefix+n", "alt+l"]
+next_workspace = ["alt+j"]
+previous_workspace = ["alt+k"]
+
+# 交換層: prefix+ctrl+hjkl で focused tab / workspace を隣と入れ替える。
+# herdr に組込みの並び替え key action が無いため、socket API の
+# tab.move / workspace.move を叩く herdr-swap (config/herdr/bin) を bind する。
+# 端では wrap せず no-op。
+[[keys.command]]
+key = "prefix+ctrl+h"
+type = "shell"
+command = "herdr-swap tab previous"
+
+[[keys.command]]
+key = "prefix+ctrl+l"
+type = "shell"
+command = "herdr-swap tab next"
+
+[[keys.command]]
+key = "prefix+ctrl+j"
+type = "shell"
+command = "herdr-swap workspace next"
+
+[[keys.command]]
+key = "prefix+ctrl+k"
+type = "shell"
+command = "herdr-swap workspace previous"
 
 # pen — herdr workspace の仮死トグル (miyabi-sunny-side/pen-cli)
 # alt+s: 現在の workspace を TOML へ保存
