@@ -3,9 +3,9 @@ name: polish
 description: >-
   ブラッシュアップ段階の配達。動いているものに対する具体的な不満・issue を
   受け取り、実装前の方針すり合わせ1往復・修正・回帰テスト・変更隣接チェック・
-  実装レビュー1往復を経て
-  1つの local commit で返し、0.x を v1.0.0 へ磨き上げていく。明示起動・段階
-  明示・段階未指定 $deliver からの自動判断で使う。harden へ進むのは user の
+  実装レビュー1往復を経て、条件付きで最大1個の prerequisite formatting commit と
+  ちょうど1個の delivery commit で返し、0.x を v1.0.0 へ磨き上げていく。明示起動・
+  段階明示・段階未指定 $deliver からの自動判断で使う。harden へ進むのは user の
   v1.0.0 宣言後、または version が既に 1.0.0 以上の時のみ (decision 0003)。
   push・deploy・release はしない。
 ---
@@ -63,25 +63,54 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    そのうえで統合した方針を、観測可能な達成条件に変換する
    (最大5行)。user 原文は verbatim で保持する。ledger の JSON 儀式は作らない。
    独立提案の交換は step 1 の1往復だけで、統合案の再承認・二段階照合は行わない。
-3. **直す**: 最小の変更で不満を解消する。設計の作り直しが必要だと分かったら、
+3. **基線正規化 (条件付き・最大1回)**: 契約化の直後、delivery 作業に入る前に
+   worktree と protected path (既存の user 差分) を snapshot する。protected
+   snapshot は後段 gate の scope 保護に使う。repo に意味保存契約のある
+   formatter があるとき、影響範囲が分かるならその workspace に限定して
+   check を走らせ、legacy の整形差分だけを検出する。
+   差分が無ければこの step は no-op (既定の見た目は従来どおり delivery 1 commit)。
+   差分があるときだけ、次を**すべて**満たす場合に限り、専用の
+   `style: normalize formatting` commit を**最大1個**先行させてよい。
+   - **worktree が clean 開始であること** (style commit は clean 開始に限定)
+   - first-party source のみ。generated・vendor は除外
+   - stage するのは formatter 由来 path だけ (path 単位)
+   - 関連する既存 tests が green
+   - **既存 user 差分が 1 byte でもあれば自動 commit 禁止**。黙って無視せず、
+     path・理由・解消担当を blocking recovery として返し、独立 baseline
+     delivery として可視化して引き継ぐ
+   授権は **`$polish` 明示起動 (または同等の polish 段階配達) の内側**に限定する。
+   tracked な fingerprint marker ファイルは新設しない。使った tool / version /
+   config / 対象集合は receipt か style commit の説明に残し、真実源は実際の
+   check 結果とする。専用 runner script がまだ無いときは repo-native の
+   formatter コマンドを直接実行する (未実装の script 名を前提にしない)。
+4. **直す**: 最小の変更で不満を解消する。設計の作り直しが必要だと分かったら、
    その場で拡張せず「harden で扱うべき」と報告して縮小する。step 1 で大きな
    再設計が見つかった場合も自動昇格はしない (decision 0003) — polish の内側で
    縮小するか、未解決事項として user に返す。
-4. **検証する**:
+5. **検証する**:
    - 変更に隣接する既存チェック (テスト・build・lint) を repo 標準コマンドで
      実行する。存在しないものを新設しない。
    - 直したバグ1件につき回帰テスト1本を実用的な範囲で追加する。
      困難なら理由を receipt に1行で書く。
-   - formatter/linter は repo に既存の設定があれば直接実行する。独立 formatter
-     ゲートは立てない。
+   - 適用可能な repo-native formatter/linter だけを実行し、非適用/不在は理由付き N/A として記録する。
+     harden の独立 `formatter` 役職ゲートは立てない (機械的な自己実行であり、
+     役職分離ではない)。tooling bootstrap は非目標。
    - UI surface 変更では、変更したstateを影響するviewportとinputで実ブラウザ
      実測する。見た目・interactionの不満は `ui-checker` にcriteriaごとのevidenceを
      求める。
-5. **実装レビュー1回**: step 1 で固定した同じ pane へ、user 原文
-   (verbatim)・diff・実行済みチェックを送り実装レビューを1往復だけ受ける。
+6. **実装レビュー1回**: **送信直前**に pre-review mechanical gate を通す
+   (検証 step の再掲義務ではなく、レビュー送信の門)。repo-native で
+   format → lint check → 回帰+隣接 tests → `git diff` / status 再検査を明示実行する。
+   **適用可能な repo-native formatter/linter だけを実行し、非適用/不在は理由付き N/A として記録する。実行対象の nonzero はレビュー送信を止める**。
+   成功を current diff と結んで receipt に残す。**nonzero ならレビューを送らず
+   修正へ戻る**。専用 runner が後から用意されたらそれに置換してよいが、
+   未実装 script を参照して止まってはならない。tooling bootstrap は非目標。
+   門を通したら step 1 で固定した同じ pane へ、user 原文 (verbatim)・diff・
+   実行済みチェックを送り実装レビューを1往復だけ受ける。
    レビュワーが2名の場合は同一内容を両 pane へ並列送信し、blocking は union
    として修正、closure は両名から受ける。
-   blocking は修正して focused closure、それ以外は記録して進む。不在・pane
+   blocking で source を直したら **gate を再実行してから** focused closure を
+   取りに行く。それ以外は記録して進む。不在・pane
    消失・配達失敗・期限超過のときだけ self diff-review へ fallback し、その旨を
    receipt に記す (レビュワーごとに判定・記録する)。peer 接触は step 1 の方針すり合わせ1往復と、ここの実装
    レビュー1往復の**2つで別物**である。
@@ -98,10 +127,12 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
      「このケースは必要か?」の質問を残し、receipt で user に返す。
    - **formatter / linter の実行確認 (blocking)** と、commit 対象が今回の
      変更だけかの **scope 確認 (blocking)**。
-6. **コミットする**: 1 invocation = 1 local commit。English Conventional
-   Commits。知識棚卸しは行わない (harden 専用)。
-7. **報告する**: 解消した不満と証拠、残る不満、追加した回帰テスト、review の
-   結果を短く返す。
+7. **コミットする**: 1 invocation = **0または1個の prerequisite formatting
+   commit + ちょうど1個の delivery commit**。既定 (基線 no-op) は delivery 1
+   個のみ。English Conventional Commits。style commit と delivery を混ぜない。
+   知識棚卸しは行わない (harden 専用)。
+8. **報告する**: 解消した不満と証拠、残る不満、追加した回帰テスト、review の
+   結果、style commit の有無を短く返す。
    方針すり合わせについては次を残す: 担当と各レビュワーの pane、レビュワー
    ごとの request と reply の
    message ID、**user の目的とのズレの有無と是正内容**、原文中の目的と手段を
