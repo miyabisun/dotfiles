@@ -29,6 +29,15 @@ assert_absent() {
 
 # 計画フェーズ: 独立提案を先に作り、その後で突合する
 assert_contains "$deliver" '### 1a. Co-author the contract with the counterpart'
+# 担当→レビュワー行列と authority 境界 (grok 既定・両レビュワー・委譲不可)
+assert_contains "$deliver" 'grok is the default worker'
+assert_contains "$deliver" 'the reviewer set is Claude Code and Codex (both)'
+assert_contains "$deliver" 'cannot delegate implementation to grok on its own'
+assert_contains "$deliver" 'never silently reassign the'
+assert_contains "$deliver" 'applies to each member of'
+assert_contains "$deliver" '"worker": {"runtime": "claude|codex|grok"'
+assert_contains "$deliver" '"reviewers": [{"runtime": "...", "independence"'
+assert_contains "$deliver" 'judge and record it per'
 assert_contains "$deliver" 'Do not include a proposed contract in this first brief.'
 assert_contains "$deliver" 'Draft the local proposal
 in the same turn that sends the brief'
@@ -45,28 +54,36 @@ assert_absent "$deliver" 'planning_review'
 # security は両側で実施し、和集合を閉じる
 assert_contains "$deliver" 'Treat every security-sensitive change as high risk.'
 assert_contains "$deliver" "keep the implementation runtime's independent \`sec\` gate"
-assert_contains "$deliver" 'add an independent security review from the fixed counterpart pane'
+assert_contains "$deliver" 'add an independent security review from every reviewer pane'
+assert_contains "$deliver" 'three receipts: local + Claude + Codex'
 assert_contains "$deliver" 'their findings form one blocking union'
-assert_contains "$deliver" '### 5a. Freeze and run two independent security reviews'
-assert_contains "$deliver" 'Treat the two results as a union, not a vote.'
-assert_contains "$deliver" 'Both receipts are equal blockers.'
-assert_contains "$deliver" "Do not reveal either reviewer's initial findings to the other before"
+assert_contains "$deliver" '### 5a. Freeze and run the independent security reviews'
+assert_absent "$deliver" 'run two independent security reviews'
+assert_contains "$deliver" 'Treat the results as a union, not a vote.'
+assert_absent "$deliver" 'Treat the two results'
+assert_contains "$deliver" 'Every receipt is an equal blocker.'
+assert_absent "$deliver" 'Both receipts are equal blockers.'
+assert_contains "$deliver" "Do not reveal any reviewer's initial findings to"
+assert_contains "$deliver" 'before every initial receipt exists'
 assert_contains "$deliver" 'Do not impose a round cap on this gate.'
 
 # security gate は formatter の後 (凍結した bytes と commit する bytes を一致させる)
 assert_contains "$deliver" 'The security gate runs after `formatter`, not before it'
 assert_contains "$deliver" 'the reviewed bytes are not
 the committed bytes'
-assert_contains "$deliver" 'security-sensitive:   implement → full checks → counterpart implementation'
+assert_contains "$deliver" 'security-sensitive:   implement → full checks → reviewer implementation'
+assert_contains "$deliver" 'local sec + every reviewer sec independently'
 assert_contains "$deliver" 'staged_snapshot_matches_security_manifest'
 # risk table の high 行も新しい順序と矛盾しないこと
 assert_absent "$deliver" 'independent `rev` + `sec` → `formatter`'
 assert_contains "$deliver" '`formatter` → security gate when security-sensitive → commit'
-assert_contains "$deliver" 'AND for security-sensitive work, both security receipts approve the current frozen snapshot'
+assert_contains "$deliver" 'AND for security-sensitive work, every required security receipt approves the current frozen snapshot'
 
 # 凍結 manifest
 assert_contains "$deliver" 'a content hash per reviewed file'
-assert_contains "$deliver" 'Do not mutate the reviewed files while either security review is in flight.'
+assert_contains "$deliver" 'Do not mutate the reviewed files while any security review is in flight.'
+assert_contains "$deliver" 'Give the local sec role and every reviewer pane'
+assert_contains "$deliver" '"runtime": "claude|codex|grok|null"'
 assert_contains "$deliver" '"review_snapshot"'
 assert_contains "$deliver" '"security_review"'
 
@@ -74,7 +91,7 @@ assert_contains "$deliver" '"security_review"'
 assert_contains "$deliver" 'never treat one security reviewer as a substitute'
 assert_contains "$deliver" 'Never average, outvote, or silently drop a security finding'
 assert_contains "$deliver" "Never count the implementing agent's self-review as an independent security"
-assert_contains "$deliver" 'Any mutation after the security freeze invalidates both receipts'
+assert_contains "$deliver" 'Any mutation after the security freeze invalidates every receipt'
 assert_contains "$deliver" 'never read the
   counterpart proposal before drafting the local one'
 

@@ -16,10 +16,12 @@ assert_contains() {
   }
 }
 
-# polish: counterpart は planning で一意固定し、実装レビューは同じ pane を使う
-assert_contains "$polish" '**反対 runtime の登録 pane**を同じ window、次に同じ session の'
+# polish: レビュワーは planning で一意固定し、実装レビューは同じ pane を使う。
+# grok 担当時は両レビュワーへ並列送信し closure は両名から受ける
 assert_contains "$polish" 'step 1 で固定した同じ pane へ'
-assert_contains "$polish" '同じ window、次に同じ session'
+assert_contains "$polish" '同じ window、次に同じ'
+assert_contains "$polish" 'レビュワーが2名の場合は同一内容を両 pane へ並列送信し'
+assert_contains "$polish" 'closure は両名から受ける'
 
 # polish: spike と横並びの検査項目
 assert_contains "$polish" 'テストの誠実さ (blocking)'

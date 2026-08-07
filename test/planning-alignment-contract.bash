@@ -86,10 +86,22 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '**B を未実施のまま契約化へ進んではならない。**'
   assert_absent "$skill" '### B. どちらの手段が優れているか (選択軸・non-blocking)'
 
-  # counterpart は反対 runtime。距離規則 (same-window/session) は runtime を決めない
-  assert_contains "$skill" '**反対 runtime の登録 pane**'
-  assert_contains "$skill" 'Claude の counterpart は Codex、Codex の counterpart は'
-  assert_contains "$skill" '相方の runtime を決める'
+  # 担当→レビュワー行列: 明示指定が最優先、未明示 + 同席 grok は grok が既定
+  # 担当。grok 担当は claude+codex 両レビュー。距離規則は runtime を決めない
+  assert_contains "$skill" '**user の明示指定が最優先**'
+  assert_contains "$skill" '**grok が既定の作業担当**'
+  assert_contains "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
+  assert_contains "$skill" '担当 claude → レビュワーは codex。担当 codex → レビュワーは claude'
+  assert_contains "$skill" '担当・レビュワーの'
+  # authority 境界: 受けた pane から grok へ実装を委譲できない
+  assert_contains "$skill" '担当未明示の起動を claude / codex の pane が受け'
+  assert_contains "$skill" '権限を運ばない**ので、受けた pane から grok へ実装を委譲することは'
+  # grok 担当時の並列2通と、読む前の自案確定
+  assert_contains "$skill" 'レビュワーが2名なら2通を'
+  assert_contains "$skill" 'どちらの返信も読む前に自案を確定させる'
+  # 旧二値規定の再発防止
+  assert_absent "$skill" '**反対 runtime の登録 pane**'
+  assert_absent "$skill" 'Claude の counterpart は Codex'
 
   # 期限超過を fallback 条件にする以上、期限と default action の設定が要る
   assert_contains "$skill" '**期限と default action を決めて記録する**'
@@ -100,14 +112,19 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '**user の目的とのズレの有無と是正内容**'
   assert_contains "$skill" '原文中の目的と手段を'
   assert_contains "$skill" '**手段を置き換えた場合はその内容と理由**'
-  assert_contains "$skill" 'counterpart 不在時は fallback 理由も残す'
+  assert_contains "$skill" 'レビュワー不在時は該当レビュワーごとに'
   assert_absent "$skill" 'user 原文とのズレの有無'
 
   # 文型ヒューリスティックを最終判断にしない
   assert_contains "$skill" '**最終判断は文型ではなく「置換しても望む結果が同一か」**'
 
   # 不在時 fallback を「相互レビュー」と偽らない
-  assert_contains "$skill" 'planning_counterpart: unavailable'
+  assert_contains "$skill" 'planning_reviewer_unavailable: <runtime>'
+  assert_contains "$skill" 'planning_reviewers: unavailable'
+  assert_contains "$skill" '**片方だけ不在** (レビュワー2名時)'
+  assert_contains "$skill" '欠けた側の分だけ自案を A 軸で self-check する'
+  assert_contains "$skill" '不在を理由に担当を変更しない'
+  assert_absent "$skill" 'planning_counterpart: unavailable'
   assert_contains "$skill" '**self の見直しを「相互レビュー」と呼ばない。**'
   assert_contains "$skill" 'ズレ検出だけは省略しない'
 

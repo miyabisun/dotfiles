@@ -66,7 +66,8 @@ assert_contains "$spike" '**formatter / linter を機械的に叩く**'
 
 # counterpart は planning で list_peers により一意固定し、実装レビューは同じ
 # pane を使い回す (毎回引き直すと途中で相手が入れ替わる)
-assert_contains "$spike" '**反対 runtime の登録 pane**を同じ window、次に同じ session の'
+assert_contains "$spike" '同じ window、次に同じ'
+assert_contains "$spike" 'レビュワーが2名の場合は同一内容を両 pane へ'
 assert_contains "$spike" 'step 1 で固定した同じ pane へ'
 assert_contains "$spike" '同じ window、次に同じ session'
 assert_contains "$spike" '不在・pane 消失・配達失敗のときだけ self review'

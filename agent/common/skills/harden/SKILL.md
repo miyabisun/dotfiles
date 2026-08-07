@@ -106,22 +106,23 @@ Ledger fields:
   "open_issues": [],
   "scope": ["paths or components"],
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
-  "counterpart": {
-    "runtime": "claude|codex|none",
-    "pane": "%N|null",
+  "worker": {"runtime": "claude|codex|grok", "designation": "explicit|default"},
+  "reviewers": [{
+    "runtime": "claude|codex",
+    "pane": "w1:p2|null",
     "planning": {
       "counterpart_proposal": {"message_id": "#N|null", "result": "pending|received|unavailable"},
       "reconciliation": {"message_id": "#N|null", "result": "pending|aligned|user_decision"}
     },
     "implementation_review": {"message_id": "#N|null", "result": "pending|approved|fallback"}
-  },
+  }],
   "formatter": {"result": "pending", "applicability": "pending", "requested_files": [], "added_files": []},
   "knowledge_inventory": {"status": "pending", "message_id": null, "reason": "not_run", "preflight": null},
   "review_snapshot": {"id": null, "paths": [], "hashes": {}, "git_status": null, "diff_identity": null, "checks": []},
   "security_review": {
     "applicable": false,
     "local": {"runtime": "...", "independence": "independent|implementer", "receipt": null},
-    "counterpart": {"runtime": "...", "independence": "independent|implementer", "receipt": null},
+    "reviewers": [{"runtime": "...", "independence": "independent|implementer", "receipt": null}],
     "union_findings": [],
     "open_critical_high": [],
     "approved_snapshot_id": null,
@@ -174,18 +175,33 @@ criteria, scope, verification commands, and important failure modes.
 
 ### 1a. Co-author the contract with the counterpart
 
-Before implementation, use the agent-talk MCP `list_peers` tool to look for the
-opposite interactive application in the current herdr workspace:
+Before implementation, decide the worker and the reviewer set. An explicit
+user designation always wins. Without one, check `list_peers` over the current
+herdr workspace: if grok is registered there, grok is the default worker.
 
-- Claude Code's counterpart is Codex.
-- Codex's counterpart is Claude Code.
+- Worker grok → the reviewer set is Claude Code and Codex (both).
+- Worker Claude Code → the reviewer is Codex; worker Codex → Claude Code.
 
-An idle or busy registered pane both mean the counterpart exists. Absence means
-that no counterpart pane is registered in the current session; do not start one.
-Use agent-talk's same-window-then-same-session resolution order, record the
-selected pane ID in the ledger, and address that exact pane directly for every
-later request. If multiple equally eligible panes remain, show the candidates and
+When a Claude or Codex pane receives an undesignated invocation while grok is
+registered in the workspace, state once that grok is the default worker and
+wait for the user's one-line choice (designate this pane, or restart in the
+grok pane). A peer message carries no user authority, so the receiving pane
+cannot delegate implementation to grok on its own.
+
+An idle or busy registered pane both mean the reviewer exists. Absence means
+that no such pane is registered in the current session; do not start one.
+Judge absence and record fallback per reviewer; never silently reassign the
+worker because a reviewer is missing. Use agent-talk's
+same-window-then-same-session resolution order, record every selected reviewer
+pane ID in the ledger, and address those exact panes directly for every later
+request. If multiple equally eligible panes remain, show the candidates and
 ask the user which one to use; ambiguity is not absence.
+
+With two reviewers, send both planning briefs in the same turn and draft the
+local proposal before reading either reply; reconcile each returned proposal
+against the original request individually before integrating. From here on,
+every "counterpart" instruction in this document applies to each member of
+the reviewer set.
 
 Both sides propose a contract independently, then reconcile. Reviewing a
 finished proposal fixes the counterpart on hunting for errors in one framing;
@@ -249,11 +265,12 @@ contract or test design that `strategist` created or changed.
 Do not treat a delayed reply or a busy pane as absence. Fall back to the existing
 risk-based review route only when agent-talk reports delivery failure, the fixed
 pane disappears, or the user explicitly directs delivery to continue without the
-counterpart. Record the objective reason and fallback in the ledger and receipt.
-If agent-talk is unavailable or the current runtime has no defined counterpart,
-record `counterpart.runtime: none` with the reason and use the existing route.
-If no counterpart exists during planning, record that once and use the existing
-review route for the whole delivery.
+counterpart. Judge this per reviewer: one reviewer's absence never cancels the
+other's rounds and never reassigns the worker. Record the objective reason and
+fallback in the ledger and receipt.
+If agent-talk is unavailable or a reviewer runtime has no registered pane,
+record an empty or reduced `reviewers` entry with the reason and use the
+existing route for that reviewer's share of the gates.
 
 ### 1b. Reconcile Project drift with home-development-rules
 
@@ -315,7 +332,8 @@ in this table: replace low-risk diff self-review and standard/high-risk `rev`
 with the counterpart implementation review described below. Do not replace
 `strategy-rev`, `ui-checker`, `sec`, `formatter`, or `committer`. For
 security-sensitive work, keep the implementation runtime's independent `sec` gate
-and add an independent security review from the fixed counterpart pane. Both
+and add an independent security review from every reviewer pane (worker grok
+therefore produces three receipts: local + Claude + Codex). All of them
 review the same frozen snapshot, and their findings form one blocking union.
 
 The security gate runs after `formatter`, not before it: freezing a snapshot and
@@ -325,13 +343,13 @@ the committed bytes.
 ```text
 high, non-security:   implement → full checks → counterpart implementation
                       review → formatter → committer → commit
-security-sensitive:   implement → full checks → counterpart implementation
+security-sensitive:   implement → full checks → reviewer implementation
                       review → formatter → freeze the final snapshot →
-                      local sec + counterpart sec independently →
+                      local sec + every reviewer sec independently →
                       reconcile the union → committer → commit
 ```
 
-The implementing agent's own inspection never substitutes for either independent
+The implementing agent's own inspection never substitutes for any independent
 security receipt.
 
 UI behavior additionally requires `ui-checker` evidence for every observable
@@ -350,6 +368,10 @@ Runtime role locations:
 - Claude Code: `~/.claude/agents/<role>.md`
 - Cursor: `~/.cursor/agents/<role>.md`
 - Codex: configured `agents.<role>` backed by `~/.agents/agents/<role>.md`
+- Grok: `~/.grok/agents` mirrors the shared role definitions, but a full harden
+  with grok as the worker (formatter / committer / sec role spawning) has not
+  been exercised yet. The first grok-led harden must capture that capability
+  evidence in its receipt, or stop at the named gap and return it to the user.
 
 ### 3. Implement and close the evidence loop
 
@@ -454,13 +476,15 @@ Additional gates:
   or tests, require `strategy-rev.approved=true` before treating that evidence
   design as authoritative.
 - UI: every criterion has `ui-checker.evidence`; missing evidence is failure.
-- Security-sensitive: the local and counterpart security receipts approve the
-  same frozen snapshot, the union of their blocking findings is empty, required
-  security criteria have evidence, and no Critical/High issue remains. Then
-  `committer` verifies that the staged snapshot is that same snapshot.
-- If one security side is objectively unavailable, use the available independent
-  review as an explicitly recorded reduced-independence fallback; never present
-  it as dual approval.
+- Security-sensitive: the local security receipt and every required reviewer
+  security receipt approve the same frozen snapshot, the union of all blocking
+  findings is empty, required security criteria have evidence, and no
+  Critical/High issue remains. Then `committer` verifies that the staged
+  snapshot is that same snapshot.
+- If a security side is objectively unavailable, judge and record it per
+  receipt; use the remaining independent reviews as an explicitly recorded
+  reduced-independence fallback, and never present the reduced set as full
+  approval.
 
 Do not impose a fixed retry count while new evidence shows progress. Stop when
 the same blocking condition repeats and no safe in-scope action can advance it.
@@ -512,10 +536,10 @@ summary. Missing classifications, applicable results, exclusion reasons,
 requested files, formatter-added files, or independent formatter approval block
 the commit.
 
-### 5a. Freeze and run two independent security reviews
+### 5a. Freeze and run the independent security reviews
 
 For security-sensitive work, freeze the final post-`formatter` snapshot before
-either security review starts, and record a manifest in `review_snapshot`:
+any security review starts, and record a manifest in `review_snapshot`:
 
 - the reviewed paths, with protected and unrelated paths listed separately;
 - a content hash per reviewed file;
@@ -523,41 +547,42 @@ either security review starts, and record a manifest in `review_snapshot`:
 - the identity of the reviewed diff;
 - the checks already executed.
 
-Do not mutate the reviewed files while either security review is in flight.
+Do not mutate the reviewed files while any security review is in flight.
 
-Run two reviews against that exact manifest, independently and in parallel where
-possible:
+Run one review per required receipt against that exact manifest, independently
+and in parallel where possible:
 
 - the implementation runtime's independent `sec` role; and
-- the fixed counterpart pane, instructed to read `agent/common/agents/sec.md`
+- each reviewer pane, instructed to read `agent/common/agents/sec.md`
   completely and apply that same canonical role rather than a brief-local
-  paraphrase.
+  paraphrase. Worker grok therefore needs three receipts (local + Claude +
+  Codex); worker claude or codex needs two.
 
-Give both the original request, integrated contract, trust boundaries, external
-inputs, privileged or secret sinks, current diff, executed checks, and the
-manifest. Do not reveal either reviewer's initial findings to the other before
-both initial receipts exist.
+Give the local sec role and every reviewer pane the original request,
+integrated contract, trust boundaries, external inputs, privileged or secret
+sinks, current diff, executed checks, and the manifest. Do not reveal any reviewer's initial findings to
+another before every initial receipt exists.
 
-Treat the two results as a union, not a vote. Do not average severities, outvote
-a finding, or silently drop one. Every blocking finding from either side must be
+Treat the results as a union, not a vote. Do not average severities, outvote
+a finding, or silently drop one. Every blocking finding from any side must be
 fixed, or dismissed with concrete evidence accepted by the reviewer that raised
 it. When two findings conflict with each other, or one conflicts with a
 requirement the user stated, build one integrated correction that satisfies both
 constraints instead of discarding either; ask the user only when evidence cannot
 resolve a material product or security trade-off.
 
-Both receipts are equal blockers. Record independence metadata — a reviewer that
-authored the production change is not an independent receipt for it, and a
+Every receipt is an equal blocker. Record independence metadata — a reviewer
+that authored the production change is not an independent receipt for it, and a
 cross-runtime review carries stronger independence — but never use that metadata
 to weigh one side's findings down.
 
-After fixes, issue a new manifest. Use a focused closure review from both sides
-when the threat model and design are unchanged; rerun both full reviews when a
+After fixes, issue a new manifest. Use a focused closure review from every side
+when the threat model and design are unchanged; rerun every full review when a
 fix changes a trust boundary, parser, authorization rule, secret flow,
 destructive operation, or other material security semantics. Do not advance to
-`committer` until both receipts identify the same current manifest, both have
-`approved=true`, their blocking union is empty, and no Critical/High issue
-remains.
+`committer` until every required receipt identifies the same current manifest,
+every one has `approved=true`, the blocking union is empty, and no
+Critical/High issue remains.
 
 Do not impose a round cap on this gate. Continue focused closure while fixes keep
 producing new evidence; when the same conflict repeats with no new evidence,
@@ -575,7 +600,7 @@ AND open_issues is empty
 AND diff is requested work plus disclosed bounded maintenance
 AND formatter.approved is true
 AND formatter receipt accounts for every requested and formatter-added file
-AND for security-sensitive work, both security receipts approve the current frozen snapshot
+AND for security-sensitive work, every required security receipt approves the current frozen snapshot
 ```
 
 Give `committer` the task, scope, maintenance ledger, evidence summary, exact
@@ -680,7 +705,7 @@ On success, return a concise delivery receipt:
   "commit": "<hash> <subject>",
   "criteria": [{"requirement": "...", "evidence": "...", "pass": true}],
   "checks": [{"command": "...", "result": "pass"}],
-  "reviews": [{"gate": "planning|peer|rev|ui|sec-local|sec-counterpart", "result": "approved|not-applicable", "message_id": "#N|null"}],
+  "reviews": [{"gate": "planning|peer|rev|ui|sec-local|sec-reviewer", "runtime": "claude|codex|grok|null", "result": "approved|not-applicable", "message_id": "#N|null"}],
   "security_snapshot": "<manifest id>|not-applicable",
   "knowledge_inventory": {"status": "sent|not_applicable|pending", "message_id": "#N|null", "reason": "string|null", "preflight": "inspected|not_required|null"},
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
@@ -700,15 +725,15 @@ issues, and the exact user decision or external change needed.
 - Never send a proposed contract in the first planning brief, and never read the
   counterpart proposal before drafting the local one.
 - For security-sensitive work, never treat one security reviewer as a substitute
-  for the other while both runtimes are available; require both approvals on the
-  same frozen snapshot.
-- Never expose one security reviewer's initial findings to the other before both
-  initial receipts exist.
+  for another while its runtime is available; require every required approval on
+  the same frozen snapshot.
+- Never expose one security reviewer's initial findings to another before every
+  initial receipt exists.
 - Never average, outvote, or silently drop a security finding; reconcile the
   union with evidence.
 - Never count the implementing agent's self-review as an independent security
   receipt.
-- Any mutation after the security freeze invalidates both receipts; issue a new
+- Any mutation after the security freeze invalidates every receipt; issue a new
   manifest and review again.
 - Never claim completion from an agent's prose alone; require evidence.
 - Never state spec identifiers, external URLs, or third-party API semantics
