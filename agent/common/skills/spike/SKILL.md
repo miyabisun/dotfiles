@@ -7,7 +7,7 @@ description: >-
   ゴールは存在しない)、formatter/linter は機械的に実行し、テストの誠実さと
   DRY・過度な YAGNI を見る軽量な実装レビュー1回を通す。明示起動・段階明示・段階
   未指定 $deliver からの自動判断で使う。自動昇格は polish まで (decision
-  0003)。push・deploy・release はしない。
+  0003/0004)。push・deploy・release はしない。
 ---
 
 # spike
@@ -132,6 +132,8 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    それぞれを実行可能なテストとして表現する。「何が動けば体験できたことに
    なるか」がテスト名になる。ledger は作らない。独立提案の交換は step 1 の
    1往復だけで、統合案の再承認・二段階照合は行わない。
+   version が既に 1.0.0 以上の project では、既存の公開契約への互換性影響も
+   ここで判定する (詳細は「[昇格](#昇格-decision-00030004)」)。
 3. **TDD で作る**: 失敗するテストを先に書き (red)、通す (green)。この順序に
    自己免除は無い。user が同じ依頼文で明示的に例外を許可した場合のみ省略でき
    (原文を receipt に引用する)、それ以外で red を観測できないなら未達として止める。
@@ -272,17 +274,21 @@ idle も busy も存在扱いで送る。返信待ちの間に active polling �
 - **scope 確認 (blocking)**: commit 対象が spike の変更だけで、無関係な
   作業中変更を巻き込んでいないか。
 
-## 昇格 (decision 0003)
+## 昇格 (decision 0003/0004)
 
-**自動昇格は polish まで**。`harden` は「v1.0.0 にして**全世界に問いかける**」
-と user が宣言した後の段階であり、spike からの強制昇格先にはならない。
+**自動昇格は polish まで**。`harden` は user のリリース号令 (「v1.0.0 にして
+**全世界に問いかける**」等) だけが入口の出荷ゲートであり、spike からの強制
+昇格先にはならない。version 値も昇格根拠にならない。
 
 - credential・secret の取り扱い、権限・認証・信頼境界の変更、破壊的な
   データ操作 (drop・一括削除・migration) に触れる必要が生じたら、
   **polish への切り替えを宣言して停止する** (レビュー付きの流れで扱う)。
-- harden へ直行する例外は1つだけ: project の version (Rust なら Cargo.toml)
-  が**既に 1.0.0 以上**なのに spike が起動された時 —
-  「これ既に v1.0.0 やん、なんで spike やねん」の状態。
+- project の version (Rust なら Cargo.toml) が**既に 1.0.0 以上**でも
+  **spike は spike のまま進む**。ただし契約段階 (step 2) で既存の公開契約
+  (API・CLI・config・schema・可視の interaction) への**互換性影響**を判定し、
+  破壊するなら「next major work: v<現 major+1>.0.0 系の作業」と根拠を
+  receipt に明示して続行する。version file は変更しない — version 操作は
+  user の `bump-tag` だけが担う。
 - 将来 `bump-tag` でリリースされ得ることは昇格理由にならない。公開の権限は
   release 操作の明示起動が別途担い、spike 自身は push しない。
 

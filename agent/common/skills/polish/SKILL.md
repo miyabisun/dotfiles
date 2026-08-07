@@ -4,17 +4,18 @@ description: >-
   ブラッシュアップ段階の配達。動いているものに対する具体的な不満・issue を
   受け取り、実装前の方針すり合わせ1往復・修正・回帰テスト・変更隣接チェック・
   実装レビュー1往復を経て、条件付きで最大1個の prerequisite formatting commit と
-  ちょうど1個の delivery commit で返し、0.x を v1.0.0 へ磨き上げていく。明示起動・
-  段階明示・段階未指定 $deliver からの自動判断で使う。harden へ進むのは user の
-  v1.0.0 宣言後、または version が既に 1.0.0 以上の時のみ (decision 0003)。
+  ちょうど1個の delivery commit で返し、version を問わず成熟へ磨き上げていく。
+  明示起動・段階明示・段階未指定 $deliver からの自動判断で使う。harden へ
+  進むのは user のリリース号令のみ (decision 0004)。
   push・deploy・release はしない。
 ---
 
 # polish
 
-**動いているものを、出てきた不満に沿って叩き直し、0.x を v1.0.0 へ磨き上げる**
-(decision 0002/0003)。新規の体験づくりは `spike` の仕事であり、polish は成熟へ
-向かう本流 — 実利のある品質改善を軽い足取りで積む。
+**動いているものを、出てきた不満に沿って叩き直し、成熟へ磨き上げる**
+(decision 0002/0003/0004)。新規の体験づくりは `spike` の仕事であり、polish は
+**どの version でも**成熟へ向かう本流 — v1.0.0 は卒業ではなく通過点で、
+実利のある品質改善を軽い足取りで積む。
 
 ## 起動条件
 
@@ -85,6 +86,16 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    そのうえで統合した方針を、観測可能な達成条件に変換する
    (最大5行)。user 原文は verbatim で保持する。ledger の JSON 儀式は作らない。
    独立提案の交換は step 1 の1往復だけで、統合案の再承認・二段階照合は行わない。
+   契約化の時点で2つの判定を済ませる (worktree に触れる前に行う):
+   - **規模判定**: bounded な修正ではなく core architecture・主要 flow・公開
+     契約の全面的な作り直しが必要なら、基線正規化・実装・commit のどれにも
+     進まず、理由と再構成した **`$spike` 再依頼**文 (`$spike <goal>`) を user
+     へ返して終了する。大規模な再作成は spike のやり直しであり、自動転送は
+     しない (decision 0004)。
+   - **harden-review-sensitive 判定**: secret・credential / 認証・権限・信頼
+     境界 / 破壊的データ操作 / 公開 API 互換のどれに触れるかを分類して契約に
+     記録する (公開 API 互換は security ではないが出荷前見直しの対象)。
+     該当しても polish の内側で完遂する — 扱いは「[昇格と進言](#昇格と進言-decision-0004)」。
 3. **基線正規化 (条件付き・最大1回)**: 契約化の直後、delivery 作業に入る前に
    worktree と protected path (既存の user 差分) を snapshot する。protected
    snapshot は後段 gate の scope 保護に使う。repo に意味保存契約のある
@@ -105,10 +116,12 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    config / 対象集合は receipt か style commit の説明に残し、真実源は実際の
    check 結果とする。専用 runner script がまだ無いときは repo-native の
    formatter コマンドを直接実行する (未実装の script 名を前提にしない)。
-4. **直す**: 最小の変更で不満を解消する。設計の作り直しが必要だと分かったら、
-   その場で拡張せず「harden で扱うべき」と報告して縮小する。step 1 で大きな
-   再設計が見つかった場合も自動昇格はしない (decision 0003) — polish の内側で
-   縮小するか、未解決事項として user に返す。
+4. **直す**: 最小の変更で不満を解消する。実装の途中で全面的な作り直しが
+   必要だと判明したら、**部分実装を delivery 扱いせず**、commit せずに理由と
+   `$spike` 再依頼文を user へ返して終了する (書きかけの変更は破棄せず
+   worktree に残して保護する)。step 1 で大きな
+   再設計が見つかった場合も自動昇格はしない (decision 0003/0004) — 同じく
+   `$spike` 再依頼として user へ返す。切り替えを決めるのは user である。
 5. **検証する**:
    - 変更に隣接する既存チェック (テスト・build・lint) を repo 標準コマンドで
      実行する。存在しないものを新設しない。
@@ -127,6 +140,9 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    成功を current diff と結んで receipt に残す。**nonzero ならレビューを送らず
    修正へ戻る**。専用 runner が後から用意されたらそれに置換してよいが、
    未実装 script を参照して止まってはならない。tooling bootstrap は非目標。
+   gate と同時に final diff で harden-review-sensitive を再判定し、step 2 の
+   契約時分類との差分を契約と receipt に反映する — 実装の途中で予期せず
+   認証・権限・公開 API 等へ触れた場合を、事前予測だけに頼って見逃さない。
    門を通したら step 1 で固定した同じ pane へ、user 原文 (verbatim)・diff・
    実行済みチェックを送り実装レビューを1往復だけ受ける。
    レビュワーが2名の場合は同一内容を両 pane へ並列送信し、blocking は union
@@ -154,7 +170,8 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    個のみ。English Conventional Commits。style commit と delivery を混ぜない。
    知識棚卸しは行わない (harden 専用)。
 8. **報告する**: 解消した不満と証拠、残る不満、追加した回帰テスト、review の
-   結果、style commit の有無を短く返す。
+   結果、style commit の有無、harden-review-sensitive 判定 (該当時は surface・
+   根拠と `$harden` 推奨) を短く返す。
    方針すり合わせについては次を残す: 担当と各レビュワーの pane、レビュワー
    ごとの request と reply の
    message ID、**user の目的とのズレの有無と是正内容**、原文中の目的と手段を
@@ -239,16 +256,20 @@ idle も busy も存在扱いで送る。返信待ちの間に active polling �
 反証を求める形式なので、**blind な独立提案の代替にはならない**。同じ pane と
 既出の message ID は再利用し、同一争点の重複照会だけを避ける。
 
-## 昇格 (decision 0003)
+## 昇格と進言 (decision 0004)
 
-`harden` へ進むのは次の2つの場合だけ。それ以外の自動昇格は存在しない。
+`harden` へ進むのは **user のリリース号令のみ** (明示的な `$harden` 起動は
+号令と同値)。version 値は昇格根拠にならない — project の version が 1.0.0 を
+過ぎていても、号令が無ければ polish のまま磨き続ける。それ以外の自動昇格は
+存在しない。
 
-- user が「v1.0.0 にして**全世界に問いかける**」と宣言した後。
-- project の version (Rust なら Cargo.toml) が**既に 1.0.0 以上**の時。
-
-credential・secret・権限境界・破壊的データ操作は polish の内側で扱う —
+**harden-review-sensitive な変更は polish の内側で完遂する** —
 方針すり合わせと実装レビューの2往復、および不変条件 (secret 非コミット・
-push なし・破壊的 git 禁止) がその守りである。将来リリースされ得ることは昇格理由にならない。閉域 LAN での
+push なし・破壊的 git 禁止) がその守りである。そのうえで、該当した delivery
+の最終報告には**「出荷判断の前に `$harden` での見直しを推奨」を必ず含める**
+(該当 surface と根拠を添える)。この進言は完了後の advisory であり、
+自動で harden を起動したり delivery を block したりはしない。
+将来リリースされ得ることは昇格理由にならない。閉域 LAN での
 agent 間リスクの受容 (decision 0002, user-origin) の範囲は変わらない。
 
 ## 不変条件 (全段階共通)

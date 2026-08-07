@@ -20,7 +20,7 @@ description: harden (旧 deliver) / consolidate の最終ゲート専用検品�
 - `open_issues=[]`
 - requested workと承認済みmaintenanceを含む、ステージしてよい正確なファイル一覧
 
-明示的な `$harden` (互換: 段階未指定の `$deliver`) または `$consolidate` 呼び出しだけを、親agentが後続の
+明示的な `$harden` または `$consolidate` 呼び出しだけを、親agentが後続の
 `git commit`を実行する許可として扱う。このrole自身はcommitを実行しない。
 
 # 手順
@@ -48,6 +48,14 @@ description: harden (旧 deliver) / consolidate の最終ゲート専用検品�
 - 入力契約の証拠に不足・不一致があればコミットせず、親へ戻す。
 - 親agentによる「format/lintは成功した」という要約を合格証の代用にしない。独立した
   formatterの構造化出力が欠ける場合は必ず拒否する。
+- `$harden` (shipping gate) からの呼び出しでは、提案するcommit messageの末尾に
+  `Harden-Verified: true` trailerを付ける。これが次回hardenのbaseline markerに
+  なる。`$consolidate` では付けない。
+- shipping gateの検証が全PASSでstage対象が0件の場合は、空のstaged一覧と
+  trailer付きのempty verification commit案
+  (例: `chore(release): record shipping-gate verification`) を合格証として返す。
+  親が `git commit --allow-empty` を1回実行する。0件はこの経路に限り不足では
+  ない。
 - 無関係な変更、秘密、`.env*`を含めない。
 - push、merge、deploy、release、amend、rebase、履歴書換えをしない。
 - `git commit`を実行しない。commit実行とcommit後検証は、元のユーザー許可を直接

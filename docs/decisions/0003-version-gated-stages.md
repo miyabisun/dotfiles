@@ -1,5 +1,11 @@
 # 0003: version でゲートする段階昇格と、spike/polish 自動判断への既定変更
 
+> **Superseded (部分)**: Decision 2 の version gate (「version が既に 1.0.0
+> 以上なら harden」) と「gate は依頼文の段階明示より優先される」条項は
+> decision 0004 で廃止された。harden の入口は user のリリース号令のみ。
+> その他の決定 (自動昇格は polish まで、spike の v0.1.0 立ち上げ、段階未指定
+> `$deliver` の spike/polish 自動判断) は現行のまま。
+
 ## 要約
 
 harden への入口は決定的 gate ただ1つになった:

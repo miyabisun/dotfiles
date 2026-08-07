@@ -1,24 +1,70 @@
 ---
 name: harden
 description: >-
-  Release-grade delivery: turn a requested change into a verified local commit
-  through the full pipeline (co-authored contract, independent review,
-  formatter gate, dual security review on a frozen snapshot, gated staging).
-  Use only when the user explicitly invokes harden, has declared the v1.0.0
-  "present to the world" milestone, or the project version is already at or
-  above 1.0.0 (decision 0003). Never push, deploy, or release.
+  Release-grade shipping gate: turn a requested change into a verified local
+  commit through the full pipeline (co-authored contract, independent review,
+  formatter gate, dual security review on a frozen snapshot, gated staging),
+  and verify the cumulative diff since the previous harden-verified point.
+  Enter only on the user's explicit release call — an explicit $harden
+  invocation is that call (decision 0004).
+  A version number alone never selects harden.
+  Never push, deploy, or release.
 ---
 
 # harden
 
 This skill inherits the full former `deliver` pipeline unchanged (decision
 0002). In this document, "deliver"/"delivery" refers to this skill's own
-process. Per decision 0003, `$deliver` without an explicit stage no longer
-resolves here: this stage is entered only by explicit invocation, the user's
-declared v1.0.0 milestone, or a project version already at or above 1.0.0.
+process. Per decision 0004 this stage has exactly one entry: the user's
+explicit release call — a command to run the shipping gate (「リリースして
+v1.0.0 にしたい」 and its equivalents), not any sentence that merely contains
+the word "release". An explicit `$harden` invocation is that call. `$deliver`
+without an explicit stage never resolves here, and a version manifest already
+past 1.0.0 does not select harden by itself.
 
 Turn a request into a **verified local commit**. Choose the smallest reliable
 route. Phases and subagents are tools, not completion criteria.
+
+## Shipping-gate scope
+
+harden verifies what is about to ship, not only the current task. The review
+target is the **cumulative diff** from the previous harden-verified point to
+the current frozen snapshot:
+
+- The previous harden-verified point is the newest reachable commit whose
+  message carries the `Harden-Verified: true` trailer. Every harden delivery
+  commit must carry that trailer, so the gate's own commit becomes the next
+  baseline.
+- If no such commit exists (first harden), do not invent a baseline: the
+  review target is the **entire tracked product state**.
+- From that cumulative diff, always return exactly one semver recommendation
+  with its reason: `major` (breaks the public contract), `minor`
+  (backward-compatible capability), or `patch` (compatible fix or
+  internal-only change). The recommendation informs the user's `bump-tag`
+  decision; harden never edits version manifests, never tags, and never
+  releases.
+- This scope is not merely a semver input — it is wired through the pipeline.
+  The delivery **mutation scope** (`scope`: what this task may change) and the
+  **shipping verification scope** (`shipping_gate`: what must pass the gate)
+  are separate ledger fields, and the second contains the first. Section 1
+  resolves the baseline and cumulative paths, Section 2 classifies risk and
+  security sensitivity from the cumulative diff, Sections 3–5a run checks,
+  independent review, and the security manifest over it, and the
+  `Harden-Verified` trailer in Section 6 asserts that the **entire cumulative
+  range** passed — never only the current task diff.
+- The baseline commit stays fixed after contract time, but the range endpoint
+  and `cumulative_paths` follow the working tree: re-enumerate them
+  from the current candidate snapshot before sending the implementation
+  review, before the post-`formatter` security freeze, and after any
+  security-closure fix before `committer`.
+  Every mutation invalidates the previously enumerated candidate evidence.
+  Re-evaluate risk, security sensitivity, and the semver recommendation
+  against the final frozen cumulative diff, not the contract-time enumeration.
+- A shipping-gate run whose verification passes with zero fix diff still
+  advances the baseline: the explicit `$harden` authorization covers one
+  **empty verification commit** (`git commit --allow-empty`) whose message
+  carries the trailer. Without it the next harden would re-verify the same
+  range forever.
 
 ## Inputs
 
@@ -105,6 +151,7 @@ Ledger fields:
   "risk": "low|standard|high",
   "open_issues": [],
   "scope": ["paths or components"],
+  "shipping_gate": {"baseline": "commit|entire-tracked-state", "range": "<baseline>..<frozen>", "cumulative_paths": [], "semver_recommendation": null, "reason": null},
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
   "worker": {"runtime": "claude|codex|grok", "designation": "explicit|default"},
   "reviewers": [{
@@ -154,6 +201,14 @@ criteria, scope, verification commands, and important failure modes.
 - Snapshot initial `git status` and relevant diffs before mutation; record
   pre-existing user paths as protected so later formatter or maintenance work
   cannot absorb them.
+- Resolve the shipping-gate baseline at contract time: locate the newest
+  reachable commit whose message carries the `Harden-Verified: true` trailer
+  (record `entire-tracked-state` when none exists), enumerate the cumulative
+  diff paths from that baseline, and fill the ledger's `shipping_gate` field.
+  The baseline commit is fixed here; the enumerated range endpoint and paths
+  are provisional and are re-enumerated at every later gate.
+  Later sections read this field; a harden that never resolved it cannot
+  attach the trailer.
 - Before asking the user to approve anything, search for authorization that
   already exists: the invoking request, earlier user statements, and this
   skill's own invocation. Record what you find as authority evidence and
@@ -327,6 +382,12 @@ purely non-security (concurrency, public compatibility, a large migration with n
 threat path) uses the high route without a security gate; a security-adjacent
 change with no reachable threat path is not security-sensitive.
 
+Classify risk and security sensitivity from the **cumulative shipping diff**
+(`shipping_gate.range`), not from the current task diff alone: a sensitive
+change committed earlier (for example by a polish that recommended this
+review) and not yet harden-verified makes this delivery security-sensitive
+even when the current task is benign.
+
 When planning selected a counterpart, replace only the general semantic review
 in this table: replace low-risk diff self-review and standard/high-risk `rev`
 with the counterpart implementation review described below. Do not replace
@@ -381,7 +442,10 @@ After each substantive attempt:
 
 1. Run the narrowest useful check for quick feedback.
 2. Fix failures caused by the task.
-3. Run the complete applicable behavior, type, test, and build checks before review.
+3. Run the complete applicable behavior, type, test, and build checks before
+   review, against the full tracked state — the checks must exercise the
+   cumulative shipping diff (`shipping_gate.range`), not only the current
+   task's files.
 4. Exercise every acceptance criterion and attach the observed result.
 5. Inspect `git diff` and `git status` for scope contamination.
 
@@ -426,9 +490,13 @@ in-scope closure while a reliable local path remains.
 
 ### 4. Review only where it buys confidence
 
+Re-enumerate `shipping_gate` from the current candidate snapshot before
+sending any implementation review; a review of the contract-time enumeration
+does not cover paths the implementation added later.
 When planning selected a counterpart, give the same fixed pane the separately
 labeled original user request and material follow-ups under the fidelity rules
-above, acceptance criteria, relevant diff, and executed checks after
+above, acceptance criteria, the current task diff plus the cumulative shipping
+diff (`shipping_gate.range`), and executed checks after
 implementation. This counterpart review replaces low-risk diff self-review and
 standard/high-risk `rev`; the implementer must not act as the independent
 approver. Otherwise, preserve the risk-based route and give `rev` the same user
@@ -539,9 +607,12 @@ the commit.
 ### 5a. Freeze and run the independent security reviews
 
 For security-sensitive work, freeze the final post-`formatter` snapshot before
-any security review starts, and record a manifest in `review_snapshot`:
+any security review starts. Re-enumerate the range and `cumulative_paths`
+from that frozen snapshot first — the manifest lists the fresh enumeration,
+never the contract-time one — then record the manifest in `review_snapshot`:
 
-- the reviewed paths, with protected and unrelated paths listed separately;
+- the reviewed paths — every path in `shipping_gate.cumulative_paths`, with
+  protected and unrelated paths listed separately;
 - a content hash per reviewed file;
 - `git status --short`;
 - the identity of the reviewed diff;
@@ -560,7 +631,8 @@ and in parallel where possible:
 
 Give the local sec role and every reviewer pane the original request,
 integrated contract, trust boundaries, external inputs, privileged or secret
-sinks, current diff, executed checks, and the manifest. Do not reveal any reviewer's initial findings to
+sinks, the current task diff plus the cumulative shipping diff
+(`shipping_gate.range`), executed checks, and the manifest. Do not reveal any reviewer's initial findings to
 another before every initial receipt exists.
 
 Treat the results as a union, not a vote. Do not average severities, outvote
@@ -576,7 +648,10 @@ that authored the production change is not an independent receipt for it, and a
 cross-runtime review carries stronger independence — but never use that metadata
 to weigh one side's findings down.
 
-After fixes, issue a new manifest. Use a focused closure review from every side
+After fixes, issue a new manifest — re-enumerate the range and
+`cumulative_paths` from the new frozen snapshot each time, so a
+security-closure fix that touched a new path can never ship outside the
+reviewed scope. Use a focused closure review from every side
 when the threat model and design are unchanged; rerun every full review when a
 fix changes a trust boundary, parser, authorization rule, secret flow,
 destructive operation, or other material security semantics. Do not advance to
@@ -601,14 +676,25 @@ AND diff is requested work plus disclosed bounded maintenance
 AND formatter.approved is true
 AND formatter receipt accounts for every requested and formatter-added file
 AND for security-sensitive work, every required security receipt approves the current frozen snapshot
+AND the shipping-gate verification covered the entire cumulative range (`shipping_gate.range`)
 ```
 
 Give `committer` the task, scope, maintenance ledger, evidence summary, exact
 files eligible for staging, the formatter receipt, and the security manifest when
-one exists. `committer` reports
+one exists. Require the proposed commit message to end with the
+`Harden-Verified: true` trailer — that commit becomes the next shipping-gate
+baseline, and the trailer asserts that the entire cumulative range passed this
+gate, never only the current task diff. Stage only the current task's eligible
+files; the earlier commits in the range are already history and need no
+restaging. When verification passes with **zero eligible files**, `committer`
+returns an approved receipt with an empty staged list and a proposed empty
+verification commit message carrying the trailer, and the parent executes
+exactly one `git commit --allow-empty` with it — the baseline must advance
+even when nothing needed fixing. `committer` reports
 `staged_snapshot_matches_security_manifest: true|false`; a false value blocks the
-commit because the approved bytes and the staged bytes differ. The explicit invocation
-of `deliver` is the commit authorization, but commit execution stays with the
+commit because the approved bytes and the staged bytes differ. The user's
+release call (the explicit `$harden` invocation) is the commit authorization,
+but commit execution stays with the
 parent agent that directly retains that authorization and the source request.
 
 `committer` independently inspects the evidence and diff, stages only the exact
@@ -707,6 +793,7 @@ On success, return a concise delivery receipt:
   "checks": [{"command": "...", "result": "pass"}],
   "reviews": [{"gate": "planning|peer|rev|ui|sec-local|sec-reviewer", "runtime": "claude|codex|grok|null", "result": "approved|not-applicable", "message_id": "#N|null"}],
   "security_snapshot": "<manifest id>|not-applicable",
+  "shipping_gate": {"baseline": "<commit>|entire-tracked-state", "semver_recommendation": "major|minor|patch", "reason": "..."},
   "knowledge_inventory": {"status": "sent|not_applicable|pending", "message_id": "#N|null", "reason": "string|null", "preflight": "inspected|not_required|null"},
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
   "formatter": {"result": "approved", "applicability": "checked|not_applicable", "added_files": []}
