@@ -9,6 +9,20 @@ fake_home="$test_root/home"
 tool_bin="$test_root/tools"
 mkdir -p "$fake_home" "$tool_bin"
 
+link_host_tool() {
+  tool_name="$1"
+  target_dir="$2"
+  tool_path="$(command -v "$tool_name")" || {
+    echo "required host tool not found: $tool_name" >&2
+    exit 1
+  }
+  if [ ! -x "$tool_path" ]; then
+    echo "host tool is not executable: $tool_path" >&2
+    exit 1
+  fi
+  ln -s "$tool_path" "$target_dir/$tool_name"
+}
+
 cat >"$tool_bin/curl" <<'TOOL'
 #!/bin/bash
 exit 0
@@ -75,7 +89,7 @@ bootstrap_bin="$test_root/bootstrap-tools"
 bootstrap_home="$test_root/bootstrap-home"
 mkdir -p "$bootstrap_bin" "$bootstrap_home"
 for tool_name in dirname ln mkdir cp readlink unlink mv; do
-  ln -s "/usr/bin/$tool_name" "$bootstrap_bin/$tool_name"
+  link_host_tool "$tool_name" "$bootstrap_bin"
 done
 if HOME="$bootstrap_home" PATH="$bootstrap_bin" \
   /bin/bash "$repo_root/bin/install" >/dev/null 2>&1; then
@@ -88,9 +102,15 @@ fi
 no_curl_bin="$test_root/no-curl-tools"
 no_curl_home="$test_root/no-curl-home"
 mkdir -p "$no_curl_bin" "$no_curl_home"
-for tool_name in dirname mkdir cp chmod unlink mktemp sed mv rm sha256sum stat; do
-  ln -s "/usr/bin/$tool_name" "$no_curl_bin/$tool_name"
+for tool_name in dirname mkdir cp chmod unlink mktemp sed mv rm stat; do
+  link_host_tool "$tool_name" "$no_curl_bin"
 done
+if command -v sha256sum >/dev/null 2>&1; then
+  hash_tool=sha256sum
+else
+  hash_tool=shasum
+fi
+link_host_tool "$hash_tool" "$no_curl_bin"
 HOME="$no_curl_home" PATH="$no_curl_bin" "$installer"
 grep -Fx 'CURL_BIN=' \
   "$no_curl_home/.local/bin/.dotfiles-agent-runtime" >/dev/null
