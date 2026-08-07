@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Contract: agent CLI は zsh 関数に shadow されない。登録は daemon の pull
-# sync、busy/turn-end は lifecycle hooks が担い、shell 層は broker を呼ばない。
+# Contract: agent CLI は zsh 関数に shadow されない。agent-talk lifecycle は
+# daemon の herdr pull sync が担い、shell 層は broker を呼ばない。
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

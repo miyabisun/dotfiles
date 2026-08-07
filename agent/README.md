@@ -49,8 +49,8 @@ Agent completion events call `~/.local/bin/emit-turn-end.sh`. When
 `MOCA_URL` is set it asks MOCA to announce the event; a successful turn is
 announced only when every other agent in the same herdr workspace has
 settled to done/idle (so a claude↔codex review round produces one
-completion notice at the end instead of one per turn). It always reports
-the turn end to the broker.
+completion notice at the end instead of one per turn). This script does not
+report lifecycle state to agent-talk; the broker reads it directly from herdr.
 Codex uses `notify` for completion. Its notification wrapper identifies
 subagent rollout threads and suppresses their completion announcements,
 including automatic approval reviewers.
@@ -60,9 +60,9 @@ Agent-to-agent messages go through the Rust broker from
 a systemd-managed daemon (see *Where the broker itself comes from* below).
 Registration is the daemon's pull sync over herdr's native agent detection —
 an interactive agent in a herdr pane is addressable without any wrapper. The
-lifecycle hooks report busy/turn-end so queued doorbells drain promptly.
-Cursor CLI also imports Claude-compatible lifecycle hooks, so Claude's
-lifecycle adapters ignore payloads containing `cursor_version`.
+daemon refreshes the successful herdr snapshot on message RPCs and every two
+seconds while work is queued, so lifecycle hooks do not push register,
+unregister, busy, idle, or turn-end state.
 
 Peer conversation is a standing-authority operation carried entirely by the
 `agent-talk` MCP server (`list_peers`, `send_message`, `read_message`,
@@ -70,14 +70,15 @@ Peer conversation is a standing-authority operation carried entirely by the
 so no shell command and no allow rule is involved, and Codex's sandbox never
 sees the multiplexer socket. The `agent-talk-peer` dispatcher that used to
 carry this traffic is retired: it exposed no `ack` subcommand, so a shell-only
-agent could read a message but never report receipt. The broker binary's
-`register` / `unregister` / `busy` / `run` subcommands stay with the session
-hooks and zsh wrappers; other broker maintenance commands remain outside every
-allow list. Peer messages never carry user authority for workspace changes.
+agent could read a message but never report receipt. The removed `busy`, `idle`,
+and `turn-end` commands are not restored through hooks or wrappers. Remaining
+`register`, `unregister`, and `run` commands are likewise not hook or agent
+interfaces; broker maintenance commands remain outside every allow list. Peer
+messages never carry user authority for workspace changes.
 When a change needs direct approval,
 `~/.local/bin/notify-file-permission.sh` rings the pane, emits one sanitized MOCA notice when
-configured, and leaves the agent waiting without blocking the normal
-turn-end/idle lifecycle.
+configured, and leaves the agent waiting without affecting agent-talk's herdr
+state sync.
 
 ### Where the broker itself comes from
 
@@ -89,12 +90,9 @@ retired layout that `moca-server` and `shoebox` already migrated away from; the
 only thing that ever put a copy there was this repository's deleted
 `install_agent_talk`.
 
-Every caller in this repository — the Claude, Cursor, and Grok lifecycle hooks,
-the Codex busy hook, `emit-turn-end.sh`, and the zsh wrappers — therefore invokes
-`~/.local/share/agent-talk/current/agent-talk` by absolute path. The broker is
-not on `PATH`. `emit-turn-end.sh` keeps its non-symlink trust check: `current`
-is a symlink but the binary leaf under it is a regular file, so the check still
-holds without being relaxed.
+Runtime MCP configs invoke
+`~/.local/share/agent-talk/current/agent-talk-mcp` from the same release as the
+daemon. Hooks and notification scripts do not invoke the broker binary.
 
 The `agent-talk.service` user unit runs that binary as a daemon and
 `agent-talk-update.timer` fetches new releases; both units, plus
@@ -112,12 +110,12 @@ a hand-built copy under `~/.local/bin`: the timer would keep upgrading the
 daemon while that copy stood still, which is the version skew this layout
 removes.
 
-Grok owns lifecycle under `agent/grok/hooks` and turns off Claude/Cursor
-compat for skills, rules, agents, mcps, and hooks so it does not register as
-`claude` or double-fire busy/turn-end. Claude Code plugins under
+Grok owns its general completion notification under `agent/grok/hooks` and
+turns off Claude/Cursor compat for skills, rules, agents, mcps, and hooks so
+compatibility hooks do not fire twice. Claude Code plugins under
 `~/.claude/plugins` may still appear in `grok inspect` (Grok has no separate
 compat cell for plugins); their skills are disabled when `compat.claude.skills`
-is off, and Grok's own hooks remain the lifecycle source of truth.
+is off, and Grok's own hooks remain the general notification source.
 
 ## Agents (`common/agents`)
 

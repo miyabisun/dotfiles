@@ -152,33 +152,30 @@ assert_contains "$talk_skill" 'credential, token, private-key,'
 assert_contains "$talk_skill" '`.env`-derived value, private host, or internal endpoint'
 assert_contains "$talk_skill" 'set `no_reply`'
 assert_contains "$talk_skill" 'Reply to a no-reply brief only when silence would cause material harm'
-# broker binary の register/run 系は hooks のもので、agent は触らない
-assert_contains "$talk_skill" 'belong to the session'
+# v0.11.0: herdr snapshot が lifecycle の唯一の live truth。
+assert_contains "$talk_skill" 'successful herdr API snapshot is the only live truth'
+assert_contains "$talk_skill" 'removed `busy`, `idle`, and `turn-end`'
+assert_contains "$talk_skill" 'remaining `register`, `unregister`, and `run` commands'
+assert_contains "$talk_skill" 'not agent or hook'
+assert_absent "$talk_skill" 'belong to the session'
+assert_absent "$talk_skill" 'Manual registration'
 
-# broker の実体は systemd 管理サービスの release layout 側にある。
-# `~/.local/bin/<service>` は home-server が moca-server / shoebox と同様に
-# 廃止した旧 layout で、dotfiles の install_agent_talk だけが作っていた残骸
-canonical_broker='.local/share/agent-talk/current/agent-talk'
-for caller in \
+for retired_hook in \
   "$repo_root/agent/claude/hooks/register-agent-talk.sh" \
   "$repo_root/agent/claude/hooks/unregister-agent-talk.sh" \
   "$repo_root/agent/claude/hooks/agent-talk-busy.sh" \
   "$repo_root/agent/cursor/hooks/agent-talk-busy.sh" \
   "$repo_root/agent/grok/hooks/register-agent-talk.sh" \
   "$repo_root/agent/grok/hooks/unregister-agent-talk.sh" \
-  "$repo_root/agent/grok/hooks/agent-talk-busy.sh" \
-  "$repo_root/agent/codex/hooks.json" \
-  "$repo_root/agent/common/bin/emit-turn-end.sh"; do
-  assert_contains "$caller" "$canonical_broker"
-  if grep -Fq '.local/bin/agent-talk' "$caller"; then
-    echo "broker caller still points at the retired bin layout: $caller" >&2
+  "$repo_root/agent/grok/hooks/agent-talk-busy.sh"; do
+  if [[ -e "$retired_hook" ]]; then
+    echo "retired lifecycle hook still exists: $retired_hook" >&2
     exit 1
   fi
 done
-assert_contains "$repo_root/agent/grok/hooks/register-agent-talk.sh" 'register grok'
 assert_contains "$repo_root/agent/grok/hooks/stop-turn-end.sh" 'emit-turn-end.sh}" grok success'
-# 非 symlink の trust check は release 実体で成立するので緩めない
-assert_contains "$repo_root/agent/common/bin/emit-turn-end.sh" '! -L "$BROKER"'
+assert_absent "$repo_root/agent/common/bin/emit-turn-end.sh" 'turn-end'
+assert_absent "$repo_root/agent/common/bin/emit-turn-end.sh" 'current/agent-talk'
 
 # 旧 CLI 経路の記述が1つも復活していないこと
 for retired in '~/.local/bin/agent-talk-peer' '--body-file' 'direct PTY command'; do

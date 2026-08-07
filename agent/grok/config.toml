@@ -39,9 +39,9 @@ disabled = [
   "skill-creator",
 ]
 
-# Claude/Cursor lifecycle hooks register as the wrong pane name and double-fire
-# busy/turn-end. Own those under ~/.grok/hooks instead. Skills, agents, and
-# GLOBAL rules are installed as native ~/.grok/* links, so vendor scans stay off.
+# Claude/Cursor compatibility hooks can double-fire general notifications.
+# Own those under ~/.grok/hooks instead. Skills, agents, and GLOBAL rules are
+# installed as native ~/.grok/* links, so vendor scans stay off.
 [compat.claude]
 skills = false
 rules = false

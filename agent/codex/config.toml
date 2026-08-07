@@ -78,7 +78,7 @@ command = "obscura"
 args = ["mcp"]
 required = false
 
-# agent-talk broker (v0.10.1+, herdr-only)。daemon が接続元から pane を特定する
+# agent-talk broker (v0.11.0+, herdr-only)。daemon が接続元から pane を特定する
 # ため forward は Linux では必須ではないが、非標準 runtime root・named
 # session・macOS では要るので残している (残置は無害)
 #

@@ -7,24 +7,8 @@ SELF_PATH="${BASH_SOURCE[0]}"
 SELF_PARENT="${SELF_PATH%/*}"
 SELF_DIR="$(cd -- "$SELF_PARENT" && pwd -P)"
 RUNTIME_PATHS="$SELF_DIR/.dotfiles-agent-runtime"
-# broker は systemd 管理の常駐サービスであり、その実体は home-server の規約で
-# releases/vX.Y.Z + current に不変配置される (`~/.local/bin/<service>` は
-# moca-server / shoebox と同様に廃止済みの旧 layout)。current は symlink だが
-# leaf は通常ファイルなので、下の非 symlink 検査はそのまま成立する。
-BROKER="${HOME}/.local/share/agent-talk/current/agent-talk"
 AGENT="${1:-unknown}"
 STATUS="${2:-success}"
-
-turn_end_on_exit() {
-    if [[ -f "$BROKER" && -x "$BROKER" && ! -L "$BROKER" ]]; then
-        "$BROKER" turn-end 2>/dev/null || true
-    fi
-}
-if [[ "$STATUS" == "success" ]]; then
-    trap turn_end_on_exit EXIT
-fi
-
-[[ -f "$BROKER" && -x "$BROKER" && ! -L "$BROKER" ]] || exit 126
 [[ -f "$RUNTIME_PATHS" && ! -L "$RUNTIME_PATHS" ]] || exit 126
 CURL_BIN=""
 HERDR_BIN=""
@@ -183,6 +167,3 @@ if [[ -n "${MOCA_URL:-}" && -n "$CURL_BIN" && -x "$CURL_BIN" \
     "$CURL_BIN" -fsS -m 5 -X POST -H 'Content-Type: text/plain' \
         --data "${MSG}" "${MOCA_URL%/}/notify" >/dev/null 2>&1 || true
 fi
-
-# STATUS=success の turn-end は EXIT trap が常に一度試みる。通知用 runtime
-# pin が壊れていても、busy queue と idle 復帰を巻き添えにしない。

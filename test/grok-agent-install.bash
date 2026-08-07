@@ -52,7 +52,12 @@ test -f "$fake_home/.grok/config.toml"
 test ! -L "$fake_home/.grok/config.toml"
 grep -Fq '[mcp_servers.agent-talk]' "$fake_home/.grok/config.toml"
 grep -Fq 'hooks = false' "$fake_home/.grok/config.toml"
-grep -Fq 'register grok' "$fake_home/.grok/hooks/register-agent-talk.sh"
+grep -Fq 'stop-turn-end.sh' "$fake_home/.grok/hooks/lifecycle.json"
+if grep -ER 'register-agent-talk|unregister-agent-talk|agent-talk-busy' \
+  "$fake_home/.grok/hooks" >/dev/null; then
+  echo 'retired agent-talk lifecycle hook installed for Grok' >&2
+  exit 1
+fi
 
 # 教育チェーン: install が張るリンクの先に agent-talk の作法が実在すること。
 # リンクは張れているのに中身から作法が消えると、新しい grok セッションは

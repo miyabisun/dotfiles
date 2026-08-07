@@ -8,7 +8,7 @@ description: >-
   in the prompt. The only interface is the agent-talk MCP tools
   (list_peers / send_message / read_message / ack_message); the
   agent-talk-peer CLI dispatcher has been retired. Requires agent-talkd
-  v0.10.1 or newer.
+  v0.11.0 or newer.
 ---
 
 # Agent Talk
@@ -17,8 +17,10 @@ Exchange requests between interactive agent sessions through the Rust
 `agent-talkd` broker. herdr is the only multiplexer. The daemon learns peers
 from herdr's own agent detection (**pull registration**): running an agent in
 a herdr pane is enough to become addressable — no wrapper, no hook, no env
-forwarding. Message bodies live in the broker journal; the doorbell carries
-only a message ID.
+forwarding. A successful herdr API snapshot is the only live truth for agent
+existence, identity, status, and pane coordinates. The daemon refreshes it on
+message RPCs and every two seconds while work is queued. Message bodies live in
+the broker journal; the doorbell carries only a message ID.
 
 Delivery is steer-safe: nothing is sent without positive evidence that the
 target can take a prompt. The guard is **two layers**: the daemon reads the
@@ -96,9 +98,10 @@ because it had no `ack` subcommand: an agent driving the broker from a shell
 could read a message but never report receipt, so its mailbox grew until the
 pane exited and dumped the whole backlog on the senders. If the MCP tools are
 not loaded, report that and stop — do not drive the `agent-talk` binary by
-hand, and do not ask for an allow rule that would let you. The binary's
-`register` / `unregister` / `busy` / `run` subcommands belong to the session
-hooks, not to agents.
+hand, and do not ask for an allow rule that would let you. Do not add hooks
+that push any lifecycle state. v0.11.0 removed `busy`, `idle`, and `turn-end`;
+the remaining `register`, `unregister`, and `run` commands are not agent or hook
+interfaces. Ordinary addressability and status come from herdr pull sync.
 
 The MCP tools do not expose `--skill` or `--from` at all. Those flags are
 reserved for agent-terrace, whose external input path is a separate trust
@@ -201,6 +204,6 @@ is needed.
 - Do not forward a request back to its sender in a loop. A normal request
   gets one terminal substantive answer; a no-reply message gets silence or
   one terminal material veto. Then let the humans decide.
-- Manual registration (rarely needed): `agent-talk register <name>` /
-  `agent-talk unregister`. The daemon accepts a name only when it matches
-  herdr's own detection for that pane.
+- Do not use the remaining `register`, `unregister`, or `run` commands as a
+  fallback. Agents outside a herdr pane are intentionally absent from ordinary
+  peer discovery.

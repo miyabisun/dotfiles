@@ -6,11 +6,6 @@
         "matcher": "git "
       }
     ],
-    "beforeSubmitPrompt": [
-      {
-        "command": "./hooks/agent-talk-busy.sh"
-      }
-    ],
     "preToolUse": [
       {
         "command": "./hooks/prefer-semble.sh",

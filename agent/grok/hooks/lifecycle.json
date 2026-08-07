@@ -1,38 +1,5 @@
 {
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "./register-agent-talk.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "./unregister-agent-talk.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "./agent-talk-busy.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [

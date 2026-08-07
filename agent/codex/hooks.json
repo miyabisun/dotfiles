@@ -23,18 +23,6 @@
           }
         ]
       }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "command": "~/.local/share/agent-talk/current/agent-talk busy",
-            "statusMessage": "agent-talk busy 宣言",
-            "timeout": 10,
-            "type": "command"
-          }
-        ]
-      }
     ]
   }
 }

@@ -2,8 +2,8 @@
 # emit-turn-end.sh の MOCA 通知契約 (workspace 静穏ゲート):
 # 同じ herdr workspace に working/blocked/unknown の他 agent が残っている間は
 # 成功完了を通知しない。全員 done/idle (または単独) になった完了だけが鳴る。
-# 確認待ち・許可待ち・異常終了は静穏と無関係に通知し、broker への turn-end は
-# 成功時に常に1回。判定不能 (herdr/jq/env 欠落・照会失敗) は fail-open。
+# 確認待ち・許可待ち・異常終了は静穏と無関係に通知する。agent-talk の状態は
+# daemon が herdr から pull するため broker lifecycle command は呼ばない。
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -15,15 +15,11 @@ log="$test_root/log"
 agents_json="$test_root/herdr-agents.json"
 workspaces_json="$test_root/herdr-workspaces.json"
 : >"$log"
-mkdir -p "$test_root/bin" "$test_root/home/.local/share/agent-talk/current"
+mkdir -p "$test_root/bin" "$test_root/home"
 
 cat >"$test_root/bin/curl" <<EOF
 #!/bin/bash
 echo "CURL \$*" >>"$log"
-EOF
-cat >"$test_root/home/.local/share/agent-talk/current/agent-talk" <<EOF
-#!/bin/bash
-echo "BROKER \$*" >>"$log"
 EOF
 cat >"$test_root/bin/herdr" <<EOF
 #!/bin/bash
@@ -40,8 +36,7 @@ case "\$1 \$2" in
   *) exit 1 ;;
 esac
 EOF
-chmod +x "$test_root/bin/curl" "$test_root/bin/herdr" \
-  "$test_root/home/.local/share/agent-talk/current/agent-talk"
+chmod +x "$test_root/bin/curl" "$test_root/bin/herdr"
 
 # スクリプトは自身の隣にある runtime pin を読むため、コピーして隔離する。
 cp "$script" "$test_root/bin/emit-turn-end.sh"
@@ -94,13 +89,13 @@ cat >"$workspaces_json" <<'JSON'
 ]}}
 JSON
 
-# 同 workspace に working が居る: 成功完了は通知しない。turn-end は生きている。
+# 同 workspace に working が居る: 成功完了は通知しない。
 # 通知しないなら label 照会もしない。
 peers "w9:p2=working"
 : >"$log"
 run claude success
 grep -q "CURL" "$log" && fail "他 agent working 中の完了が通知された"
-grep -q "BROKER turn-end" "$log" || fail "抑止時に turn-end が消えた"
+grep -q "BROKER" "$log" && fail "broker lifecycle command が呼ばれた"
 grep -q "HERDR workspace list" "$log" && fail "抑止時に workspace list を照会した"
 
 # blocked / unknown も静穏ではない。
@@ -120,7 +115,7 @@ peers "w9:p2=done" "w9:p3=idle"
 : >"$log"
 run claude success
 grep -q "CURL.*settingsが完了しました" "$log" || fail "label 主語の完了通知が消えた"
-grep -q "BROKER turn-end" "$log" || fail "通知時に turn-end が消えた"
+grep -q "BROKER" "$log" && fail "broker lifecycle command が呼ばれた"
 
 : >"$log"
 run claude success talk
@@ -157,12 +152,12 @@ rm -f "$agents_json"
 run claude success
 grep -q "CURL.*settingsが完了しました" "$log" || fail "herdr 失敗時に fail-open しなかった"
 
-# jq が読めない出力 (malformed JSON) も判定不能 → fail-open。turn-end も残る。
+# jq が読めない出力 (malformed JSON) も判定不能 → fail-open。
 printf 'not json at all' >"$agents_json"
 : >"$log"
 run claude success
 grep -q "CURL.*settingsが完了しました" "$log" || fail "malformed JSON で fail-open しなかった"
-grep -q "BROKER turn-end" "$log" || fail "malformed JSON で turn-end が消えた"
+grep -q "BROKER" "$log" && fail "broker lifecycle command が呼ばれた"
 
 # 名前解決の失敗は通知の消失に波及しない: label 無し → workspace id へ、
 # workspace list 失敗・malformed → id へ、id も無ければ cwd basename へ。

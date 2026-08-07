@@ -90,25 +90,7 @@
         "matcher": "Bash"
       }
     ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "command": "bash ~/.dotfiles/agent/claude/hooks/unregister-agent-talk.sh",
-            "type": "command"
-          }
-        ]
-      }
-    ],
     "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "bash ~/.dotfiles/agent/claude/hooks/register-agent-talk.sh",
-            "type": "command"
-          }
-        ]
-      },
       {
         "hooks": [
           {
@@ -125,16 +107,6 @@
         "hooks": [
           {
             "command": "bash ~/.dotfiles/agent/claude/hooks/stop-turn-end.sh",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "command": "bash ~/.dotfiles/agent/claude/hooks/agent-talk-busy.sh",
             "type": "command"
           }
         ]
