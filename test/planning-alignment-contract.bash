@@ -105,7 +105,23 @@ for skill in "$spike" "$polish"; do
 
   # 期限超過を fallback 条件にする以上、期限と default action の設定が要る
   assert_contains "$skill" '**期限と default action を決めて記録する**'
-  assert_contains "$skill" '**次に delivery が再開した時点**で評価する'
+  # 返信待ち: 再開点を定義し、途中停止を未完了と明記 (旧曖昧句は禁止)
+  assert_contains "$skill" '**返信待ちの状態遷移**'
+  assert_contains "$skill" '同じ delivery の**再開 trigger**'
+  assert_contains "$skill" '追加の「続けて」を**再開条件にしない**'
+  assert_contains "$skill" 'peer への返信要否**'
+  assert_contains "$skill" '進行中 user 授権 delivery の停止指示ではない'
+  assert_contains "$skill" '契約は commit まで。途中で止まった配達は未完了である'
+  # planning route と implementation-review route を分離 (混線禁止)
+  assert_contains "$skill" '**planning 返信**が揃った'
+  assert_contains "$skill" 'A→B 照合 → 契約化以降'
+  assert_contains "$skill" '**実装レビュー返信**が揃った'
+  assert_contains "$skill" '全 closure 後 → commit / 報告'
+  # 期限は単独で auto-wake しない
+  assert_contains "$skill" '**期限はそれ自体で wake しない。**'
+  assert_contains "$skill" '待っていた reply doorbell 到着時の自動再開'
+  assert_absent "$skill" '**次に delivery が再開した時点**で評価する'
+  assert_absent "$skill" 'または期限・不在の default action が発火'
 
   # receipt の証跡。照合先は「原文」ではなく「目的」でなければならない
   assert_contains "$skill" '方針すり合わせについては次を残す'

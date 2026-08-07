@@ -21,6 +21,14 @@ assert_contains 'do not send routine acknowledgement, thanks, receipt'
 assert_contains 'Reply to a no-reply brief only when silence would cause material harm'
 assert_contains 'Send at most one veto'
 assert_contains 'Do not answer a terminal veto.'
+# no_reply / 返信不要 is peer-channel only; does not end user-authorized local work
+assert_contains 'control only whether'
+assert_contains 'you must send a peer reply'
+assert_contains 'do **not** end an in-flight'
+assert_contains 'user-authorized local workflow'
+assert_contains 'continue that workflow'
+assert_contains 'same turn'
+assert_contains 'That restraint is about the peer channel only'
 
 if grep -Fq 'reply-policy:' "$talk"; then
   echo 'body reply-policy markers must not remain after CLI migration' >&2

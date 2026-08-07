@@ -97,8 +97,30 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    - 求める項目は各1〜数行: 狙う体験 / 最大3項目の acceptance /
      最小の実装 / 最大のリスク・疑問。
    - 送信時に**期限と default action を決めて記録する**。期限値は状況で決めて
-     よいが、設定と評価時点は省略できない。返信待ちの間に active polling は
-     せず、**次に delivery が再開した時点**で評価する。
+     よいが、設定と評価時点は省略できない。
+   - **返信待ちの状態遷移** (active polling はしない):
+     1. brief / 実装レビュー依頼の送信後は poll せず turn を yield してよい
+        (broker が idle/done へ届けるため)。これは**合法な待機**であり
+        delivery 完了ではない。
+     2. **この delivery が明示的に待っている** peer 返信の agent-talk 呼び鈴
+        自体が、同じ delivery の**再開 trigger** である (待っていない
+        doorbell を一般再開にしない)。
+     3. 各 `read_message` + `ack_message` のあと、いま待っている phase の
+        期待 reply の充足を判定する。
+     4. user の追加の「続けて」を**再開条件にしない**。充足したら**同一ターン**
+        で次へ進む。進む先は phase で分岐する:
+        - **planning 返信**が揃った (または不在 default が適用された) →
+          A→B 照合 → 契約化以降 (実装・検証・レビュー依頼)
+        - **実装レビュー返信**が揃った → blocking の union を処理し、必要なら
+          修正・再 gate・focused closure。全 closure 後 → commit / 報告
+     5. 未到着なら delivery を完了扱いせず、何待ちか (どの phase・誰) を1行
+        記して次の呼び鈴を待つ。
+     6. 呼び鈴定型や body の「返信不要」/ `no_reply` は **peer への返信要否**
+        だけを示し、進行中 user 授権 delivery の停止指示ではない。
+     7. **期限はそれ自体で wake しない。** 次の broker / user event で turn が
+        再開したときに期限と default action を評価する。今回の保証は
+        「待っていた reply doorbell 到着時の自動再開」に限定する。
+     8. 契約は commit まで。途中で止まった配達は未完了である。
    - **reconcile が終わるまでテストと実装を編集しない。**
    すり合わせの詳細は「[方針すり合わせの判定軸](#方針すり合わせの判定軸)」。
 2. **契約はテストで書く**: rendered UI or user interaction may change
