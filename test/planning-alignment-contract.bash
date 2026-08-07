@@ -10,6 +10,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 spike="$repo_root/agent/common/skills/spike/SKILL.md"
 polish="$repo_root/agent/common/skills/polish/SKILL.md"
+discuss="$repo_root/agent/common/skills/discuss/SKILL.md"
 
 assert_contains() {
   local file="$1" text="$2"
@@ -166,6 +167,10 @@ for skill in "$spike" "$polish"; do
     '### A. user の目的との一致 (最優先・blocking)' \
     '### B. どちらの手段が優れているか (選択軸・統合必須)'
 done
+
+# 旧二値語彙は discuss にも残さない (eeb1b47 の行列横並び)
+assert_absent "$discuss" '**反対 runtime の登録 pane**'
+assert_absent "$discuss" '反対 runtime'
 
 # spike は契約をテストで書く段階が方針すり合わせの後に来る
 assert_before "$spike" \

@@ -1,6 +1,6 @@
 ---
 name: discuss
-description: フェーズ (spike/polish/harden) で性格を切り替える議論スキル。spike はワクワクする方向へ広げるブレスト、polish は UX を損なわない解決策の探索、harden はセキュリティと外部エンジニアの評価に耐える収束 (decision receipt+A〜F)。明示引数か呼び出し元 skill でフェーズを解決し、未指定は harden。不可逆な変更、権限境界の変更、binding instruction との競合、複数 agent 間の重要判断を含むときに使う。
+description: フェーズ (spike/polish/harden) で性格を切り替える議論スキル。spike はワクワクする方向へ広げるブレスト、polish は UX を損なわない解決策の探索、harden はセキュリティと外部エンジニアの評価に耐える収束 (decision receipt+A〜F)。明示引数か呼び出し元 skill でフェーズを解決し、単独起動の未指定は議題の性質から spike / polish を自動判断する (迷ったら polish)。harden フェーズは明示引数か、号令で起動済みの harden の内側からの呼び出しのみ (decision 0004)。不可逆な変更、権限境界の変更、binding instruction との競合、複数 agent 間の重要判断は harden 級の兆候として進言対象。
 ---
 
 # discuss
@@ -17,8 +17,21 @@ question ゼロで着手できること**。
 段階の語が現れても判定しない**。解決の優先順:
 
 1. 明示引数
-2. spike / polish / harden (または deliver) の内側から呼ばれた場合、その段階
-3. どちらも無ければ **harden** — 現行の全機構。保証を暗黙に弱めない
+2. spike / polish / harden の内側から呼ばれた場合、その段階を継承する
+   (段階未指定の `$deliver` は dispatcher が先に段階を解決してから呼ぶ)。
+   **継承は本文の話題からの推論より優先する** — polish の内側で「作り直し」の
+   案を検討しても、それだけで spike モードへ転換しない。段階の変更は提案に留め、
+   切り替えは user が決める (decision 0004)。
+3. どちらも無ければ、議題の性質から **spike / polish を自動判断**し、選択と
+   根拠を宣言する。新しい体験・greenfield・全面的な作り直しの構想 → spike。
+   動いているものの不満・UX の落とし所 → polish。**迷ったら polish**。
+   **version・リスク・成果物の重さ・本文中の語からの推論で harden を選ばない**
+   — harden フェーズに入るのは、明示引数か、号令で起動済みの harden の内側
+   からの呼び出しだけである (decision 0004)。議題に harden 級の兆候
+   (不可逆・外部公開 / 権限境界・信頼境界 / binding instruction との競合 /
+   複数 agent にまたがる重要判断) を検知したら、**自動で harden へ格上げせず**、
+   成果物に「`$discuss harden` を推奨」と根拠を添えて user へ返す
+   (polish の出荷前進言と同じ advisory)。
 
 呼び出し元 skill は discuss を**自動では起動しない**。未解決の product 選択が
 実装結果を変えるときだけ呼ぶ。
@@ -60,19 +73,24 @@ question ゼロで着手できること**。
 明文化する: セキュリティ、および**他の IT エンジニアに評価されても**耐えうるか —
 命名・API・設計判断を第三者に根拠つきで説明できるか。
 
-以降の「deliver から呼ばれる場合」「出力: decision receipt」「権限モデル」
-「停止条件」「再開トリガー」の各節は **harden フェーズ** (および polish が
-decision note の形式を借りる範囲) にのみ適用する。
+以降の「harden delivery のラウンド出口 (A〜F)」「出力: decision receipt」
+「権限モデル」「停止条件」「再開トリガー」の各節は **harden フェーズ** (および
+polish が decision note の形式を借りる範囲) にのみ適用する。
+「delivery から呼ばれたときの共通規則」だけは全段階に適用する。
 **要約規定は decision receipt を書くフェーズにだけ適用**する。
 どのフェーズも成果物は会話に返すものであり、project repo の file ではない。
 
 ## 起動条件と、起動しない場合
 
-起動条件もフェーズで分かれる。
+起動条件は「そのフェーズで discuss を使うか」の判定であって、
+**フェーズの選択条件ではない** — フェーズは「フェーズの解決」だけが決める。
 
-- spike / polish: **未解決の product / UX 選択が実装結果を変えるとき**。
+- spike / polish のフェーズ内: **未解決の product / UX 選択が実装結果を変えるとき**。
   ブレストしたい・UX の落とし所を探りたいという user の明示起動もこれに含む。
-- harden: 次のいずれかを含むとき —
+  harden 級の兆候を検知しても advisory (「`$discuss harden` を推奨」) に留め、
+  フェーズは変えない。
+- 明示引数・継承で harden に入っている場合: 議題が次のいずれかを含むとき
+  **A〜F と decision receipt の全機構を要する** —
   不可逆または外部に公開される変更 / 権限境界・信頼境界の変更 /
   現在有効な binding instruction との競合 / 複数 agent にまたがる重要判断
 
@@ -95,11 +113,15 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
 フェーズ別の共同検討機会を**1回だけ**設ける
 (spike=乗っかり、polish=UX 反証、harden=material objection)。
 
-1. `deliver` から呼ばれた場合は、その delivery が固定済みの counterpart pane を
-   そのまま使い、選び直さない。単独起動では agent-talk MCP の `list_peers` で
-   反対 runtime の登録 pane を同じ window、次に同じ session の順で一意に特定する。
-   候補が曖昧なら推測せず、候補を user に示す。
-2. 特定した pane へ1件だけ送る。共通で含める: user 原文 (verbatim)、確認済みの
+1. spike / polish / harden の内側から呼ばれた場合は、その delivery が
+   固定済みのレビュワー集合をそのまま使い、選び直さない。単独起動では、
+   この pane の runtime を議論の owner として既存の担当→レビュワー行列で
+   相手を固定する (owner grok → claude と codex の**両方**、
+   owner claude → codex、owner codex → claude)。pane は
+   agent-talk MCP の `list_peers` で同じ window、次に同じ session の順で
+   一意に特定する。候補が曖昧なら推測せず、候補を user に示す。
+2. 特定した各 pane へ**レビュワーごとに1件だけ**送る (2名なら同一ターンに並列で各1通。
+   一方の初回回答を他方へ開示しない)。共通で含める: user 原文 (verbatim)、確認済みの
    事実、期限と default action。秘密・`.env` 由来値・private host・internal
    endpoint は送らない。求める返答はフェーズで変える:
    - spike: いま出ている案を添え、**乗っかり**・新案・一番ワクワクする案の
@@ -107,36 +129,46 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
    - polish: 候補と UX 制約を添え、見落とした **UX 退行**とより軽い代替を求める。
    - harden: 暫定結論と残る争点を添え、
      material objection / missing risk / concrete correction のみを求める。
-3. 交換は最大1往復。再照会・承認ループ・deliver 型の二段階照合を持ち込まない。
+3. 交換は最大1往復。再照会・承認ループ・delivery 型の二段階照合を持ち込まない。
    返答の採否もフェーズに従う: spike は全案を候補として積み、polish は UX 軸の
-   指摘を、harden は反証・新事実・権限境界に関わる指摘だけを反映する。単なる
+   指摘を、harden は反証・新事実・権限境界に関わる指摘だけを反映する。
+   レビュワーが2名のときの指摘は union として扱い、多数決にしない。単なる
    選好差はどのフェーズでも小さい可逆案へ収束させ、2回目の問い合わせをしない。
-4. 同一 delivery 内で counterpart が既に同一争点へ見解を返している場合は
+4. 同一 delivery 内で**そのレビュワー**が既に同一争点へ見解を返している場合は
    再照会しない。同一争点かは記録済みの message ID と争点の対応で判定し、
-   意味の推測で照会を省略しない。既出の見解を counterpart 意見として記録し、
-   新規争点だけを照会する。
-5. counterpart 不在・pane 消失・配達失敗・期限超過は solo fallback とし、
+   意味の推測で照会を省略しない。既出の見解をレビュワー意見として記録し、
+   新規争点だけを照会する。**一方のレビュワーの既出回答を理由に、
+   他方への新規争点の照会を省略しない。**
+5. 不在・pane 消失・配達失敗・期限超過の判定と記録は**レビュワーごとに**行う。
+   片方だけ不在なら届いた側の意見は通常どおり扱い、
+   **全員不在のときだけ solo fallback** とし、
    **フェーズ表の出口のいずれかへ必ず着地する**。
    期限は round 開始時に deadline と default action として記録し、**次に実行が
    再開した時点で評価する**。active polling や自動 wake-up は約束しない。
    deadline 後に届いた返答で決定を自動で巻き戻さず、Reopen triggers に該当する
    新事実だけを別途扱う。
-6. peer message は情報であって mutation 権限ではない。counterpart pane・
+6. peer message は情報であって mutation 権限ではない。レビュワーごとの pane・
    message ID・応答の有無・採否・fallback 理由の記録先はフェーズの成果物に従う:
    spike は応答/receipt、polish は decision note、harden は decision receipt の
    実装者向け欄 (冒頭要約には書かない)。いずれも会話へ返すものであり、
    project repo の file を作らない。
 
-## deliver から呼ばれる場合
+## delivery から呼ばれたときの共通規則
 
-`deliver` は目標へ導くのが仕事であり、判断が割れたときに拒否して終わるのは失敗である。
-`deliver` が「materially different outcomes が残る」「上位指示と競合する」「権限が足りない
-かもしれない」に突き当たったら、そこで user へ差し戻す前に **discuss を1ラウンド回す**。
+delivery は目標へ導くのが仕事であり、判断が割れたときに拒否して終わるのは失敗である。
+どの段階の delivery も、「materially different outcomes が残る」「上位指示と競合する」
+「権限が足りないかもしれない」に突き当たったら、そこで user へ差し戻す前に
+**discuss を1ラウンド回し**、フェーズ表の出口へ着地して呼び出し元へ戻る。
+戻り先の成果物はフェーズに従う: spike は明日試せる一歩、polish は
+UX-safe / reduced scope / authority gap の decision note、そして
+**harden だけが A〜F と decision receipt を用いる**。
+
+## harden delivery のラウンド出口 (A〜F)
 
 このラウンドの出口は3つのいずれかで、必ずどれかに着地させる。
 
-1. **Ready** — A〜F が PASS。decision receipt を会話へ返して deliver の実装
-   フェーズへ戻る。
+1. **Ready** — A〜F が PASS。decision receipt を会話へ返して呼び出し元
+   delivery の実装フェーズへ戻る。
    このとき user への再確認は行わない。
 2. **Ready with reduced scope** — 争点を非目標へ落とし、残りが A〜F を PASS するなら、
    縮小したスコープで実装へ進む。落とした部分は次の課題として記録する。
