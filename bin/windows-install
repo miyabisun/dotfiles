@@ -22,8 +22,9 @@ fi
 
 mkdir -p "$win_claude"
 
-# Copy CLAUDE.md
+# Copy CLAUDE.md and the shared rules it imports via @~/.claude/GLOBAL.md
 cp -v "$claude_src/CLAUDE.md" "$win_claude/CLAUDE.md"
+cp -v "$dotfiles_dir/agent/common/rules/GLOBAL.md" "$win_claude/GLOBAL.md"
 
 # Copy settings.json
 cp -v "$claude_src/settings.json" "$win_claude/settings.json"

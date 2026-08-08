@@ -35,14 +35,18 @@ assert_absent() {
 }
 
 # --- A1: 全 runtime 共通の memory boundary --------------------------------
-# AGENTS.md / CLAUDE.md は GLOBAL.md への symlink なので、複製せず
-# 1ファイルに書く。複製は将来必ず drift する
-claude_md_target="$(readlink "$repo_root/agent/claude/CLAUDE.md" || true)"
-[ "$claude_md_target" = "../common/rules/GLOBAL.md" ] || {
-  printf 'agent/claude/CLAUDE.md must stay a symlink to GLOBAL.md (got: %s)\n' \
-    "${claude_md_target:-<not a symlink>}" >&2
+# AGENTS.md は GLOBAL.md への symlink。CLAUDE.md は Claude 専用規則を持つ
+# regular file で、共通規則は冒頭 import (@~/.claude/GLOBAL.md) で取り込む。
+# 共通規則の本文は1ファイルに書く。複製は将来必ず drift する
+claude_md="$repo_root/agent/claude/CLAUDE.md"
+if [ -L "$claude_md" ] || [ ! -f "$claude_md" ]; then
+  printf 'agent/claude/CLAUDE.md must be a regular file importing GLOBAL.md\n' >&2
   exit 1
-}
+fi
+assert_contains "$claude_md" '@~/.claude/GLOBAL.md'
+# installer が import 先へ GLOBAL.md を配置する (Linux は link、Windows は copy)
+assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.claude"'
+assert_contains "$repo_root/bin/windows-install" '/GLOBAL.md" "$win_claude/GLOBAL.md'
 # install は ~/.codex/AGENTS.md と ~/.grok/AGENTS.md を GLOBAL.md に張る
 assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md'
 assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.grok/AGENTS.md'
@@ -58,7 +62,7 @@ done
 assert_contains "$global_rules" 'message ID'
 assert_contains "$global_rules" 'pane ID'
 # 代替経路が同じ契約に書かれていること (禁止だけでは情報が消える)
-assert_contains "$global_rules" 'ask a counterpart through agent-talk'
+assert_contains "$global_rules" 'ask a counterpart through your peer'
 assert_contains "$global_rules" 'conversation receipt'
 assert_contains "$global_rules" 'knowledge'
 # 送れないときに repo へ逃がさない

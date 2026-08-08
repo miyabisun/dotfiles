@@ -13,7 +13,7 @@ agent/
 ├── claude/          # Claude Code only
 │   ├── hooks/
 │   ├── settings.json
-│   ├── CLAUDE.md → ../common/rules/GLOBAL.md
+│   ├── CLAUDE.md    # Claude-only rules + @~/.claude/GLOBAL.md import
 │   ├── agents → ../common/agents
 │   ├── designs → ../common/designs
 │   └── skills → ../common/skills
@@ -40,7 +40,7 @@ agent/
 | `~/.claude/*` (hooks, settings, …) | `agent/claude/*` |
 | `~/.cursor/*` (rules, hooks, …) | `agent/cursor/*` |
 | `~/.codex/config.toml`, `~/.codex/hooks.json` | `agent/codex/*` |
-| `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md` | `agent/common/rules/GLOBAL.md` |
+| `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.claude/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.grok/hooks` | `agent/grok/hooks` |
 | `~/.grok/config.toml` | seeded copy of `agent/grok/config.toml` (not a symlink) |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |

@@ -29,6 +29,8 @@ link "agent/common/agents" "$HOME/.claude"
 link "agent/common/designs" "$HOME/.claude"
 link "agent/claude/hooks" "$HOME/.claude"
 link "agent/claude/CLAUDE.md" "$HOME/.claude"
+# CLAUDE.md imports the shared rules via @~/.claude/GLOBAL.md
+link "agent/common/rules/GLOBAL.md" "$HOME/.claude"
 link "agent/claude/settings.json" "$HOME/.claude"
 
 # herdr: ~/.config/herdr はランタイム実ディレクトリ (sock/log/session) のため

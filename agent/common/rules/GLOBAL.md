@@ -12,7 +12,7 @@
 
 ## Peer Agent Communication
 
-- The only agent interface is the `agent-talk` MCP server
+- The only cross-runtime agent interface is the `agent-talk` MCP server
   (`agent-talk-mcp`): `list_peers`, `send_message`, `read_message`, and
   `ack_message`. Peers run in herdr panes; the daemon learns them from herdr's
   own agent detection, so a running agent is addressable without any wrapper
@@ -64,8 +64,9 @@ for, in a place only this project can see.
 - Do not put household runtime evidence into tracked files — an agent-talk
   message ID, a pane ID, a private path, an internal endpoint. A repository has
   to make sense to someone who has never seen this machine.
-- When a judgement is unclear, **ask a counterpart through agent-talk** instead
-  of writing it down and moving on. Peers are cheap; a stale note is not.
+- When a judgement is unclear, **ask a counterpart through your peer
+  channel** instead of writing it down and moving on. Peers are cheap; a
+  stale note is not.
 - Findings that only matter to the work in hand belong in the
   **conversation receipt**. Findings worth reusing later go to **knowledge**,
   and only through the **safe intake route** — the `knowledge-inventory` role
