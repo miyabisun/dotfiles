@@ -69,18 +69,18 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
        基盤の retrofit に今回の spike を乗っ取らせない。
    - **LICENSE は MIT** — バグを踏んでも v0.1.0 だから文句を言うなよ、の
      意思表示である。
-1. **方針を独立にすり合わせる (実装前・1往復)**: まず担当とレビュワーを
-   確定する。**user の明示指定が最優先**。指定が無ければ、`list_peers` で
-   同じ workspace に grok が登録されている場合は **grok が既定の作業担当**。
+1. **方針を独立にすり合わせる (実装前・1往復)**: **作業担当は、この skill を
+   発火した pane の runtime である** — skill の効果と user 授権は発火 pane に
+   留まり、**peer message は user 権限を運ばない**ため、
+   発火 pane から他の runtime へ実装を委譲することはできない
+   (担当の選択は構造上存在せず、既定担当も指名待ちも無い。別の runtime に
+   任せたいときは、user がその pane で skill を発火する)。
+   レビュワーは担当から行列で決まる:
    - 担当 grok → レビュワーは claude と codex の**両方**
    - 担当 claude → レビュワーは codex。担当 codex → レビュワーは claude
    - same-window/session は pane の距離規則であって、担当・レビュワーの
      runtime を決める規則ではない
-   担当未明示の起動を claude / codex の pane が受け、同 workspace に grok が
-   居る場合は、grok が既定担当である事実を示して user の一言 (この pane への
-   指名か、grok pane での起動し直し) を1回だけ待つ。**peer message は user
-   権限を運ばない**ので、受けた pane から grok へ実装を委譲することは
-   できない。
+   `list_peers` はレビュワー pane の一意解決だけに使う。
    確定した各レビュワーの pane を `list_peers` で
    同じ window、次に同じ session の順に一意固定し、その pane へ
    **user 原文 (verbatim)・確認済みの事実・制約だけ**を送って
@@ -99,9 +99,12 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    - 送信時に**期限と default action を決めて記録する**。期限値は状況で決めて
      よいが、設定と評価時点は省略できない。
    - **返信待ちの状態遷移** (active polling はしない):
-     1. brief / 実装レビュー依頼の送信後は poll せず turn を yield してよい
-        (broker が idle/done へ届けるため)。これは**合法な待機**であり
-        delivery 完了ではない。
+     1. brief / 実装レビュー依頼の送信後、依存 (待っている返信) で blocked
+        かつ他に有用な独立作業が無いなら、**現在の
+        turn を終了して yield しなければならない** (broker は idle/done の
+        pane にしか配達しない)。sleep・wait loop・`list_peers`
+        polling で turn を保持しない。これは**合法な待機**であり
+        delivery 完了ではない (agent-talk skill の待機契約と同一)。
      2. **この delivery が明示的に待っている** peer 返信の agent-talk 呼び鈴
         自体が、同じ delivery の**再開 trigger** である (待っていない
         doorbell を一般再開にしない)。
@@ -114,7 +117,9 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
         - **実装レビュー返信**が揃った → blocking の union を処理し、必要なら
           修正・再 gate・focused closure。全 closure 後 → commit / 報告
      5. 未到着なら delivery を完了扱いせず、何待ちか (どの phase・誰) を1行
-        記して次の呼び鈴を待つ。
+        記して次の呼び鈴を待つ。yield 直前の user 向け最終出力は
+        「〈phase〉の返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する」
+        の形にし、完了報告と誤認される文言を使わない。
      6. 呼び鈴定型や body の「返信不要」/ `no_reply` は **peer への返信要否**
         だけを示し、進行中 user 授権 delivery の停止指示ではない。
      7. **期限はそれ自体で wake しない。** 次の broker / user event で turn が

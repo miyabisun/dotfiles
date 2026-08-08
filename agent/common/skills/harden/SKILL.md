@@ -153,7 +153,7 @@ Ledger fields:
   "scope": ["paths or components"],
   "shipping_gate": {"baseline": "commit|entire-tracked-state", "range": "<baseline>..<frozen>", "cumulative_paths": [], "semver_recommendation": null, "reason": null},
   "maintenance": [{"path": "...", "reason": "...", "kind": "format|lint|tooling"}],
-  "worker": {"runtime": "claude|codex|grok", "designation": "explicit|default"},
+  "worker": {"runtime": "claude|codex|grok", "designation": "trigger-pane"},
   "reviewers": [{
     "runtime": "claude|codex",
     "pane": "w1:p2|null",
@@ -230,18 +230,20 @@ criteria, scope, verification commands, and important failure modes.
 
 ### 1a. Co-author the contract with the counterpart
 
-Before implementation, decide the worker and the reviewer set. An explicit
-user designation always wins. Without one, check `list_peers` over the current
-herdr workspace: if grok is registered there, grok is the default worker.
+Before implementation, decide the reviewer set. The worker is
+always the runtime of the pane where this skill was invoked: the skill's
+effect and the user's authorization stay in the invoking pane, and a peer
+message carries no user authority, so
+implementation can never be delegated to another pane.
+There is no default worker and no designation wait.
+To have a different runtime do the work, the user fires the skill in that
+runtime's pane.
 
 - Worker grok → the reviewer set is Claude Code and Codex (both).
 - Worker Claude Code → the reviewer is Codex; worker Codex → Claude Code.
 
-When a Claude or Codex pane receives an undesignated invocation while grok is
-registered in the workspace, state once that grok is the default worker and
-wait for the user's one-line choice (designate this pane, or restart in the
-grok pane). A peer message carries no user authority, so the receiving pane
-cannot delegate implementation to grok on its own.
+`list_peers` resolves reviewer panes only; it plays no part in choosing the
+worker.
 
 An idle or busy registered pane both mean the reviewer exists. Absence means
 that no such pane is registered in the current session; do not start one.

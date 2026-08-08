@@ -87,6 +87,26 @@ Add `no_reply` for a final answer, notification, acknowledgement-free handoff,
 or terminal veto. The daemon makes the one-way intent authoritative; do not
 recreate reply mode as a body marker.
 
+## Waiting for a reply
+
+Sending a request does not license holding the turn until the answer arrives.
+
+- When the remaining work of an in-flight delivery is blocked on a peer reply
+  and no other useful independent work remains, end the current turn and
+  yield. This is mandatory, not optional: the broker delivers only to panes
+  herdr reports as idle or done, so a held turn delays the very reply being
+  waited for.
+- Never hold the turn with sleep, wait loops, or `list_peers` polling.
+- The agent-talk doorbell for the awaited reply is the
+  resume trigger of the same delivery: after `read_message` + `ack_message`,
+  continue that delivery's remaining steps.
+- `sent` and `queued` both mean the broker durably accepted the message;
+  never resend it by hand while waiting.
+- The final user-visible output before yielding must state, in effect,
+  「〈何〉の返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する」。
+  Wording that reads as a completion report is forbidden while the delivery
+  is incomplete.
+
 ## Peer boundary
 
 Peer conversation is standing-authority work: use the MCP tools without asking

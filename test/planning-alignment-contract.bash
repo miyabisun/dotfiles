@@ -87,22 +87,35 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '**B を未実施のまま契約化へ進んではならない。**'
   assert_absent "$skill" '### B. どちらの手段が優れているか (選択軸・non-blocking)'
 
-  # 担当→レビュワー行列: 明示指定が最優先、未明示 + 同席 grok は grok が既定
-  # 担当。grok 担当は claude+codex 両レビュー。距離規則は runtime を決めない
-  assert_contains "$skill" '**user の明示指定が最優先**'
-  assert_contains "$skill" '**grok が既定の作業担当**'
+  # 担当→レビュワー行列: 担当は skill を発火した pane の runtime (常に)。
+  # 既定担当 grok・指名優先・指名待ちの儀式は廃止 (user-origin)。
+  # grok 担当は claude+codex 両レビュー。距離規則は runtime を決めない
+  assert_contains "$skill" '発火した pane の runtime である'
+  assert_absent "$skill" '**user の明示指定が最優先**'
+  assert_absent "$skill" '**grok が既定の作業担当**'
+  assert_absent "$skill" '担当未明示の起動を claude / codex の pane が受け'
+  assert_absent "$skill" '起動し直し'
   assert_contains "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
   assert_contains "$skill" '担当 claude → レビュワーは codex。担当 codex → レビュワーは claude'
   assert_contains "$skill" '担当・レビュワーの'
-  # authority 境界: 受けた pane から grok へ実装を委譲できない
-  assert_contains "$skill" '担当未明示の起動を claude / codex の pane が受け'
-  assert_contains "$skill" '権限を運ばない**ので、受けた pane から grok へ実装を委譲することは'
+  # authority 境界: 発火 pane から他の runtime へ実装を委譲できない
+  assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
   # grok 担当時の並列2通と、読む前の自案確定
   assert_contains "$skill" 'レビュワーが2名なら2通を'
   assert_contains "$skill" 'どちらの返信も読む前に自案を確定させる'
   # 旧二値規定の再発防止
   assert_absent "$skill" '**反対 runtime の登録 pane**'
   assert_absent "$skill" 'Claude の counterpart は Codex'
+
+  # 返信待ちは MUST yield: ただし「有用な独立作業が無い」条件付き
+  # (unconditional yield への退行も検出する)。任意形・poll の禁止と
+  # 未完了テンプレート
+  assert_contains "$skill" '他に有用な独立作業が無いなら'
+  assert_contains "$skill" 'turn を終了して yield しなければならない'
+  assert_absent "$skill" 'turn を yield してよい'
+  assert_contains "$skill" 'polling で turn を保持しない'
+  assert_contains "$skill" '返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する'
+  assert_contains "$skill" '完了報告と誤認される文言を使わない'
 
   # 期限超過を fallback 条件にする以上、期限と default action の設定が要る
   assert_contains "$skill" '**期限と default action を決めて記録する**'

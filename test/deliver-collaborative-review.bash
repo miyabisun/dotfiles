@@ -29,13 +29,19 @@ assert_absent() {
 
 # 計画フェーズ: 独立提案を先に作り、その後で突合する
 assert_contains "$deliver" '### 1a. Co-author the contract with the counterpart'
-# 担当→レビュワー行列と authority 境界 (grok 既定・両レビュワー・委譲不可)
-assert_contains "$deliver" 'grok is the default worker'
+# 担当→レビュワー行列と authority 境界 (担当 = 発火 pane の runtime・
+# 両レビュワー・委譲不可)。既定担当 grok と指名待ちは廃止 (user-origin)
+assert_contains "$deliver" 'always the runtime of the pane where this skill was invoked'
+assert_contains "$deliver" 'implementation can never be delegated to another pane'
+assert_contains "$deliver" 'There is no default worker and no designation wait.'
+assert_absent "$deliver" 'grok is the default worker'
+assert_absent "$deliver" "one-line choice"
 assert_contains "$deliver" 'the reviewer set is Claude Code and Codex (both)'
-assert_contains "$deliver" 'cannot delegate implementation to grok on its own'
 assert_contains "$deliver" 'never silently reassign the'
 assert_contains "$deliver" 'applies to each member of'
 assert_contains "$deliver" '"worker": {"runtime": "claude|codex|grok"'
+assert_contains "$deliver" '"designation": "trigger-pane"'
+assert_absent "$deliver" '"designation": "explicit|default"'
 assert_contains "$deliver" '"reviewers": [{"runtime": "...", "independence"'
 assert_contains "$deliver" 'judge and record it per'
 assert_contains "$deliver" 'Do not include a proposed contract in this first brief.'
