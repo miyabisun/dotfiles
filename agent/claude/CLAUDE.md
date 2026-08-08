@@ -3,9 +3,9 @@
 # Claude Code Rules
 
 The shared rules for every runtime are imported above from
-`~/.claude/GLOBAL.md` (placed there by `bin/install` on Linux and
-`bin/windows-install` on Windows). The sections below apply only to the
-Claude Code runtime; codex, grok, and cursor never read this file.
+`~/.claude/GLOBAL.md` (placed there by `bin/install`). The sections below
+apply only to the Claude Code runtime; codex, grok, and cursor never read
+this file.
 
 ## Claude Session Messaging
 

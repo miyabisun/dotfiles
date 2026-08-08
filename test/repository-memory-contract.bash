@@ -44,9 +44,15 @@ if [ -L "$claude_md" ] || [ ! -f "$claude_md" ]; then
   exit 1
 fi
 assert_contains "$claude_md" '@~/.claude/GLOBAL.md'
-# installer が import 先へ GLOBAL.md を配置する (Linux は link、Windows は copy)
+# installer が import 先へ GLOBAL.md を配置する
 assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.claude"'
-assert_contains "$repo_root/bin/windows-install" '/GLOBAL.md" "$win_claude/GLOBAL.md'
+# Windows 同期は dotfiles の所有物ではない (別 repository の領分)。
+# 撤去した windows-install を復活させない
+if [ -e "$repo_root/bin/windows-install" ]; then
+  printf 'bin/windows-install must stay removed (Windows sync lives outside dotfiles)\n' >&2
+  exit 1
+fi
+assert_absent "$claude_md" 'windows-install'
 # install は ~/.codex/AGENTS.md と ~/.grok/AGENTS.md を GLOBAL.md に張る
 assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md'
 assert_contains "$repo_root/bin/install" 'agent/common/rules/GLOBAL.md" "$HOME/.grok/AGENTS.md'
