@@ -63,13 +63,23 @@ assert_contains "$polish" '書きかけの変更は破棄せず'
 assert_absent "$polish" '「harden で扱うべき」'
 assert_absent "$polish" '縮小'
 
-# polish: harden-review-sensitive は契約時分類と final diff 再判定の両方
-# (advisory であって自動昇格でない)
+# polish: harden-review-sensitive は全 version で分類・記録する。$harden 推奨は
+# (v1+ AND sensitive) のときだけ (authority: v1.0.0 後)。pre-v1 / unknown では
+# 勧めない。これは version で harden を選ぶ入口の復活ではない。
 assert_contains "$polish" 'harden-review-sensitive'
 assert_contains "$polish" '出荷判断の前に `$harden` での見直しを推奨'
+assert_contains "$polish" 'product version is already 1.0.0 or higher かつ harden-review-sensitive に該当したときだけ'
+assert_contains "$polish" 'pre-v1 or unknown version: do not recommend'
+assert_contains "$polish" 'version で harden を選ぶ入口'
 assert_contains "$polish" '自動で harden を起動したり'
 assert_contains "$polish" 'final diff で harden-review-sensitive を再判定し'
 assert_contains "$polish" '契約時分類との差分を契約と receipt に反映する'
+assert_absent "$polish" '最終報告には**「出荷判断の前に `$harden` での見直しを推奨」を必ず含める**'
+
+# decision 0004 Decision 4 も v1.0.0 後に限定した進言と一致する
+assert_contains "$decision4" 'product version is already 1.0.0 or higher'
+assert_contains "$decision4" 'pre-v1 or unknown'
+assert_absent "$decision4" 'を必ず進言する'
 
 # spike: version は昇格根拠にならず、v1.0.0+ では互換性影響を判定して続行
 assert_contains "$spike" 'spike は spike のまま進む'

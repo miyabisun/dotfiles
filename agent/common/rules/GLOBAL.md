@@ -8,7 +8,9 @@
 
 - Commit messages must always be written in English
 - Use Conventional Commits format (e.g. `feat:`, `fix:`, `refactor:`)
-- NEVER commit unless the user explicitly instructs you to
+- NEVER commit unless the user explicitly requests a commit or invokes a delivery
+  skill whose documented workflow includes committing (such as `$spike`, `$polish`,
+  `$harden`, or `$deliver` which selects one of those and inherits its commit step)
 
 ## Peer Agent Communication
 

@@ -9,7 +9,7 @@ project の version が既に 1.0.0 以上なら harden — は**廃止**。vers
 体験づくり = spike、不満直し = polish (全 version)、出荷 = harden。
 
 - user から見た変化: v1.0.0 後も日常の改善は polish の軽さで進み、
-  厳格さは「出荷の瞬間」と「危険な場所に触れた時の進言」に集約される
+  厳格さは「出荷の瞬間」と「v1.0.0 後に危険な場所に触れた時の進言」に集約される
 - user がいま決める必要があること: 無い
 - 次の一歩: v1.0.0 到達プロダクトの改善を polish で回し、最初のリリース
   号令で harden の出荷ゲートを実走させる
@@ -33,9 +33,12 @@ project の version が既に 1.0.0 以上なら harden — は**廃止**。vers
    再依頼文を user へ返す。切り替えを決めるのは user。
 4. **polish は全 version の成熟レーン。** v1.0.0 は卒業ではなく通過点。
    harden-review-sensitive な変更 (secret・credential / 認証・権限・信頼境界 /
-   破壊的データ操作 / 公開 API 互換) は polish の内側で完遂しつつ、最終報告で
-   「出荷判断の前に `$harden` での見直しを推奨」を必ず進言する (advisory。
-   自動昇格・block はしない)。
+   破壊的データ操作 / 公開 API 互換) は polish の内側で完遂する。分類と記録は
+   全 version で行う。最終報告での「出荷判断の前に `$harden` での見直しを
+   推奨」は product version is already 1.0.0 or higher のときだけ
+   (authority evidence: v1.0.0 後のプロダクト)。pre-v1 or unknown では surface
+   と根拠だけ残し `$harden` を勧めない。advisory。自動昇格・block はしない。
+   この条件は version で harden を選ぶ入口の復活ではない。
 5. **v1.0.0 以上での spike は互換性を宣言して続行。** 契約段階で既存の公開
    契約への互換性影響を判定し、破壊するなら「next major work:
    v<現 major+1>.0.0 系の作業」と receipt に明示する。spike は止まらず、

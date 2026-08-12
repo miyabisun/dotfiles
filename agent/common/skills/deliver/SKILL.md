@@ -39,3 +39,6 @@ description: >-
 3. gate 非該当で user が同じ依頼文で段階を明示した場合はそれに従う。
 4. spike の内側で credential・secret・権限境界・破壊的データに触れる必要が
    生じたときの昇格先は polish (各スキルの規定どおり)。
+5. `$deliver` 自体に commit 手順は無い。選択した段階スキル (`spike` /
+   `polish` / `harden`) の documented workflow に commit が含まれるとき、その
+   commit 授権を継承する (GLOBAL Git 規則の delivery skill 例外と同一)。

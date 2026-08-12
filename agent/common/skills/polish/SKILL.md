@@ -178,8 +178,10 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    個のみ。English Conventional Commits。style commit と delivery を混ぜない。
    知識棚卸しは行わない (harden 専用)。
 8. **報告する**: 解消した不満と証拠、残る不満、追加した回帰テスト、review の
-   結果、style commit の有無、harden-review-sensitive 判定 (該当時は surface・
-   根拠と `$harden` 推奨) を短く返す。
+   結果、style commit の有無、harden-review-sensitive 判定 (surface・根拠は
+   全 version で記録。`$harden` 推奨は product version is already 1.0.0 or
+   higher のときだけ。pre-v1 or unknown version: do not recommend `$harden`)
+   を短く返す。
    方針すり合わせについては次を残す: 担当と各レビュワーの pane、レビュワー
    ごとの request と reply の
    message ID、**user の目的とのズレの有無と是正内容**、原文中の目的と手段を
@@ -273,10 +275,12 @@ idle も busy も存在扱いで送る。返信待ちの間に active polling �
 
 **harden-review-sensitive な変更は polish の内側で完遂する** —
 方針すり合わせと実装レビューの2往復、および不変条件 (secret 非コミット・
-push なし・破壊的 git 禁止) がその守りである。そのうえで、該当した delivery
-の最終報告には**「出荷判断の前に `$harden` での見直しを推奨」を必ず含める**
-(該当 surface と根拠を添える)。この進言は完了後の advisory であり、
-自動で harden を起動したり delivery を block したりはしない。
+push なし・破壊的 git 禁止) がその守りである。sensitive の**分類と記録**は
+どの version でも行う。最終報告で**「出荷判断の前に `$harden` での見直しを推奨」**
+を含めるのは、product version is already 1.0.0 or higher かつ harden-review-sensitive に該当したときだけ (manifest の version を一次判定。
+判定不能なら pre-v1 or unknown version: do not recommend `$harden` —
+surface と根拠だけ残す)。これは advisory の条件であり、**version で harden を選ぶ入口**
+の復活ではない。自動で harden を起動したり delivery を block したりはしない。
 将来リリースされ得ることは昇格理由にならない。閉域 LAN での
 agent 間リスクの受容 (decision 0002, user-origin) の範囲は変わらない。
 
