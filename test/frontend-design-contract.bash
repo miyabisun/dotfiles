@@ -29,19 +29,96 @@ assert_absent() {
   fi
 }
 
-# Every delivery stage must deterministically load the implementation skill when
-# rendered UI or interaction may change, defaulting toward use when uncertain.
+# YAML frontmatter (primary skill-discovery / trigger text) between the first
+# two --- fences. Body-only matches must not hide description regressions.
+extract_frontmatter() {
+  local file="$1"
+  awk '
+    BEGIN { n = 0 }
+    /^---[[:space:]]*$/ {
+      n += 1
+      if (n == 2) exit
+      next
+    }
+    n == 1 { print }
+  ' "$file"
+}
+
+assert_frontmatter_contains() {
+  local file="$1"
+  local text="$2"
+  local fm
+  fm="$(extract_frontmatter "$file")"
+  [[ -n "$fm" ]] || {
+    printf 'missing YAML frontmatter in %s\n' "$file" >&2
+    return 1
+  }
+  grep -Fq -- "$text" <<<"$fm" || {
+    printf 'missing frontend frontmatter contract in %s: %s\n' "$file" "$text" >&2
+    return 1
+  }
+}
+
+assert_frontmatter_absent() {
+  local file="$1"
+  local text="$2"
+  local fm
+  fm="$(extract_frontmatter "$file")"
+  if grep -Fq -- "$text" <<<"$fm"; then
+    printf 'obsolete frontend frontmatter contract in %s: %s\n' "$file" "$text" >&2
+    return 1
+  fi
+}
+
+# Delivery stages load frontend-design only when browser-rendered frontend
+# sources (HTML/CSS/JavaScript/Svelte) are judged to need edits — not for
+# CLI/TUI usability, Node backend-only JavaScript, or when uncertain.
 for stage in spike polish harden; do
   skill="$repo_root/agent/common/skills/$stage/SKILL.md"
-  assert_contains "$skill" 'rendered UI or user interaction may change'
+  assert_contains "$skill" 'browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)'
   assert_contains "$skill" '`frontend-design`'
-  assert_contains "$skill" '迷ったら適用する'
+  assert_contains "$skill" 'CLI/TUI'
+  assert_contains "$skill" 'Node backend'
   assert_contains "$skill" '実ブラウザ'
+  assert_absent "$skill" 'rendered UI or user interaction may change'
+  assert_absent "$skill" '迷ったら適用する'
 done
+
+# Japanese stages: extension/usability alone and uncertain gate in Japanese.
+for stage in spike polish; do
+  skill="$repo_root/agent/common/skills/$stage/SKILL.md"
+  assert_contains "$skill" '拡張子や「使い勝手」だけでは発火しない'
+  assert_contains "$skill" 'Node backend 専用 JavaScript'
+  assert_contains "$skill" '修正が必要だと確認できなければ使わない'
+done
+
+# English harden stage: same gate, English wording.
+harden="$repo_root/agent/common/skills/harden/SKILL.md"
+assert_contains "$harden" 'File extension or "usability" alone is not enough'
+assert_contains "$harden" 'Node backend-only JavaScript'
+assert_contains "$harden" 'cannot confirm those frontend sources need changes, do not use'
+
+# Primary trigger surface is the skill description frontmatter, not body only.
+assert_frontmatter_contains "$frontend" 'browser-rendered frontend sources (HTML, CSS, JavaScript, or'
+assert_frontmatter_contains "$frontend" 'Svelte'
+assert_frontmatter_contains "$frontend" 'CLI/TUI'
+assert_frontmatter_contains "$frontend" 'Node backend-only'
+assert_frontmatter_contains "$frontend" 'JavaScript'
+assert_frontmatter_contains "$frontend" 'Extension alone is'
+assert_frontmatter_contains "$frontend" 'not enough'
+assert_frontmatter_contains "$frontend" 'cannot confirm those frontend sources need changes, do not'
+assert_frontmatter_contains "$frontend" 'use this skill'
+assert_frontmatter_absent "$frontend" 'rendered UI or user interaction may change'
+assert_frontmatter_absent "$frontend" 'If applicability is uncertain, use this skill.'
 
 # The implementation skill owns the detailed UI-surface boundary and resolves
 # Project authority before offering generic aesthetic guidance.
 assert_contains "$frontend" '## UI surface and authority'
+assert_contains "$frontend" 'browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)'
+assert_contains "$frontend" 'CLI/TUI'
+assert_contains "$frontend" 'Node backend-only JavaScript'
+assert_contains "$frontend" 'extension alone is not enough'
+assert_contains "$frontend" 'cannot confirm those frontend sources need changes, do not use'
 assert_contains "$frontend" 'Project root `DESIGN.md`'
 assert_contains "$frontend" '`docs/DESIGN.md` is a legacy'
 assert_contains "$frontend" 'fallback; read it for this delivery'
@@ -51,6 +128,8 @@ assert_contains "$frontend" 'Project design and an applicable designer brief ove
 assert_contains "$frontend" 'Invoke `designer`'
 assert_contains "$frontend" 'rendered DOM'
 assert_contains "$frontend" 'ARIA and live regions'
+assert_absent "$frontend" 'rendered UI or user interaction may change'
+assert_absent "$frontend" 'If applicability is uncertain, use this skill.'
 
 boundary_files="$(grep -RlF --include='SKILL.md' 'rendered DOM' \
   "$repo_root/agent/common/skills" || true)"

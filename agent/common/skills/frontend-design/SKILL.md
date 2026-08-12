@@ -2,10 +2,12 @@
 name: frontend-design
 description: >-
   Implement production-grade frontend UI while preserving the Project design
-  authority and interaction contract. Use when rendered UI or user interaction
-  may change: components, pages, styling, layout, responsive behavior,
-  typography, motion, icons, visible states, navigation, focus, touch, or
-  accessibility presentation. If applicability is uncertain, use this skill.
+  authority and interaction contract. Use only when the delivery is judged to
+  require editing browser-rendered frontend sources (HTML, CSS, JavaScript, or
+  Svelte). Do not use for CLI/TUI, terminal-only tools, Node backend-only
+  JavaScript, native UI, config, docs, or test-only changes. Extension alone is
+  not enough. If you cannot confirm those frontend sources need changes, do not
+  use this skill.
 ---
 
 # Frontend Design
@@ -15,7 +17,14 @@ UI. Do not invent a new visual language when the Project already owns one.
 
 ## UI surface and authority
 
-Treat a change as UI surface work when it can alter rendered DOM, CSS, tokens,
+Load this skill only when the delivery is judged to require editing
+browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte). File
+extension alone is not enough: the edit must shape browser (or webview /
+Electron) presentation. CLI/TUI, terminal-only tools, Node backend-only JavaScript,
+native UI, config, docs, and test-only changes are out of scope. If you
+cannot confirm those frontend sources need changes, do not use this skill.
+
+Once loaded, treat a change as UI surface work when it can alter rendered DOM, CSS, tokens,
 theme, layout, responsive behavior, typography, motion, images or icons,
 components or pages, visible copy or state meaning, routing or navigation,
 keyboard, focus or touch behavior, loading/empty/error states, or ARIA and live regions.

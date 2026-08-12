@@ -128,11 +128,14 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
      8. 契約は commit まで。途中で止まった配達は未完了である。
    - **reconcile が終わるまでテストと実装を編集しない。**
    すり合わせの詳細は「[方針すり合わせの判定軸](#方針すり合わせの判定軸)」。
-2. **契約はテストで書く**: rendered UI or user interaction may change
-   する可能性があれば、先に `frontend-design` skill を完全に読み、そこにある
-   UI surface 判定・Project design authority・実装規則を適用する。該当性に
-   迷ったら適用する。未解決の視覚・操作判断や design contract の変更がある
-   場合だけ `designer` を呼び、その brief を契約へ含める。
+2. **契約はテストで書く**: browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)
+   の修正が必要だと判断できたときだけ、先に `frontend-design` skill を完全に
+   読み、そこにある UI surface 判定・Project design authority・実装規則を
+   適用する。拡張子や「使い勝手」だけでは発火しない。CLI/TUI・terminal 出力
+   のみ・Node backend 専用 JavaScript・設定・docs・test-only は対象外。
+   修正が必要だと確認できなければ使わない（迷ったら適用しない）。未解決の
+   視覚・操作判断や design contract の変更がある場合だけ `designer` を呼び、
+   その brief を契約へ含める。
    そのうえで統合した方針から、達成条件を最大3項目とし、
    それぞれを実行可能なテストとして表現する。「何が動けば体験できたことに
    なるか」がテスト名になる。ledger は作らない。独立提案の交換は step 1 の

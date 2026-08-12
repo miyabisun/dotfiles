@@ -221,12 +221,12 @@ criteria, scope, verification commands, and important failure modes.
 - For non-trivial behavior, prefer a failing regression test before the fix.
 - A separate strategist is optional; use it only when the contract itself is
   difficult, cross-cutting, UI-heavy, externally integrated, or high risk.
-- If rendered UI or user interaction may change, first read the complete
+- Only when this delivery is judged to require editing browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte), first read the complete
   `frontend-design` skill and apply its UI-surface boundary, Project design
-  authority, and implementation rules. When applicability is uncertain,
-  迷ったら適用する. Invoke `designer` only for unresolved visual or interaction
-  decisions or a change to the design contract, and include its brief in the
-  acceptance criteria.
+  authority, and implementation rules. File extension or "usability" alone is not enough. CLI/TUI, terminal-only tools, Node backend-only JavaScript,
+  config, docs, and test-only changes are out of scope. If you cannot confirm those frontend sources need changes, do not use this skill. Invoke
+  `designer` only for unresolved visual or interaction decisions or a change
+  to the design contract, and include its brief in the acceptance criteria.
 
 ### 1a. Co-author the contract with the counterpart
 
