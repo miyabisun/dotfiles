@@ -89,7 +89,6 @@ fi
 
 printf '%s\n' "$url" >>"$INSTALL_APPS_TEST_LOG"
 case "$url" in
-  https://cursor.com/install) command_name=cursor-agent ;;
   https://chatgpt.com/codex/install.sh) command_name=codex ;;
   https://x.ai/cli/install.sh) command_name=grok ;;
   https://github.com/miyabisun/mux/releases/latest)
@@ -217,14 +216,17 @@ PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
   TMPDIR="$tmp_dir" \
   bash "$repo_root/bin/install-apps" >"$test_root/first-run.out"
 
-grep -Fx "https://cursor.com/install" "$log" >/dev/null
+if grep -Fq "https://cursor.com/install" "$log"; then
+  echo "install-apps must not fetch the Cursor installer" >&2
+  exit 1
+fi
 grep -Fx "https://chatgpt.com/codex/install.sh" "$log" >/dev/null
 grep -Fx "https://x.ai/cli/install.sh" "$log" >/dev/null
 grep -Fx -- "--proto" "$args_log" >/dev/null
 grep -Fx -- "=https" "$args_log" >/dev/null
 grep -Fx -- "--tlsv1.2" "$args_log" >/dev/null
 grep -Fx -- "-fsSL" "$args_log" >/dev/null
-test -x "$fake_home/.local/bin/cursor-agent"
+test ! -e "$fake_home/.local/bin/cursor-agent"
 test -x "$fake_home/.local/bin/codex"
 test -x "$fake_home/.local/bin/grok"
 test -x "$fake_home/.local/bin/mux"
@@ -242,12 +244,11 @@ PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
   TMPDIR="$tmp_dir" \
   bash "$repo_root/bin/install-apps" >"$test_root/second-run.out"
 
-test "$(grep -Fc 'https://cursor.com/install' "$log")" -eq 1
+test "$(grep -Fc 'https://cursor.com/install' "$log")" -eq 0
 test "$(grep -Fc 'https://chatgpt.com/codex/install.sh' "$log")" -eq 1
 test "$(grep -Fc 'https://x.ai/cli/install.sh' "$log")" -eq 1
 test "$(grep -Fc 'https://github.com/miyabisun/mux/releases/latest' "$log")" -eq 1
 test "$(grep -Fc 'mux-linux-x86_64.tar.gz' "$log")" -eq 2
-grep -F "Cursor CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Codex CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Grok CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Updating mux via mux update" "$test_root/second-run.out" >/dev/null
@@ -265,10 +266,13 @@ PATH="$fake_bin:/usr/bin:/bin" \
   TMPDIR="$linux_tmp" \
   bash "$repo_root/bin/install-apps" >"$test_root/linux.out"
 
-grep -Fx "https://cursor.com/install" "$test_root/linux-curl.log" >/dev/null
+if grep -Fq "https://cursor.com/install" "$test_root/linux-curl.log"; then
+  echo "install-apps must not fetch the Cursor installer on Linux" >&2
+  exit 1
+fi
 grep -Fx "https://chatgpt.com/codex/install.sh" "$test_root/linux-curl.log" >/dev/null
 grep -Fx "https://x.ai/cli/install.sh" "$test_root/linux-curl.log" >/dev/null
-test -x "$linux_home/.local/bin/cursor-agent"
+test ! -e "$linux_home/.local/bin/cursor-agent"
 test -x "$linux_home/.local/bin/codex"
 test -x "$linux_home/.local/bin/grok"
 test "$("$linux_home/.local/bin/mux" --version)" = "mux 0.1.1"
@@ -281,14 +285,14 @@ if PATH="$fake_bin:/usr/bin:/bin" \
   HOME="$failure_home" \
   INSTALL_APPS_TEST_LOG="$test_root/failure-curl.log" \
   INSTALL_APPS_TEST_ARGS_LOG="$test_root/failure-curl-args.log" \
-  INSTALL_APPS_TEST_FAIL_URL="https://cursor.com/install" \
+  INSTALL_APPS_TEST_FAIL_URL="https://chatgpt.com/codex/install.sh" \
   TMPDIR="$failure_tmp" \
   bash "$repo_root/bin/install-apps" >"$test_root/failure.out" 2>&1; then
   echo "install-apps should fail when an installer download fails" >&2
   exit 1
 fi
 
-grep -F "Failed to install Cursor CLI" "$test_root/failure.out" >/dev/null
+grep -F "Failed to install Codex CLI" "$test_root/failure.out" >/dev/null
 test -z "$(find "$failure_tmp" -mindepth 1 -print -quit)"
 
 run_failure_home="$test_root/run-failure-home"
@@ -298,14 +302,14 @@ if PATH="$fake_bin:/usr/bin:/bin" \
   HOME="$run_failure_home" \
   INSTALL_APPS_TEST_LOG="$test_root/run-failure-curl.log" \
   INSTALL_APPS_TEST_ARGS_LOG="$test_root/run-failure-curl-args.log" \
-  INSTALL_APPS_TEST_FAIL_RUN_URL="https://cursor.com/install" \
+  INSTALL_APPS_TEST_FAIL_RUN_URL="https://chatgpt.com/codex/install.sh" \
   TMPDIR="$run_failure_tmp" \
   bash "$repo_root/bin/install-apps" >"$test_root/run-failure.out" 2>&1; then
   echo "install-apps should fail when an installer execution fails" >&2
   exit 1
 fi
 
-grep -F "Failed to install Cursor CLI" "$test_root/run-failure.out" >/dev/null
+grep -F "Failed to install Codex CLI" "$test_root/run-failure.out" >/dev/null
 test -z "$(find "$run_failure_tmp" -mindepth 1 -print -quit)"
 
 prepare_mux_case() {
@@ -313,7 +317,6 @@ prepare_mux_case() {
   local tmp="$2"
 
   mkdir -p "$home/.local/bin" "$tmp"
-  cp "$fake_home/.local/bin/cursor-agent" "$home/.local/bin/cursor-agent"
   cp "$fake_home/.local/bin/codex" "$home/.local/bin/codex"
   cp "$fake_home/.local/bin/grok" "$home/.local/bin/grok"
 }

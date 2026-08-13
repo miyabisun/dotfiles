@@ -36,7 +36,6 @@ All agent config lives under `agent/`:
 agent/
 ├── common/   # shared: agents, designs, skills, rules, bin
 ├── claude/   # Claude Code only (hooks, workflows, settings)
-├── cursor/   # Cursor only (rules, hooks)
 ├── codex/    # Codex CLI only (hooks, config)
 └── grok/     # Grok CLI only (hooks, config)
 ```
@@ -49,13 +48,6 @@ See `agent/README.md` for details.
 - `~/.claude/designs` -> `agent/common/designs`
 - `~/.claude/CLAUDE.md` -> `agent/claude/CLAUDE.md` -> `agent/common/rules/GLOBAL.md`
 - `~/.claude/workflows`, `hooks`, `settings.json` -> `agent/claude/*`
-
-#### Cursor (`~/.cursor`)
-- `~/.cursor/skills` -> `agent/common/skills`
-- `~/.cursor/agents` -> `agent/common/agents`
-- `~/.cursor/designs` -> `agent/common/designs`
-- `~/.cursor/rules` -> `agent/cursor/rules`
-- `~/.cursor/hooks`, `hooks.json` -> `agent/cursor/hooks*`
 
 #### Codex (`~/.codex`)
 - `~/.codex/AGENTS.md` -> `agent/common/rules/GLOBAL.md`

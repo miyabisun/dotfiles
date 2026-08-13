@@ -25,17 +25,6 @@ run_remote_installer() {
 # ---------------------------------------------------------------------------
 # Agent CLIs — official standalone installers for Linux and macOS
 # ---------------------------------------------------------------------------
-install_cursor() {
-  if command -v cursor-agent >/dev/null 2>&1; then
-    echo "==> Cursor CLI already installed ($(cursor-agent --version 2>/dev/null | head -1))"
-    return
-  fi
-
-  echo "==> Installing Cursor CLI..."
-  run_remote_installer "Cursor CLI" "https://cursor.com/install"
-  echo "==> Cursor CLI installed"
-}
-
 install_codex() {
   if command -v codex >/dev/null 2>&1; then
     echo "==> Codex CLI already installed ($(codex --version 2>/dev/null | head -1))"
@@ -59,7 +48,6 @@ install_grok() {
 }
 
 install_agent_clis() {
-  install_cursor
   install_codex
   install_grok
 }

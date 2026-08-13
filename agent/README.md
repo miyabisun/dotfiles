@@ -17,10 +17,6 @@ agent/
 │   ├── agents → ../common/agents
 │   ├── designs → ../common/designs
 │   └── skills → ../common/skills
-├── cursor/          # Cursor only
-│   ├── rules/       # .mdc alwaysApply rules
-│   ├── hooks/ + hooks.json
-│   └── agents → ../common/agents
 ├── codex/           # Codex CLI only
 │   ├── agents/      # Codex subagent TOML role adapters
 │   ├── hooks/ + hooks.json
@@ -34,11 +30,10 @@ agent/
 
 | Home | Source |
 |------|--------|
-| `~/.claude/skills`, `~/.cursor/skills`, `~/.grok/skills` | `agent/common/skills` |
-| `~/.claude/agents`, `~/.cursor/agents`, `~/.grok/agents` | `agent/common/agents` |
-| `~/.claude/designs`, `~/.cursor/designs`, `~/.grok/designs` | `agent/common/designs` |
+| `~/.claude/skills`, `~/.grok/skills` | `agent/common/skills` |
+| `~/.claude/agents`, `~/.grok/agents` | `agent/common/agents` |
+| `~/.claude/designs`, `~/.grok/designs` | `agent/common/designs` |
 | `~/.claude/*` (hooks, settings, …) | `agent/claude/*` |
-| `~/.cursor/*` (rules, hooks, …) | `agent/cursor/*` |
 | `~/.codex/config.toml`, `~/.codex/hooks.json` | `agent/codex/*` |
 | `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.claude/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.grok/hooks` | `agent/grok/hooks` |
@@ -112,15 +107,15 @@ removes.
 
 Grok owns its general completion notification under `agent/grok/hooks` and
 turns off Claude/Cursor compat for skills, rules, agents, mcps, and hooks so
-compatibility hooks do not fire twice. Claude Code plugins under
+a leftover `~/.cursor` does not fire compatibility hooks twice. Claude Code plugins under
 `~/.claude/plugins` may still appear in `grok inspect` (Grok has no separate
 compat cell for plugins); their skills are disabled when `compat.claude.skills`
 is off, and Grok's own hooks remain the general notification source.
 
 ## Agents (`common/agents`)
 
-Role definitions shared by Claude Code and Cursor. Frontmatter keeps only
-`name` / `description` so Cursor inherits the parent chat model (`model`
+Role definitions shared by Claude Code and Grok. Frontmatter keeps only
+`name` / `description` so the parent chat model is inherited (`model`
 defaults to `inherit`). Claude-specific `model` / `effort` / `tools` are
 intentionally omitted.
 
@@ -133,7 +128,7 @@ migration, but root and docs are never merged implicitly.
 ## Adding a new skill
 
 1. Create `agent/common/skills/<name>/SKILL.md`
-2. Existing symlinks pick it up for Claude Code, Cursor, Codex, and Grok
+2. Existing symlinks pick it up for Claude Code, Codex, and Grok
 
 Notable skills:
 

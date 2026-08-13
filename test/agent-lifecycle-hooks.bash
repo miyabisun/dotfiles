@@ -13,7 +13,7 @@ fake_home="$test_root/home"
 event_log="$test_root/events.log"
 mkdir -p "$fake_bin" "$fake_home"
 
-# Cursor stop hook: 完了を emit-turn-end.sh へ cursor success として渡す。
+# Grok stop hook: 完了を emit-turn-end.sh へ grok success として渡す。
 mkdir -p "$fake_home/.local/bin"
 cat >"$fake_home/.local/bin/emit-turn-end.sh" <<'FAKE_EMITTER'
 #!/usr/bin/env bash
@@ -21,9 +21,10 @@ printf 'turn-end %s\n' "$*" >>"$LIFECYCLE_TEST_LOG"
 FAKE_EMITTER
 chmod +x "$fake_home/.local/bin/emit-turn-end.sh"
 : >"$event_log"
-HOME="$fake_home" LIFECYCLE_TEST_LOG="$event_log" \
-  bash "$repo_root/agent/cursor/hooks/stop-turn-end.sh"
-grep -Fx 'turn-end cursor success' "$event_log" >/dev/null
+printf '%s\n' '{"reason":"end_turn"}' \
+  | HOME="$fake_home" LIFECYCLE_TEST_LOG="$event_log" \
+    bash "$repo_root/agent/grok/hooks/stop-turn-end.sh"
+grep -Fx 'turn-end grok success' "$event_log" >/dev/null
 
 cat >"$fake_bin/turn-end-emitter" <<'TURN_END_EMITTER'
 #!/usr/bin/env bash
@@ -31,11 +32,6 @@ printf 'turn-end %s\n' "$*" >>"$LIFECYCLE_TEST_LOG"
 TURN_END_EMITTER
 chmod +x "$fake_bin/turn-end-emitter"
 : >"$event_log"
-printf '%s\n' '{"hook_event_name":"stop","cursor_version":"2026.07"}' \
-  | HOME="$fake_home" LIFECYCLE_TEST_LOG="$event_log" \
-    TURN_END_EMITTER="$fake_bin/turn-end-emitter" \
-    bash "$repo_root/agent/claude/hooks/stop-turn-end.sh"
-test ! -s "$event_log"
 printf '%s\n' '{"hook_event_name":"Stop","session_id":"test"}' \
   | HOME="$fake_home" LIFECYCLE_TEST_LOG="$event_log" \
     TURN_END_EMITTER="$fake_bin/turn-end-emitter" \
@@ -46,15 +42,13 @@ grep -Fx 'turn-end claude success' "$event_log" >/dev/null
 # portable-paths guard が拾うが、コマンド自体の消失・誤パス化はここで拾う。
 jq -e '.hooks.SessionStart[0].hooks[0].command == "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session"' \
   "$repo_root/agent/claude/settings.json" >/dev/null
-jq -e '.hooks.sessionStart[0].command == "bash \"$HOME/.cursor/herdr-agent-state.sh\" session"' \
-  "$repo_root/agent/cursor/hooks.json" >/dev/null
 jq -e '.hooks.SessionStart[0].hooks[0].command == "bash \"$HOME/.codex/herdr-agent-state.sh\" session"' \
   "$repo_root/agent/codex/hooks.json" >/dev/null
 
 # 空白入り HOME でも $HOME 展開形の command が実体へ届くこと (sh -c 実行)。
 space_home="$test_root/space home"
 state_log="$test_root/herdr-state.log"
-for state_dir in .claude/hooks .cursor .codex; do
+for state_dir in .claude/hooks .codex; do
   mkdir -p "$space_home/$state_dir"
   cat >"$space_home/$state_dir/herdr-agent-state.sh" <<'STATE'
 #!/usr/bin/env bash
@@ -65,16 +59,13 @@ done
 : >"$state_log"
 for hook_json in \
   "$repo_root/agent/claude/settings.json" \
-  "$repo_root/agent/cursor/hooks.json" \
   "$repo_root/agent/codex/hooks.json"; do
   cmd="$(jq -r '.. | .command? // empty' "$hook_json" | grep -F 'herdr-agent-state')"
   HOME="$space_home" HERDR_STATE_TEST_LOG="$state_log" sh -c "$cmd"
 done
-test "$(grep -c 'herdr-state .* session$' "$state_log")" -eq 3
+test "$(grep -c 'herdr-state .* session$' "$state_log")" -eq 2
 
 # 一般の完了通知は残し、agent-talk lifecycle push は全 runtime から消す。
-jq -e '.hooks.stop[0].command == "./hooks/stop-turn-end.sh"' \
-  "$repo_root/agent/cursor/hooks.json" >/dev/null
 jq -e '.hooks.Stop[0].hooks[0].command | endswith("stop-turn-end.sh")' \
   "$repo_root/agent/claude/settings.json" >/dev/null
 jq -e '.hooks.Stop[0].hooks[0].command == "./stop-turn-end.sh"' \
@@ -82,7 +73,6 @@ jq -e '.hooks.Stop[0].hooks[0].command == "./stop-turn-end.sh"' \
 
 for hook_json in \
   "$repo_root/agent/claude/settings.json" \
-  "$repo_root/agent/cursor/hooks.json" \
   "$repo_root/agent/codex/hooks.json" \
   "$repo_root/agent/grok/hooks/lifecycle.json"; do
   if jq -e '.. | strings | select(test("agent-talk.*(register|unregister|busy|turn-end)|register-agent-talk|unregister-agent-talk|agent-talk-busy"))' \

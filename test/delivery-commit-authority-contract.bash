@@ -5,7 +5,6 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 global_rules="$repo_root/agent/common/rules/GLOBAL.md"
-cursor_global="$repo_root/agent/cursor/rules/global.mdc"
 spike="$repo_root/agent/common/skills/spike/SKILL.md"
 polish="$repo_root/agent/common/skills/polish/SKILL.md"
 discuss="$repo_root/agent/common/skills/discuss/SKILL.md"
@@ -30,15 +29,13 @@ assert_absent() {
 
 # Shared runtime rules: explicit commit request OR a delivery skill whose
 # documented workflow includes committing ($spike / $polish / $deliver).
-for rules in "$global_rules" "$cursor_global"; do
-  assert_contains "$rules" 'NEVER commit unless the user explicitly requests a commit or invokes a delivery'
-  assert_contains "$rules" 'skill whose documented workflow includes committing'
-  assert_contains "$rules" '`$spike`'
-  assert_contains "$rules" '`$polish`'
-  assert_contains "$rules" '`$deliver`'
-  assert_contains "$rules" 'inherits its commit step'
-  assert_absent "$rules" 'NEVER commit unless the user explicitly instructs you to'
-done
+assert_contains "$global_rules" 'NEVER commit unless the user explicitly requests a commit or invokes a delivery'
+assert_contains "$global_rules" 'skill whose documented workflow includes committing'
+assert_contains "$global_rules" '`$spike`'
+assert_contains "$global_rules" '`$polish`'
+assert_contains "$global_rules" '`$deliver`'
+assert_contains "$global_rules" 'inherits its commit step'
+assert_absent "$global_rules" 'NEVER commit unless the user explicitly instructs you to'
 
 # Named delivery skills actually document a commit step.
 assert_contains "$spike" '**コミットする**'

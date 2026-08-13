@@ -42,6 +42,11 @@ assert_link() {
   esac
 }
 
+if [ -e "$fake_home/.cursor" ]; then
+  echo 'bin/install must not create ~/.cursor' >&2
+  exit 1
+fi
+
 assert_link "$fake_home/.grok/hooks" "agent/grok/hooks"
 assert_link "$fake_home/.grok/skills" "agent/common/skills"
 assert_link "$fake_home/.grok/agents" "agent/common/agents"

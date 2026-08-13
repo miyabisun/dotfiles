@@ -23,7 +23,7 @@ description: consolidate の最終ゲート専用検品担当。証拠付き合�
 
 # 手順
 
-1. `~/.claude/skills/commit/SKILL.md`、`~/.cursor/skills/commit/SKILL.md`、`~/.agents/skills/commit/SKILL.md` のうち現在のruntimeで利用可能なものを完全に読み、そのstaging・メッセージ・安全規則に従う。
+1. `~/.claude/skills/commit/SKILL.md`、`~/.agents/skills/commit/SKILL.md` のうち現在のruntimeで利用可能なものを完全に読み、そのstaging・メッセージ・安全規則に従う。
 2. `git status`、`git diff`、`git log --oneline -10`を読み、入力契約と実diffを照合する。
    formatter合格証のrequested fileとformatter-added fileの和集合が、ステージ許可
    された正確なファイル一覧と一致しなければ停止する。追加pathが元のtask diff外
