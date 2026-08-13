@@ -46,7 +46,13 @@ assert_contains "$talk_skill" 'list_peers'
 assert_contains "$talk_skill" 'ack_message'
 assert_contains "$talk_skill" 'w1:p2'
 assert_contains "$talk_skill" 'herdr is the only multiplexer'
-assert_contains "$talk_skill" 'as `idle` or `done`'
+assert_contains "$talk_skill" '`idle` / `done` / `working`'
+assert_contains "$talk_skill" '読んだ時点で受領'
+assert_contains "$talk_skill" '本文は残り'
+assert_contains "$talk_skill" '互換の空操作'
+assert_contains "$talk_skill" 'only while herdr reports `idle` or `done`'
+assert_contains "$talk_skill" 'It does not ring `working` / `blocked` / `unknown`'
+assert_absent "$talk_skill" 'ack するとメッセージが消える'
 
 # v0.8.3 の配達契約。旧記述 (pane.send_text / ガードは agent-talkd 側だけ) が
 # 復活すると、agent は「入力欄に置くだけで turn が始まる」と誤解する
@@ -83,7 +89,7 @@ assert_contains "$talk_skill" 'unreceipted work is chased'
 
 # 登録は herdr の検出からの pull で、agent 側の仕込みを要求しない
 assert_contains "$talk_skill" 'pull registration'
-# ack の罠 (E2E #1065 で実測): reply_to は ack 前に控える。human 宛返信は不可
+# 返信宛先は reply_to。human 宛返信は不可。ack は受領条件ではない。
 assert_contains "$talk_skill" 'reply_to` を控えてから'
 assert_contains "$talk_skill" '送信者が human (未登録 pane) の場合、返信は構造的に不可'
 if grep -Fq 'One daemon per tmux server' "$talk_skill"; then

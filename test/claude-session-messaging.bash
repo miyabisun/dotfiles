@@ -40,7 +40,7 @@ assert_contains "$claude_md" 'never invent a ref'
 
 # agent-talk へ残る条件: 混成 runtime・pane/workspace 指定・配達保証契約
 assert_contains "$claude_md" 'codex, grok, or cursor'
-assert_contains "$claude_md" 'durable queue, doorbell resume, read + ack receipts'
+assert_contains "$claude_md" 'durable queue, doorbell resume, read is receipt'
 # cwd は一意 identity ではない。list_peers と ListAgents の cwd 突き合わせで
 # pane 上の session を特定する手順は誤送信を招くので、復活させない
 assert_absent "$claude_md" 'match agent-talk'

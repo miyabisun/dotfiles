@@ -100,14 +100,13 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    - **返信待ちの状態遷移** (active polling はしない):
      1. brief / 実装レビュー依頼の送信後、依存 (待っている返信) で blocked
         かつ他に有用な独立作業が無いなら、**現在の
-        turn を終了して yield しなければならない** (broker は idle/done の
-        pane にしか配達しない)。sleep・wait loop・`list_peers`
+        turn を終了して yield しなければならない**。sleep・wait loop・`list_peers`
         polling で turn を保持しない。これは**合法な待機**であり
         delivery 完了ではない (agent-talk skill の待機契約と同一)。
      2. **この delivery が明示的に待っている** peer 返信の agent-talk 呼び鈴
         自体が、同じ delivery の**再開 trigger** である (待っていない
         doorbell を一般再開にしない)。
-     3. 各 `read_message` + `ack_message` のあと、いま待っている phase の
+     3. 各 `read_message` のあと、いま待っている phase の
         期待 reply の充足を判定する。
      4. user の追加の「続けて」を**再開条件にしない**。充足したら**同一ターン**
         で次へ進む。進む先は phase で分岐する:
