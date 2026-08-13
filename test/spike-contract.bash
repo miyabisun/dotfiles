@@ -53,7 +53,7 @@ assert_absent_in_step() {
 # TDD は死守: red の観測が必須で、自己免除は存在しない
 assert_contains "$spike" 'テスト無きゴールは存在しない'
 assert_contains "$spike" '失敗するテストを先に書き (red)、通す (green)'
-assert_contains "$spike" 'red を観測できないなら未達として止める'
+assert_contains "$spike" '観測できるまで実装を'
 assert_absent "$spike" '守れない事情があるなら'
 assert_absent_in_step "$spike" '**TDD で作る**' '理由を1行'
 
@@ -161,18 +161,13 @@ assert_contains "$global_rules" 'Depositing findings'
 assert_contains "$global_rules" 'Asking knowledge a question is ordinary peer conversation'
 assert_contains "$global_rules" 'do not use a question to hand findings over'
 
-# 昇格モデル: 昇格は polish まで。harden は user のリリース号令のみが入口
-# (decision 0004)。version は昇格根拠にならず、v1.0.0+ では互換性影響を判定
-# して spike のまま続行する
-assert_contains "$spike" '**polish への切り替えを'
-assert_contains "$spike" '自動昇格は polish まで'
-assert_contains "$spike" '全世界に問いかける'
+# version は停止理由にならず、v1.0.0+ では互換性影響を判定して続行する
 assert_contains "$spike" 'Cargo.toml'
 assert_contains "$spike" '既に 1.0.0 以上'
 assert_contains "$spike" 'spike は spike のまま進む'
 assert_contains "$spike" 'next major work'
+assert_contains "$spike" 'Stopping work'
 assert_absent "$spike" 'なんで spike やねん'
 assert_absent "$spike" '外部公開・release artifact・第三者へ届く出力'
-assert_absent "$spike" '**harden への切り替えを'
 
 echo "spike contract test: pass"

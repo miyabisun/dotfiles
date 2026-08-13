@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-deliver="$repo_root/agent/common/skills/harden/SKILL.md"
+
 role="$repo_root/agent/common/agents/knowledge-inventory.md"
 adapter="$repo_root/agent/codex/agents/knowledge-inventory.toml"
 config="$repo_root/agent/codex/config.toml"
@@ -18,47 +18,6 @@ assert_contains() {
     return 1
   }
 }
-
-# 共通開発ルールの追従を「明らかな過失」に限定する5条件
-assert_contains "$deliver" '共通開発ルール（home-development-rules）'
-assert_contains "$deliver" 'canonical policyに明文規則がある'
-assert_contains "$deliver" 'grep、build、lintなどで機械検出できる'
-assert_contains "$deliver" '局所的かつ挙動保存で、API、schema、UXを変えない'
-assert_contains "$deliver" 'Project overrideがその逸脱を明示していない'
-assert_contains "$deliver" '今回のdeliver scope内で完結する'
-assert_contains "$deliver" '5条件をすべて満たす場合だけ'
-
-# 5条件を満たさない場合の行き先
-assert_contains "$deliver" 'base ruleが沈黙している事項はdriftではなくProjectの自由'
-assert_contains "$deliver" 'base rule自体の穴、矛盾、適用不能'
-assert_contains "$deliver" 'ユーザーへ相談する'
-assert_contains "$deliver" '正当なProject固有理由'
-assert_contains "$deliver" 'Project overrideとして記録する'
-assert_contains "$deliver" 'scope外なら自動修正せず、最終報告へ推奨として記録する'
-
-# overrideはbaseの複製ではなく、AGENTS.mdから発見できる差分
-assert_contains "$deliver" 'AGENTS.md本体、またはAGENTS.mdから明示リンクされる単一file'
-assert_contains "$deliver" 'base全文をcopyしない'
-assert_contains "$deliver" 'home-development-rules#<existing-rule-id>'
-assert_contains "$deliver" '存在しないrule IDをinventしない'
-assert_contains "$deliver" 'base側commit hashまたは日付'
-assert_contains "$deliver" 'override理由、scope、影響、再評価条件'
-assert_contains "$deliver" 'agent/common/rules/GLOBAL.md'
-
-# commit後・final receipt前のsoft-fail棚卸し
-assert_contains "$deliver" '### 6a. Inventory domain knowledge after commit'
-assert_contains "$deliver" 'commit後、final receipt前'
-assert_contains "$deliver" 'knowledge-inventory'
-assert_contains "$deliver" '棚卸し前後のHEAD hashと`git status --short`を比較する'
-assert_contains "$deliver" '1 deliverにつき最大1 batch'
-assert_contains "$deliver" 'knowledge/codex'
-assert_contains "$deliver" '`no_reply`'
-assert_contains "$deliver" '自動再送queueを作らない'
-assert_contains "$deliver" 'pendingでもdelivery本体の成功を取り消さない'
-assert_contains "$deliver" '"knowledge_inventory"'
-assert_contains "$deliver" '"status": "sent|not_applicable|pending"'
-assert_contains "$deliver" '"preflight": "inspected|not_required|null"'
-assert_contains "$deliver" 'parent must inspect the serialized candidate and scan result'
 
 # dedicated role: provenance、空batch禁止、安全な1回送信
 test -f "$role"
@@ -91,7 +50,7 @@ assert_contains "$role" 'scan後に本文を追記・整形・置換・要約し
 # polish の内側で受容できない (この根拠まで含めて固定する)
 assert_contains "$role" '**ただし現在この送信は行わない。`pending`を返して終える。**'
 assert_contains "$role" 'lateral agent takeoverに限定'
-assert_contains "$role" 'userがこのsecret-risk弱体化を明示承認し、hardenで記録・検証する'
+assert_contains "$role" 'userがこの経路の再開をこの pane で明示承認する'
 if grep -Fq -- 'agent-talk-peer' "$role"; then
   echo 'knowledge handoff must not use the retired CLI dispatcher' >&2
   exit 1
@@ -217,7 +176,7 @@ if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate" \
   exit 1
 fi
 
-printf '%s\n' 'basis: library/okf/spec.md' 'source: agent/common/skills/harden/SKILL.md' \
+printf '%s\n' 'basis: library/okf/spec.md' 'source: agent/common/skills/polish/SKILL.md' \
   >"$probe_root/candidate"
 if rg -q -i --pcre2 "$host_pattern" "$probe_root/candidate"; then
   echo "source paths must not be classified as hosts" >&2

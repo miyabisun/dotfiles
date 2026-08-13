@@ -5,7 +5,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 polish="$repo_root/agent/common/skills/polish/SKILL.md"
-harden="$repo_root/agent/common/skills/harden/SKILL.md"
+spike="$repo_root/agent/common/skills/spike/SKILL.md"
 
 assert_contains() {
   local file="$1"
@@ -32,11 +32,10 @@ assert_contains "$polish" 'このケースは必要か?'
 assert_contains "$polish" 'formatter / linter の実行確認 (blocking)'
 assert_contains "$polish" '回帰テストが付いているか'
 
-# harden: 同じ横並び項目 (英文本文)
-assert_contains "$harden" 'test honesty'
-assert_contains "$harden" 'tautological tests that restate the implementation'
-assert_contains "$harden" 'weakened or skipped assertions'
-assert_contains "$harden" 'harmful duplication introduced by this diff'
-assert_contains "$harden" 'Is this case actually needed?'
+# spike: 同じ横並び項目
+assert_contains "$spike" 'テストの誠実さ (blocking)'
+assert_contains "$spike" 'トートロジー'
+assert_contains "$spike" '誤魔化し'
+assert_contains "$spike" 'このケースは必要か?'
 
 echo "review standards contract test: pass"

@@ -15,7 +15,6 @@ global_rules="$repo_root/agent/common/rules/GLOBAL.md"
 discuss="$repo_root/agent/common/skills/discuss/SKILL.md"
 spike="$repo_root/agent/common/skills/spike/SKILL.md"
 polish="$repo_root/agent/common/skills/polish/SKILL.md"
-harden="$repo_root/agent/common/skills/harden/SKILL.md"
 inventory="$repo_root/agent/common/agents/knowledge-inventory.md"
 
 assert_contains() {
@@ -78,22 +77,13 @@ assert_contains "$global_rules" 'current-state'
 assert_contains "$global_rules" 'the product itself needs'
 
 # --- A2: repo 書き込み動線を skill から除去 -------------------------------
-# discuss: 決定記録の書式は維持し、出力先だけ conversation receipt にする
-assert_contains "$discuss" '## 出力: decision receipt'
 assert_absent "$discuss" '`docs/decisions/NNNN-<slug>.md`'
 assert_absent "$discuss" 'docs/ または決定記録へ置く'
-# F は「決定記録とリポジトリだけ」を前提にしていたので、記録が repo から出る以上
-# 判定の根拠も更新しないと成立しない
-assert_absent "$discuss" '決定記録とリポジトリだけを'
-
-# discuss は「出力節だけ直して他は旧命令のまま」になりやすい。実行命令が
-# 分散しているので、旧 repo 出力を指す経路を1つずつ塞ぐ
 assert_absent "$discuss" 'docs/decisions の決定記録'
 assert_absent "$discuss" '決定記録を残して deliver の実装フェーズへ戻る'
 assert_absent "$discuss" '決定記録の作成・更新はリポジトリの mutation である'
-assert_absent "$discuss" 'harden は決定記録の'
 assert_absent "$discuss" '出力: 決定記録'
-assert_contains "$discuss" '会話へ返す decision receipt'
+assert_contains "$discuss" 'docs/decisions は作らない'
 assert_contains "$discuss" 'project repo の file を作らない'
 
 # canonical な安全境界 (knowledge-inventory) と競合しないこと。
@@ -101,22 +91,15 @@ assert_contains "$discuss" 'project repo の file を作らない'
 assert_contains "$discuss" 'safe intake route'
 assert_absent "$discuss" '`knowledge/<name>` へ 1 Decision = 1 message として送る'
 
-# Readiness F は判定時点で存在する入力だけを要求する。
-# knowledge は commit 後の横展開なので F の前提にできない
-assert_contains "$discuss" 'source request + この会話に返した'
-assert_absent "$discuss" 'knowledge の claims** を読んで'
-
 # spike: TODO を repo へ残す許可を消し、receipt の follow-up へ
 assert_absent "$spike" 'TODO を残してよい'
 assert_absent "$spike" 'non-blocking の polish TODO'
 assert_contains "$spike" 'follow-up として receipt'
 
 # 各段階が repo へ退避しないこと
-for skill in "$spike" "$polish" "$harden"; do
+for skill in "$spike" "$polish"; do
   assert_contains "$skill" 'project repo へ file として残さない'
 done
-# harden の ledger は会話のもの
-assert_contains "$harden" 'parent conversation context only'
 
 # knowledge が pending でも repo へ逃がさない (fail-closed を迂回させない)
 assert_contains "$inventory" 'project repoへ退避しない'

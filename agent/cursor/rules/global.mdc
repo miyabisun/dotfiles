@@ -15,7 +15,16 @@ alwaysApply: true
 - Use Conventional Commits format (e.g. `feat:`, `fix:`, `refactor:`)
 - NEVER commit unless the user explicitly requests a commit or invokes a delivery
   skill whose documented workflow includes committing (such as `$spike`, `$polish`,
-  `$harden`, or `$deliver` which selects one of those and inherits its commit step)
+  or `$deliver` which selects one of those and inherits its commit step)
+
+## Stopping work
+
+Stop requested development work — refuse it, demand another invocation, or
+switch stages to block progress — only when it would harm another company
+(他社への迷惑) or appears to be a crime (犯罪行為).
+
+Household use, a closed LAN, and the word "security" are not reasons to
+stop. Extra review ceremony happens only when the user explicitly orders it.
 
 ## Design
 

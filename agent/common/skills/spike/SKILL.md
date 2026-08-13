@@ -6,8 +6,7 @@ description: >-
   方針を独立にすり合わせ、TDD は死守 (テスト無き
   ゴールは存在しない)、formatter/linter は機械的に実行し、テストの誠実さと
   DRY・過度な YAGNI を見る軽量な実装レビュー1回を通す。明示起動・段階明示・段階
-  未指定 $deliver からの自動判断で使う。自動昇格は polish まで (decision
-  0003/0004)。push・deploy・release はしない。
+  未指定 $deliver からの自動判断で使う。push・deploy・release はしない。
 ---
 
 # spike
@@ -16,7 +15,7 @@ description: >-
 **v0.1.0 のリリースを目指す**段階である — バグを踏まれても「v0.1.0 だから」と
 言える粗さで、まず世に出せる形へ向かう (リリース行為そのものは user が
 `bump-tag` で行う)。抽象化・設定項目・将来対応・網羅的な堅牢性はあとの
-`polish` が引き受ける (decision 0002/0003)。完成度は8割で止めてよく、やり残しは
+`polish` が引き受ける。完成度は8割で止めてよく、やり残しは
 **follow-up として receipt に返す** — project repo へ file として残さない
 (GLOBAL.md「Project Memory Boundary」)。ただし**作った分にはテストがある** —
 テスト無きゴールは存在しない。
@@ -141,10 +140,12 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    なるか」がテスト名になる。ledger は作らない。独立提案の交換は step 1 の
    1往復だけで、統合案の再承認・二段階照合は行わない。
    version が既に 1.0.0 以上の project では、既存の公開契約への互換性影響も
-   ここで判定する (詳細は「[昇格](#昇格-decision-00030004)」)。
+   ここで判定する (詳細は「[続行](#続行)」)。
 3. **TDD で作る**: 失敗するテストを先に書き (red)、通す (green)。この順序に
    自己免除は無い。user が同じ依頼文で明示的に例外を許可した場合のみ省略でき
-   (原文を receipt に引用する)、それ以外で red を観測できないなら未達として止める。
+   (原文を receipt に引用する)。red を観測できなければ、観測できるまで実装を
+   続ける。技術的に不能なら未達として報告する。GLOBAL.md「Stopping work」以外で
+   作業を拒否しない。
    **ゴール = 最大3項目の acceptance テストと、
    変更に隣接する既存 test/build/lint が全て green**。
    実行不能な既存 check は未実行の理由と影響を receipt に記録し、
@@ -282,26 +283,18 @@ idle も busy も存在扱いで送る。返信待ちの間に active polling �
 - **scope 確認 (blocking)**: commit 対象が spike の変更だけで、無関係な
   作業中変更を巻き込んでいないか。
 
-## 昇格 (decision 0003/0004)
+## 続行
 
-**自動昇格は polish まで**。`harden` は user のリリース号令 (「v1.0.0 にして
-**全世界に問いかける**」等) だけが入口の出荷ゲートであり、spike からの強制
-昇格先にはならない。version 値も昇格根拠にならない。
+secret・権限境界・破壊的データ・version・将来のリリース可能性を理由に、
+作業を止めたり段階を切り替えたりしない。止めてよい条件は GLOBAL.md
+「Stopping work」だけである。
 
-- credential・secret の取り扱い、権限・認証・信頼境界の変更、破壊的な
-  データ操作 (drop・一括削除・migration) に触れる必要が生じたら、
-  **polish への切り替えを宣言して停止する** (レビュー付きの流れで扱う)。
-- project の version (Rust なら Cargo.toml) が**既に 1.0.0 以上**でも
-  **spike は spike のまま進む**。ただし契約段階 (step 2) で既存の公開契約
-  (API・CLI・config・schema・可視の interaction) への**互換性影響**を判定し、
-  破壊するなら「next major work: v<現 major+1>.0.0 系の作業」と根拠を
-  receipt に明示して続行する。version file は変更しない — version 操作は
-  user の `bump-tag` だけが担う。
-- 将来 `bump-tag` でリリースされ得ることは昇格理由にならない。公開の権限は
-  release 操作の明示起動が別途担い、spike 自身は push しない。
-
-閉域 LAN での agent 間リスクの受容 (decision 0002, user-origin) の範囲は
-変わらない。受容されたのは lateral agent takeover だけである。
+project の version (Rust なら Cargo.toml) が**既に 1.0.0 以上**でも
+**spike は spike のまま進む**。ただし契約段階 (step 2) で既存の公開契約
+(API・CLI・config・schema・可視の interaction) への**互換性影響**を判定し、
+破壊するなら「next major work: v<現 major+1>.0.0 系の作業」と根拠を
+receipt に明示して続行する。version file は変更しない — version 操作は
+user の `bump-tag` だけが担う。spike 自身は push しない。
 
 ## 不変条件 (全段階共通)
 

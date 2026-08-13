@@ -72,8 +72,8 @@ assert_contains "$polish" '適用可能な repo-native formatter/linter だけ�
 assert_contains "$polish" '非適用/不在は理由付き N/A として記録する'
 assert_contains "$polish" '実行対象の nonzero はレビュー送信を止める'
 
-# harden 式の独立 formatter 役職は要求しない / hook 非依存
-assert_contains "$polish" '独立 `formatter` 役職ゲートは立てない'
+# 独立 formatter 役職は要求しない / hook 非依存
+assert_contains "$polish" '独立な formatter 役職ゲートは立てない'
 assert_absent "$polish" 'PostToolUse'
 assert_absent "$polish" 'Stop hook'
 

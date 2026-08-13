@@ -203,8 +203,8 @@ assert_before "$polish" \
   '**直す**'
 assert_contains "$polish" '不満の理解 / 最小修正 / 回帰証拠'
 
-# 方針すり合わせで大きな再設計が出ても自動昇格しない (decision 0003/0004 との整合)
+# 方針すり合わせで大きな再設計が出ても同じ delivery で続行する
 assert_contains "$polish" 'step 1 で大きな'
-assert_contains "$polish" '自動昇格はしない (decision 0003/0004)'
+assert_contains "$polish" 'この delivery の内側で続行する'
 
 echo 'planning alignment contract test: pass'

@@ -73,7 +73,7 @@ assert_frontmatter_absent() {
 # Delivery stages load frontend-design only when browser-rendered frontend
 # sources (HTML/CSS/JavaScript/Svelte) are judged to need edits — not for
 # CLI/TUI usability, Node backend-only JavaScript, or when uncertain.
-for stage in spike polish harden; do
+for stage in spike polish; do
   skill="$repo_root/agent/common/skills/$stage/SKILL.md"
   assert_contains "$skill" 'browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)'
   assert_contains "$skill" '`frontend-design`'
@@ -91,12 +91,6 @@ for stage in spike polish; do
   assert_contains "$skill" 'Node backend 専用 JavaScript'
   assert_contains "$skill" '修正が必要だと確認できなければ使わない'
 done
-
-# English harden stage: same gate, English wording.
-harden="$repo_root/agent/common/skills/harden/SKILL.md"
-assert_contains "$harden" 'File extension or "usability" alone is not enough'
-assert_contains "$harden" 'Node backend-only JavaScript'
-assert_contains "$harden" 'cannot confirm those frontend sources need changes, do not use'
 
 # Primary trigger surface is the skill description frontmatter, not body only.
 assert_frontmatter_contains "$frontend" 'browser-rendered frontend sources (HTML, CSS, JavaScript, or'

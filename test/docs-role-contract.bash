@@ -5,7 +5,6 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 docs="$repo_root/agent/common/agents/docs.md"
-deliver="$repo_root/agent/common/skills/harden/SKILL.md"
 
 assert_contains() {
   local file="$1"
@@ -53,10 +52,6 @@ assert_contains "$docs" '"claims": [{"claim": "...", "sources": ["file:line"], "
 # 行動に変換できない語を復活させない
 assert_absent "$docs" '宣言的'
 assert_absent "$docs" '先回り'
-
-# deliver 側が原文を docs role へ渡す契約を持つこと (無いとドメイン前提の出典が枯れる)
-assert_contains "$deliver" '`source_request` original text, material follow-ups, and'
-assert_contains "$deliver" "source other than the user's own words"
 
 # receipt 例が JSON として妥当であること
 receipt="$(sed -n '/^```json$/,/^```$/p' "$docs" | sed '1d;$d')"

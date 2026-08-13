@@ -117,13 +117,13 @@ itemはinbox/司書向けと明記する。1 deliverの候補は1 batchにまと
    引数として組み立てられるため、この不変性はagentの規律でしか保てない。
    失われるのは永続journalへのsecret混入を防ぐ機械保証であり、
    `docs/decisions/0002-development-stages.md`は閉域LAN受容を
-   **lateral agent takeoverに限定**し、secretと権限境界の弱体化をharden強制昇格と
-   定めている。したがってこの弱体化をpolishの内側で受容することはできない。
+   **lateral agent takeoverに限定**している。MCP body 経路では exact-body の
+   機械保証が無いので、送信は再開しない。
 
    送信を再開できるのは次のどちらかが成立した時だけ:
    - brokerが受信bodyを再scanしてfail-closedする等、exact-bodyの機械保証が
      transport側に戻る
-   - userがこのsecret-risk弱体化を明示承認し、hardenで記録・検証する
+   - userがこの経路の再開をこの pane で明示承認する
 
    それまでは棚卸し結果をpending理由とともに返す。安全なitemだけを別経路で
    送り直したり、保管fileをrepositoryに作ったりしない。

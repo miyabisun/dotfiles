@@ -14,13 +14,9 @@ description: >-
 Deliver a behavior-preserving consolidation as one verified local commit.
 Optimize for change locality and clear ownership, not deleted line count.
 
-Before acting, read `../harden/SKILL.md` completely. Apply its delivery ledger,
-risk classification, evidence integrity, review gates, scope protection, commit
-gate, formatter applicability/classification rules, structured formatter receipt,
-failure output, and hard rules. This skill specializes those rules below and must
-not weaken or replace the inherited formatter gate.
-An explicit `$consolidate` invocation grants the same single-local-commit
-authorization as `$harden`; it grants nothing beyond that.
+An explicit `$consolidate` invocation grants one local commit. Apply the
+inventory, review, formatter, and parent-owned commit rules in this file.
+Do not invent an extra shipping stage or demand another invocation.
 
 ## Inputs
 
@@ -33,7 +29,7 @@ Free text alone means `target`.
 
 ## Definition of consolidated
 
-In addition to the `harden` completion gate, require all applicable outcomes:
+Require all applicable outcomes:
 
 1. An inventory identifies concrete duplicate sites and their callers.
 2. Each site is classified as `merge`, `share-primitive`, or `keep-separate`
@@ -49,9 +45,9 @@ In addition to the `harden` completion gate, require all applicable outcomes:
    leaky generic types, dependency cycles, or a miscellaneous utility dumping ground.
 8. Regression tests and independent review prove the result.
 
-## Consolidation ledger
+## Consolidation inventory
 
-Extend the delivery ledger with:
+Record this inventory in the conversation receipt:
 
 ```json
 {
@@ -156,8 +152,7 @@ canonical owner or shared contract concurrently.
 
 Require independent `rev` even if the textual diff is small. Give it the
 original target, inventory, baseline, ownership design, retired paths, complete
-diff, and executed checks. In addition to normal `harden` review, require it to
-answer:
+diff, and executed checks. Require it to answer:
 
 - Were any `keep-separate` sites incorrectly merged?
 - Does the owner match the domain and dependency direction?
@@ -166,10 +161,10 @@ answer:
 - Are old production paths actually unreachable or deleted?
 - Are compatibility, errors, concurrency, and performance preserved?
 
-Consolidation that crosses trust, auth, tenant, serialization, SQL, URL,
-filesystem, command, secret, or destructive-data boundaries is
-security-sensitive. Run `harden`'s two independent security reviews at the point
-its route defines, after `formatter`; do not run them here.
+Do not stop or demand extra ceremony because a consolidation crosses trust,
+auth, tenant, serialization, SQL, URL, filesystem, command, secret, or
+destructive-data boundaries. Continue inside this skill. Stop only under
+GLOBAL.md 「Stopping work」.
 
 After fixes, rerun affected characterization/full checks and inspect retired
 path searches again. Material ownership or API redesign requires a fresh full
@@ -177,21 +172,35 @@ path searches again. Material ownership or API redesign requires a fresh full
 
 ## 6. Commit and report
 
-After the inherited review gates pass, run the exact formatter and closure gate
-defined by `harden`. Do not restate or narrow it here. Mechanical formatter
-output elsewhere in an affected first-party implementation workspace is bounded
-maintenance, not an automatic reason to stop consolidation.
+After review passes, the parent runs the applicable repo-native
+formatter/linter and records this structured receipt in the conversation
+(not a one-line summary):
 
-Pass the original structured formatter receipt—not a parent summary—to `committer`.
+```json
+{
+  "approved": true,
+  "applicability": "checked|not_applicable",
+  "requested_files": ["path"],
+  "formatter_added_files": [],
+  "check": "pass|n/a",
+  "reason": ""
+}
+```
+
+This parent-measured receipt is the formatter receipt. An independent
+formatter role is not required. Mechanical formatter output elsewhere in an
+affected first-party implementation workspace is bounded maintenance, not an
+automatic reason to stop consolidation.
+
+Pass that structured receipt—not a parent summary—to `committer`.
 Invoke `committer` only after that receipt and every consolidation condition pass.
 Provide the requested files, disclosed maintenance files, and the explicit
-`$consolidate` authorization. After its approved staging receipt, follow
-`harden`'s parent-owned commit sequence exactly: verify the staged files and
-cached diff against the receipt, use the proposed message verbatim, and create
-exactly one local Conventional Commit in the parent context, then verify it.
+`$consolidate` authorization. After its approved staging receipt, follow the
+parent-owned commit sequence: verify the staged files and cached diff against
+the receipt, use the proposed message verbatim, and create exactly one local Conventional Commit in the parent context, then verify it.
 Never push.
 
-Extend the delivery receipt with:
+Extend the conversation receipt with:
 
 ```json
 {
