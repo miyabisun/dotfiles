@@ -7,3 +7,6 @@ config/nvim/colorscheme.txt
 # herdr writes its integration scripts through the ~/.claude/hooks symlink and
 # overwrites them on every reinstall, so the checkout must not track them
 agent/claude/hooks/herdr-*.sh
+
+# local Python bytecode (herdr helpers and anything else)
+__pycache__/
