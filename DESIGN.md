@@ -47,3 +47,13 @@ keys.command (type = "shell") から呼ぶ helper は:
 prefix+s = 下 (上下) 分割、prefix+comma = settings、
 alt+s / alt+x / prefix+space = pen (workspace 保存 / 削除 / picker)。
 prefix 二度押しは herdr がリテラル prefix 送出に予約しており割当不可。
+
+## tmux との指癖対応
+
+herdr は agent 用、tmux は agent を置かないローカル作業場。同じ hjkl 対応を
+tmux でも使う: h/l = tmux window (herdr tab)、j/k = tmux session
+(herdr workspace)。session の上下は `list-sessions` の名前順 (LC_ALL=C、
+`_` 始まりは skip) が唯一の順序で、picker の並びと一致する。
+
+tmux の prefix+space / alt+s / alt+x は `tmux-mux` (mux 0.1.1 向けアダプタ)
+の picker / save / close。常設 sidebar (herdr の prefix+b) は tmux には無い。

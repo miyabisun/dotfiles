@@ -69,6 +69,9 @@ grep -Fq '交換後も focus は同じ tab / workspace に残る' "$design"
 grep -Fq 'wrap しない' "$design"
 grep -Fq '削除前の並びに対する位置' "$design"
 grep -Fq 'prefix+ctrl+h' "$design"
+grep -Fq 'tmux window' "$design"
+grep -Fq 'tmux session' "$design"
+grep -Fq 'tmux-mux' "$design"
 # 運用 runtime 証跡 (pane ID 等) を design 文書に書かない
 if grep -Eq 'w[0-9]+:p[0-9]+' "$design"; then
   echo 'DESIGN.md must not carry runtime pane IDs' >&2

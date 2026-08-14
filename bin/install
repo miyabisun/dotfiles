@@ -134,6 +134,7 @@ link "agent/common/designs" "$HOME/.agents"
 
 link "agent/codex/hooks/notify-turn-end.sh" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-session-picker" "$HOME/.local/bin"
+link "config/tmux/bin/tmux-mux" "$HOME/.local/bin"
 
 mkdir -p "$HOME/.config/sheldon"
 link "config/zsh/plugins.toml" "$HOME/.config/sheldon"

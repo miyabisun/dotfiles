@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
-# fzf session switcher (C-b C-b popup).
+# Compat wrapper: prefix+Space / prefix+C-b now use tmux-mux picker.
 set -euo pipefail
-export PATH="$HOME/.fzf/bin:$PATH"
-
-cur="$(tmux display-message -p '#S')"
-s="$(tmux list-sessions -F '#S' \
-  | awk -v cur="$cur" '$0 != cur && $0 !~ /^_/' \
-  | fzf --reverse --prompt='session> ' \
-      --preview 'tmux list-windows -t {} -F "#I: #W (#{pane_current_command})"; echo; tmux capture-pane -ep -t {}' \
-      --preview-window=right,65%)"
-tmux switch-client -t "=$s"
+root="$(cd "$(dirname "$0")" && pwd)"
+exec "$root/tmux-mux" picker

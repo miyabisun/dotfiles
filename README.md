@@ -65,6 +65,7 @@ See `agent/README.md` for details.
 #### `~/.local/bin`
 - `emit-turn-end.sh` -> `agent/common/bin/emit-turn-end.sh`
 - `tmux-session-picker` -> `config/tmux/bin/tmux-session-picker`
+- `tmux-mux` -> `config/tmux/bin/tmux-mux`
 
 # Utilities
 

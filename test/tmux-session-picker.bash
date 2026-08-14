@@ -22,7 +22,13 @@ case "$1" in
   list-sessions)
     printf '%s\n' current normal-one _internal normal-two
     ;;
-  switch-client|attach)
+  list-panes)
+    printf '%s\n' '%1'
+    ;;
+  has-session)
+    exit 0
+    ;;
+  switch-client|attach|list-windows|capture-pane)
     printf '%s\n' "$*" >>"$TMUX_SESSION_PICKER_TMUX_LOG"
     ;;
   *)
@@ -31,25 +37,39 @@ case "$1" in
 esac
 TMUX
 
+cat >"$fake_bin/mux" <<'MUX'
+#!/usr/bin/env bash
+case "${1:-}" in
+  ls) exit 0 ;;
+  *) exit 90 ;;
+esac
+MUX
+
 cat >"$fake_home/.fzf/bin/fzf" <<'FZF'
 #!/usr/bin/env bash
-tee "$TMUX_SESSION_PICKER_FZF_INPUT" \
-  | sed 's/\x1b\[[0-9;]*m//g' \
-  | sed -n '1p'
+tee "$TMUX_SESSION_PICKER_FZF_INPUT" >/dev/null
+if grep -q '^●' "$TMUX_SESSION_PICKER_FZF_INPUT"; then
+  printf '\n● normal-one\n'
+else
+  sed -n '1p' "$TMUX_SESSION_PICKER_FZF_INPUT"
+fi
 FZF
 
-chmod +x "$fake_bin/tmux" "$fake_home/.fzf/bin/fzf"
+chmod +x "$fake_bin/tmux" "$fake_bin/mux" "$fake_home/.fzf/bin/fzf"
 
-PATH="$fake_bin:/usr/bin:/bin" \
+PATH="$fake_bin:$fake_home/.fzf/bin:/usr/bin:/bin" \
   HOME="$fake_home" \
+  MUX_CONFIG="$test_root/empty-mux" \
+  TMUX='test-socket,1,0' \
   TMUX_SESSION_PICKER_FZF_INPUT="$fzf_input" \
   TMUX_SESSION_PICKER_TMUX_LOG="$tmux_log" \
   bash "$repo_root/config/tmux/bin/tmux-session-picker"
 
-# 自セッションと _internal を除いた素の一覧。装飾 (ANSI) は使わない。
+# wrapper → tmux-mux picker。生存 session を ● で統合し、_internal は出さない。
 cat >"$test_root/expected-picker" <<'EXPECTED'
-normal-one
-normal-two
+● current
+● normal-one
+● normal-two
 EXPECTED
 cmp "$test_root/expected-picker" "$fzf_input"
 if grep -q $'\033\[' "$fzf_input"; then
