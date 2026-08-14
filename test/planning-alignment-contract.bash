@@ -104,6 +104,9 @@ for skill in "$spike" "$polish"; do
   # 単一 Codex への1通と、読む前の自案確定
   assert_contains "$skill" '送るのは1通だけ'
   assert_contains "$skill" '返信本文を読む前に自案を確定させる'
+  assert_contains "$skill" '毎回 agent を作成する'
+  assert_contains "$skill" '親が待ち、親が Codex へ中継する'
+  assert_absent "$skill" '作業担当は発火 pane の runtime 1本でファイル変更まで自分でやる'
   assert_absent "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
   assert_absent "$skill" '担当 claude → レビュワーは codex。担当 codex → レビュワーは claude'
   assert_absent "$skill" 'レビュワーが2名なら2通を'

@@ -30,6 +30,8 @@ assert_absent() {
 assert_contains "$polish" 'step 1 で固定した同じ pane へ'
 assert_contains "$polish" '同じ window、次に同じ'
 assert_contains "$polish" '送るのは1通だけ'
+assert_contains "$polish" '毎回 agent を作成する'
+assert_contains "$polish" '親はハブである'
 assert_absent "$polish" 'レビュワーが2名の場合は同一内容を両 pane へ並列送信し'
 assert_absent "$polish" 'closure は両名から受ける'
 
