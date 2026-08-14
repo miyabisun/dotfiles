@@ -74,18 +74,22 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    発火 pane から他の runtime へ実装を委譲することはできない
    (担当の選択は構造上存在せず、既定担当も指名待ちも無い。別の runtime に
    任せたいときは、user がその pane で skill を発火する)。
-   レビュワーは担当から行列で決まる:
-   - 担当 grok → レビュワーは claude と codex の**両方**
-   - 担当 claude → レビュワーは codex。担当 codex → レビュワーは claude
+   レビュワーは **codex 専任・常に1名**。担当から次のように決まる:
+   - 担当 grok または claude → レビュワーは codex
+   - 担当が codex のとき: Codex は原則として実務担当ではない。計画・
+     mutation の前に停止し、「Codex はレビュー専任。grok か claude の
+     pane で同じ依頼を発火してください。」と返す。同じ pane の user が
+     実装を明示号令したときだけ例外として実装する。その場合レビュワーは
+     専任不在なので既存の self-review fallback を使う（Codex
+     自己レビューの正規経路は置かない）
    - same-window/session は pane の距離規則であって、担当・レビュワーの
      runtime を決める規則ではない
    `list_peers` はレビュワー pane の一意解決だけに使う。
-   確定した各レビュワーの pane を `list_peers` で
+   確定したレビュワーの pane を `list_peers` で
    同じ window、次に同じ session の順に一意固定し、その pane へ
    **user 原文 (verbatim)・確認済みの事実・制約だけ**を送って
-   「あなたならどう作る計画を立てるか」を求める。レビュワーが2名なら2通を
-   同一ターンで並列送信し、どちらの返信も読む前に自案を確定させる。返信は
-   各案を個別に user 目的へ照合してから統合する。
+   「あなたならどう作る計画を立てるか」を求める。送るのは1通だけ。
+   返信本文を読む前に自案を確定させる。返信は user 目的へ照合する。
    - **最初の brief に自分の案を入れない。** 完成した案を見せると相手は
      一つの枠内での粗探しに固定され、第二の設計空間が探索されなくなる。
    - 確認済みの事実に**設計判断を混ぜない** (現状・制約・再現証拠だけ)。
@@ -112,8 +116,8 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
         で次へ進む。進む先は phase で分岐する:
         - **planning 返信**が揃った (または不在 default が適用された) →
           A→B 照合 → 契約化以降 (実装・検証・レビュー依頼)
-        - **実装レビュー返信**が揃った → blocking の union を処理し、必要なら
-          修正・再 gate・focused closure。全 closure 後 → commit / 報告
+        - **実装レビュー返信**が揃った → blocking を処理し、必要なら
+          修正・再 gate・focused closure。closure 後 → commit / 報告
      5. 未到着なら delivery を完了扱いせず、何待ちか (どの phase・誰) を1行
         記して次の呼び鈴を待つ。yield 直前の user 向け最終出力は
         「〈phase〉の返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する」
@@ -158,11 +162,9 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    指摘を修正する。未導入で stack に標準のゼロ設定ツールがあるなら導入して
    よい (導入・実施コストが低く効果が大きい。user-origin の標準方針)。
 6. **実装レビュー1回**: step 1 で固定した同じ pane へ、diff・テスト・実行
-   証拠を送り1往復だけ受ける。レビュワーが2名の場合は同一内容を両 pane へ
-   並列送信し、blocking は union として修正、closure は両名から受ける。
+   証拠を送り1往復だけ受ける。
    不在・pane 消失・配達失敗のときだけ self review へ fallback し、下記の
-   観点を自分に適用してその旨を receipt に書く (レビュワーごとに判定・記録
-   する)。peer 接触は step 1 の方針
+   観点を自分に適用してその旨を receipt に書く。peer 接触は step 1 の方針
    すり合わせ1往復と、ここの実装レビュー1往復の**2つで別物**である。
 7. **コミットする**: 既定は 1 invocation = 1 local commit。複数 checkpoint
    commit は、起動時の user 依頼文が明示的に許可した場合のみ (その原文を
@@ -240,12 +242,10 @@ idle も busy も存在扱いで送る。返信待ちの間に active polling �
 軽量段階を無期限に止めず次で進む。不在の判定と記録はレビュワーごとに行い、
 不在を理由に担当を変更しない。
 
-- **片方だけ不在** (レビュワー2名時): 届いた一案は通常どおり A 軸で照合して
-  統合し、欠けた側の分だけ自案を A 軸で self-check する。receipt に
-  `planning_reviewer_unavailable: <runtime>` と客観的な理由を残す
-- **全員不在**: 自案を A 軸で**もう一巡 self-check する**
-  (ズレ検出だけは省略しない)。receipt に `planning_reviewers: unavailable`
-  と理由を残す。
+- **レビュワー不在**: 自案を A 軸で**もう一巡 self-check する**
+  (ズレ検出だけは省略しない)。receipt に
+  `planning_reviewer_unavailable: <runtime>` と
+  `planning_reviewers: unavailable` と客観的な理由を残す。
   **self の見直しを「相互レビュー」と呼ばない。**「独立相互提案は未実施」と
   明記する
 

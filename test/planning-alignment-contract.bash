@@ -89,20 +89,24 @@ for skill in "$spike" "$polish"; do
 
   # 担当→レビュワー行列: 担当は skill を発火した pane の runtime (常に)。
   # 既定担当 grok・指名優先・指名待ちの儀式は廃止 (user-origin)。
-  # grok 担当は claude+codex 両レビュー。距離規則は runtime を決めない
+  # レビュワーは codex 専任1名。距離規則は runtime を決めない
   assert_contains "$skill" '発火した pane の runtime である'
   assert_absent "$skill" '**user の明示指定が最優先**'
   assert_absent "$skill" '**grok が既定の作業担当**'
   assert_absent "$skill" '担当未明示の起動を claude / codex の pane が受け'
   assert_absent "$skill" '起動し直し'
-  assert_contains "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
-  assert_contains "$skill" '担当 claude → レビュワーは codex。担当 codex → レビュワーは claude'
+  assert_contains "$skill" '担当 grok または claude → レビュワーは codex'
+  assert_contains "$skill" 'Codex は原則として実務担当ではない'
+  assert_contains "$skill" 'Codex はレビュー専任。grok か claude の'
   assert_contains "$skill" '担当・レビュワーの'
   # authority 境界: 発火 pane から他の runtime へ実装を委譲できない
   assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
-  # grok 担当時の並列2通と、読む前の自案確定
-  assert_contains "$skill" 'レビュワーが2名なら2通を'
-  assert_contains "$skill" 'どちらの返信も読む前に自案を確定させる'
+  # 単一 Codex への1通と、読む前の自案確定
+  assert_contains "$skill" '送るのは1通だけ'
+  assert_contains "$skill" '返信本文を読む前に自案を確定させる'
+  assert_absent "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
+  assert_absent "$skill" '担当 claude → レビュワーは codex。担当 codex → レビュワーは claude'
+  assert_absent "$skill" 'レビュワーが2名なら2通を'
   # 旧二値規定の再発防止
   assert_absent "$skill" '**反対 runtime の登録 pane**'
   assert_absent "$skill" 'Claude の counterpart は Codex'
@@ -130,7 +134,7 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '**planning 返信**が揃った'
   assert_contains "$skill" 'A→B 照合 → 契約化以降'
   assert_contains "$skill" '**実装レビュー返信**が揃った'
-  assert_contains "$skill" '全 closure 後 → commit / 報告'
+  assert_contains "$skill" 'closure 後 → commit / 報告'
   # 期限は単独で auto-wake しない
   assert_contains "$skill" '**期限はそれ自体で wake しない。**'
   assert_contains "$skill" '待っていた reply doorbell 到着時の自動再開'
@@ -151,8 +155,9 @@ for skill in "$spike" "$polish"; do
   # 不在時 fallback を「相互レビュー」と偽らない
   assert_contains "$skill" 'planning_reviewer_unavailable: <runtime>'
   assert_contains "$skill" 'planning_reviewers: unavailable'
-  assert_contains "$skill" '**片方だけ不在** (レビュワー2名時)'
-  assert_contains "$skill" '欠けた側の分だけ自案を A 軸で self-check する'
+  assert_contains "$skill" '**レビュワー不在**'
+  assert_absent "$skill" '**片方だけ不在** (レビュワー2名時)'
+  assert_absent "$skill" '欠けた側の分だけ自案を A 軸で self-check する'
   assert_contains "$skill" '不在を理由に担当を変更しない'
   assert_absent "$skill" 'planning_counterpart: unavailable'
   assert_contains "$skill" '**self の見直しを「相互レビュー」と呼ばない。**'

@@ -83,12 +83,11 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
 1. spike / polish の内側から呼ばれた場合は、その delivery が
    固定済みのレビュワー集合をそのまま使い、選び直さない。単独起動では、
    この pane の runtime を議論の owner として既存の担当→レビュワー行列で
-   相手を固定する (owner grok → claude と codex の**両方**、
-   owner claude → codex、owner codex → claude)。pane は
+   相手を固定する (owner grok または claude → codex。owner が
+   codex なら delivery と同じ fail-fast で、自己レビュー経路は置かない)。pane は
    agent-talk MCP の `list_peers` で同じ window、次に同じ session の順で
    一意に特定する。候補が曖昧なら推測せず、候補を user に示す。
-2. 特定した各 pane へ**レビュワーごとに1件だけ**送る (2名なら同一ターンに並列で各1通。
-   一方の初回回答を他方へ開示しない)。共通で含める: user 原文 (verbatim)、確認済みの
+2. 特定した pane へ**レビュワーごとに1件だけ**送る。共通で含める: user 原文 (verbatim)、確認済みの
    事実、期限と default action。秘密・`.env` 由来値・private host・internal
    endpoint は送らない。求める返答はフェーズで変える:
    - spike: いま出ている案を添え、**乗っかり**・新案・一番ワクワクする案の
@@ -96,16 +95,14 @@ discuss を起動したら、solo で決め切る前に、利用可能な counte
    - polish: 候補と UX 制約を添え、見落とした **UX 退行**とより軽い代替を求める。
 3. 交換は最大1往復。再照会・承認ループ・delivery 型の二段階照合を持ち込まない。
    返答の採否もフェーズに従う: spike は全案を候補として積み、polish は UX 軸の
-   指摘を反映する。レビュワーが2名のときの指摘は union として扱い、多数決にしない。
+   指摘を反映する。
    単なる選好差はどのフェーズでも小さい可逆案へ収束させ、2回目の問い合わせをしない。
 4. 同一 delivery 内で**そのレビュワー**が既に同一争点へ見解を返している場合は
    再照会しない。同一争点かは記録済みの message ID と争点の対応で判定し、
    意味の推測で照会を省略しない。既出の見解をレビュワー意見として記録し、
-   新規争点だけを照会する。**一方のレビュワーの既出回答を理由に、
-   他方への新規争点の照会を省略しない。**
+   新規争点だけを照会する。
 5. 不在・pane 消失・配達失敗・期限超過の判定と記録は**レビュワーごとに**行う。
-   片方だけ不在なら届いた側の意見は通常どおり扱い、
-   **全員不在のときだけ solo fallback** とし、
+   **Codex 不在なら solo fallback** とし、
    **フェーズ表の出口のいずれかへ必ず着地する**。
    期限は round 開始時に deadline と default action として記録し、**次に実行が
    再開した時点で評価する**。active polling や自動 wake-up は約束しない。

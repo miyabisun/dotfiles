@@ -32,7 +32,9 @@ assert_absent() {
 for skill in "$spike" "$polish"; do
   assert_contains "$skill" '発火した pane の runtime である'
   assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
-  assert_contains "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
+  assert_contains "$skill" '担当 grok または claude → レビュワーは codex'
+  assert_contains "$skill" 'Codex は原則として実務担当ではない'
+  assert_absent "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
   assert_contains "$skill" '**最初の brief に自分の案を入れない。**'
   assert_contains "$skill" '**同じターンで自分の案を起草する。**'
   assert_absent "$skill" 'grok is the default worker'

@@ -16,12 +16,22 @@ assert_contains() {
   }
 }
 
+assert_absent() {
+  local file="$1"
+  local text="$2"
+  if grep -Fq -- "$text" "$file"; then
+    printf 'retired contract still present in %s: %s\n' "$file" "$text" >&2
+    return 1
+  fi
+}
+
 # polish: レビュワーは planning で一意固定し、実装レビューは同じ pane を使う。
-# grok 担当時は両レビュワーへ並列送信し closure は両名から受ける
+# レビュワーは codex 1名。旧2名並列は復活させない
 assert_contains "$polish" 'step 1 で固定した同じ pane へ'
 assert_contains "$polish" '同じ window、次に同じ'
-assert_contains "$polish" 'レビュワーが2名の場合は同一内容を両 pane へ並列送信し'
-assert_contains "$polish" 'closure は両名から受ける'
+assert_contains "$polish" '送るのは1通だけ'
+assert_absent "$polish" 'レビュワーが2名の場合は同一内容を両 pane へ並列送信し'
+assert_absent "$polish" 'closure は両名から受ける'
 
 # polish: spike と横並びの検査項目
 assert_contains "$polish" 'テストの誠実さ (blocking)'
