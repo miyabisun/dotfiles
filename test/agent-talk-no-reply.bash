@@ -14,34 +14,41 @@ assert_contains() {
   }
 }
 
+assert_absent() {
+  local text="$1"
+  if grep -Fq -- "$text" "$talk"; then
+    printf 'retired contract still present in %s: %s\n' "$talk" "$text" >&2
+    return 1
+  fi
+}
+
+# 通常返信と一方向送信の使い分けは残る
 assert_contains 'When the outbound message itself should end the exchange, set `no_reply`.'
 assert_contains 'The daemon makes the one-way intent authoritative'
 assert_contains 'Make that result terminal with `no_reply`'
 assert_contains 'do not send routine acknowledgement, thanks, receipt'
-assert_contains 'Reply to a no-reply brief only when silence would cause material harm'
-assert_contains 'Send at most one veto'
-assert_contains 'Do not answer a terminal veto.'
-# no_reply / 返信不要 is peer-channel only; does not end user-authorized local work
-assert_contains 'control only whether'
-assert_contains 'you must send a peer reply'
-assert_contains 'do **not** end an in-flight'
-assert_contains 'user-authorized local workflow'
-assert_contains 'continue that workflow'
-assert_contains 'same turn'
 assert_contains 'That restraint is about the peer channel only'
 
-# 待機契約 (中央): 依存 blocked + 有用な独立作業なし → turn 終了は MUST。
-# sleep/wait loop/list_peers polling での turn 保持禁止、reply doorbell は
-# 同一 delivery の再開 trigger、sent/queued は受理済みで再送禁止、yield 前の
-# 最終出力は未完了を明示し完了報告と誤認させない
+# agent-talk は簡易的な通話機能。no_reply へ delivery 再開の意味を戻さない
+assert_absent 'user-authorized local workflow'
+assert_absent '`$polish` / `$spike` delivery'
+assert_absent 'permission to mark the delivery complete'
+# Material veto という返信例外の儀式も持たない
+assert_absent 'Reply to a no-reply brief only when silence would cause material harm'
+assert_absent 'Material veto'
+assert_absent 'Send at most one veto'
+assert_absent 'terminal material veto'
+
+# 待機は軽い規則だけ: turn を保持しない (sleep/wait loop/list_peers polling
+# 禁止)、呼び鈴で会話を再開する、sent/queued は受理済みで再送しない。
+# delivery 再開契約と marker 義務は持ち込まない
 assert_contains '## Waiting for a reply'
-assert_contains 'no other useful independent work remains'
-assert_contains 'mandatory, not optional'
 assert_contains 'Never hold the turn with sleep, wait loops, or `list_peers` polling'
-assert_contains 'resume trigger of the'
+assert_contains "doorbell resumes the conversation"
 assert_contains 'never resend'
-assert_contains '返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する'
-assert_contains 'reads as a completion report is forbidden'
+assert_absent 'delivery:waiting'
+assert_absent 'resume trigger of the'
+assert_absent 'reads as a completion report is forbidden'
 
 if grep -Fq 'reply-policy:' "$talk"; then
   echo 'body reply-policy markers must not remain after CLI migration' >&2

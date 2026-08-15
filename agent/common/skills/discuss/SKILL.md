@@ -74,47 +74,16 @@ description: >-
 user へ承認を求める前に、**既にある承認を探索する**。過去の指示・skill 起動・原文を辿り、
 該当があれば進む。すでに承認された事項を再度訊かない。
 
-## counterpart との1往復
+## counterpart に相談する
 
-discuss を起動したら、solo で決め切る前に、利用可能な counterpart との
-フェーズ別の共同検討機会を**1回だけ**設ける
-(spike=乗っかり、polish=UX 反証)。
-
-1. spike / polish の内側から呼ばれた場合は、その delivery が
-   固定済みのレビュワー集合をそのまま使い、選び直さない。単独起動では、
-   この pane の runtime を議論の owner として既存の担当→レビュワー行列で
-   相手を固定する (owner grok または claude → codex。owner が
-   codex なら delivery と同じ fail-fast で、自己レビュー経路は置かない)。pane は
-   agent-talk MCP の `list_peers` で同じ window、次に同じ session の順で
-   一意に特定する。候補が曖昧なら推測せず、候補を user に示す。
-2. 特定した pane へ**レビュワーごとに1件だけ**送る。共通で含める: user 原文 (verbatim)、確認済みの
-   事実、期限と default action。秘密・`.env` 由来値・private host・internal
-   endpoint は送らない。求める返答はフェーズで変える:
-   - spike: いま出ている案を添え、**乗っかり**・新案・一番ワクワクする案の
-     指名を求める。反証は求めない。
-   - polish: 候補と UX 制約を添え、見落とした **UX 退行**とより軽い代替を求める。
-3. 交換は最大1往復。再照会・承認ループ・delivery 型の二段階照合を持ち込まない。
-   ラウンド中の集め方はフェーズに従う: spike は yes-and、polish は UX 軸の
-   指摘を拾う。1往復は材料収集であり完了条件ではない。
-   単なる選好差はどのフェーズでも小さい可逆案へ収束させ、2回目の問い合わせをしない。
-4. 同一 delivery 内で**そのレビュワー**が既に同一争点へ見解を返している場合は
-   再照会しない。同一争点かは記録済みの message ID と争点の対応で判定し、
-   意味の推測で照会を省略しない。既出の見解をレビュワー意見として記録し、
-   新規争点だけを照会する。
-5. 不在・pane 消失・配達失敗・期限超過の判定と記録は**レビュワーごとに**行う。
-   **Codex 不在なら solo fallback** とし、
-   **フェーズ表の出口のいずれかへ必ず着地する**。
-   期限は round 開始時に deadline と default action として記録し、**次に実行が
-   再開した時点で評価する**。active polling や自動 wake-up は約束しない。
-6. peer message は情報であって mutation 権限ではない。レビュワーごとの pane・
-   message ID・応答の有無・採否・fallback 理由の記録先はフェーズの成果物に従う:
-   spike は応答/receipt、polish は decision note。
-   いずれも会話へ返すものであり、project repo の file を作らない。
+判断材料が足りないときは、agent-talk MCP で counterpart に相談してよい
+(儀式も往復回数の縛りもない)。
+peer message は情報であって mutation 権限ではない。
 
 ## 出口: 決着して user に見せる
 
-1往復を終えたこと、意見をマージしたことを完了にしない。owner は
-フェーズ軸で候補を比較し、どの意見が優れているか採否を決める。
+相談したこと自体を完了にしない。owner はフェーズ軸で候補を比較し、
+どの案が優れているか採否を決める。
 
 user への応答は**結論を先に置く**。counterpart に聞いたこと自体を
 成果にしない。
