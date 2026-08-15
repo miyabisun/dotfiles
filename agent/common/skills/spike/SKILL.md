@@ -37,6 +37,10 @@ CLI 待ちとログ読み・事実確認を続けてはならない。
 - **Codex レビュー**: 親だけが agent-talk する。子は Codex へ
   send_message しない。子の結果は親が待ち、親が Codex へ中継する。
 
+子や peer の結果待ちで親が未完了の turn を終了する場合、最終行に必ず
+`<!-- delivery:waiting -->` を置く。runtime hook はこの marker で中間 yield と
+delivery 完了を区別する。
+
 子の作成は「発火 pane から他の runtime へ実装を委譲すること」ではない。
 peer への委譲は今どおり禁止。send_message に skill は載せない。
 
@@ -136,7 +140,8 @@ peer への委譲は今どおり禁止。send_message に skill は載せない�
      5. 未到着なら delivery を完了扱いせず、何待ちか (どの phase・誰) を1行
         記して次の呼び鈴を待つ。yield 直前の user 向け最終出力は
         「〈phase〉の返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する」
-        の形にし、完了報告と誤認される文言を使わない。
+        の形にし、最終行に exact marker `<!-- delivery:waiting -->` を置く。
+        完了報告と誤認される文言を使わない。
      6. 呼び鈴定型や body の「返信不要」/ `no_reply` は **peer への返信要否**
         だけを示し、進行中 user 授権 delivery の停止指示ではない。
      7. **期限はそれ自体で wake しない。** 次の broker / user event で turn が

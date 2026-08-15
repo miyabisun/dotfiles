@@ -103,8 +103,10 @@ Sending a request does not license holding the turn until the answer arrives.
   never resend it by hand while waiting.
 - The final user-visible output before yielding must state, in effect,
   「〈何〉の返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する」。
-  Wording that reads as a completion report is forbidden while the delivery
-  is incomplete.
+  Put the exact marker `<!-- delivery:waiting -->` on the final line. The
+  runtime completion hook uses it to distinguish this intentional yield from
+  a completed delivery. Wording that reads as a completion report is forbidden
+  while the delivery is incomplete.
 
 ## Peer boundary
 
