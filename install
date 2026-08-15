@@ -1,9 +1,11 @@
 #!/bin/bash
 if type git >> /dev/null; then
   repo="miyabisun/dotfiles"
-  git clone "https://github.com/${repo}.git" ~/.dotfiles
-  git -C ~/.dotfiles remote set-url origin "git@github.com:${repo}.git"
-  bash ~/.dotfiles/bin/install
+  dest="$HOME/projects/miyabisun/dotfiles"
+  mkdir -p "$(dirname "$dest")"
+  git clone "https://github.com/${repo}.git" "$dest"
+  git -C "$dest" remote set-url origin "git@github.com:${repo}.git"
+  bash "$dest/bin/install"
 else
   echo "not found git."
 fi

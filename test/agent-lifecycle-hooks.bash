@@ -66,7 +66,8 @@ done
 test "$(grep -c 'herdr-state .* session$' "$state_log")" -eq 2
 
 # 一般の完了通知は残し、agent-talk lifecycle push は全 runtime から消す。
-jq -e '.hooks.Stop[0].hooks[0].command | endswith("stop-turn-end.sh")' \
+# command は legacy root 直参照ではなく installer が張る安定リンク経由。
+jq -e '.hooks.Stop[0].hooks[0].command == "bash \"$HOME/.claude/hooks/stop-turn-end.sh\""' \
   "$repo_root/agent/claude/settings.json" >/dev/null
 jq -e '.hooks.Stop[0].hooks[0].command == "./stop-turn-end.sh"' \
   "$repo_root/agent/grok/hooks/lifecycle.json" >/dev/null

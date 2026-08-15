@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # ==================================================
 # Shared environment variables (POSIX sh compatible)
 # Sourced by both .bashrc and .zshrc
@@ -21,9 +22,25 @@ _prepend_path() {
 
 [ -d "$HOME/.local/bin" ]         && _prepend_path "$HOME/.local/bin"
 [ -d "$HOME/.local/share/fnm" ]   && _prepend_path "$HOME/.local/share/fnm"
-[ -d "$HOME/.dotfiles/bin/bw" ]   && _prepend_path "$HOME/.dotfiles/bin/bw"
 [ -d "$HOME/go/bin" ]             && _prepend_path "$HOME/go/bin"
 [ -d "$HOME/.bun/bin" ]           && _prepend_path "$HOME/.bun/bin"
+
+# repo 配下の bin/bw は、この file 自身の位置から repo root を導出して足す。
+# bash は BASH_SOURCE、zsh は %x prompt 展開 (bash が構文解析しないよう eval
+# で包む)。どちらでもなければ黙って skip する。
+if [ -n "${BASH_SOURCE:-}" ]; then
+  _dotfiles_self="${BASH_SOURCE}"
+elif [ -n "${ZSH_VERSION:-}" ]; then
+  eval '_dotfiles_self="${(%):-%x}"'
+else
+  _dotfiles_self=""
+fi
+if [ -n "$_dotfiles_self" ]; then
+  _dotfiles_bw="$(cd -- "$(dirname -- "$_dotfiles_self")/../.." && pwd -P)/bin/bw"
+  [ -d "$_dotfiles_bw" ] && _prepend_path "$_dotfiles_bw"
+  unset _dotfiles_bw
+fi
+unset _dotfiles_self
 
 # Homebrew keg-only formulas (resolves /opt/homebrew, /usr/local, /home/linuxbrew/.linuxbrew)
 if command -v brew >/dev/null 2>&1; then

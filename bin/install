@@ -21,7 +21,6 @@ mkdir -p "$HOME/.config"
 link "config/git" "$HOME/.config"
 link "config/nvim" "$HOME/.config"
 link "config/tmux" "$HOME/.config"
-link "config/.deepl.json" "$HOME/.config"
 
 mkdir -p "$HOME/.claude"
 link "agent/common/skills" "$HOME/.claude"
@@ -57,6 +56,8 @@ elif [ ! -e "$codex_config" ] && [ ! -L "$codex_config" ]; then
 fi
 
 link "agent/codex/hooks.json" "$HOME/.codex"
+# hooks.json は ~/.codex/hooks/ の安定リンク経由で script を参照する
+link "agent/codex/hooks" "$HOME/.codex"
 link "agent/codex/agents" "$HOME/.codex"
 link "agent/common/rules/GLOBAL.md" "$HOME/.codex/AGENTS.md"
 agent/common/bin/install-agent-runtime || exit 1
@@ -143,29 +144,86 @@ command -v sheldon > /dev/null && sheldon lock
 START_MARK="# DOTFILES_START"
 END_MARK="# DOTFILES_END"
 
-# rc ファイルにそのまま書き込む行なので、$HOME はここで展開しない
-# shellcheck disable=SC2016
-EXPORTS_LINE='[ -f "$HOME/.dotfiles/config/bash/exports.sh" ] && . "$HOME/.dotfiles/config/bash/exports.sh"'
-# shellcheck disable=SC2016
-ZSH_LINE='[ -f "$HOME/.dotfiles/config/zsh/init.zsh" ] && . "$HOME/.dotfiles/config/zsh/init.zsh"'
+# rc へ書く行は自己位置から導出した repo root の絶対パスを焼き込む。
+# rc は machine-local なので portable 制約は無く、legacy root には依存しない。
+repo_root="$(pwd)"
+EXPORTS_LINE="[ -f \"$repo_root/config/bash/exports.sh\" ] && . \"$repo_root/config/bash/exports.sh\""
+ZSH_LINE="[ -f \"$repo_root/config/zsh/init.zsh\" ] && . \"$repo_root/config/zsh/init.zsh\""
 
-for rcfile in "$HOME/.bashrc" "$HOME/.zshrc"; do
-  if [ -f "$rcfile" ]; then
-    if ! grep -q "$START_MARK" "$rcfile"; then
-      echo "Adding dotfiles config to $rcfile..."
-      # 追記するだけで、同じファイルの読み書きはしていない (SC2094 は誤検知)
-      # shellcheck disable=SC2094
-      {
-        echo ""
-        echo "$START_MARK"
-        echo "$EXPORTS_LINE"
-        if [ "$rcfile" = "$HOME/.zshrc" ]; then
-          echo "$ZSH_LINE"
-        fi
-        echo "$END_MARK"
-      } >> "$rcfile"
-    else
-      echo "Dotfiles config already present in $rcfile."
-    fi
+# managed block の管理は 2 相で行う。第 1 相 (read-only preflight) で全対象
+# rc の marker を検証し、1 件でも破損 (片方欠け・順序逆・複数) があれば
+# どの rc にも書き込まずに abort する。全件 valid のときだけ第 2 相で
+# 追加 (0 組) / 丸ごと置換 (1 組) を行う。
+validate_rc_block() {
+  rcfile="$1"
+  [ -f "$rcfile" ] || return 0
+  starts="$(grep -cFx "$START_MARK" "$rcfile" || true)"
+  ends="$(grep -cFx "$END_MARK" "$rcfile" || true)"
+  if [ "$starts" -eq 0 ] && [ "$ends" -eq 0 ]; then
+    return 0
   fi
+  if [ "$starts" -ne 1 ] || [ "$ends" -ne 1 ]; then
+    echo "Broken dotfiles block in $rcfile ($starts start / $ends end markers); fix it manually." >&2
+    return 1
+  fi
+  start_line="$(grep -nFx "$START_MARK" "$rcfile" | cut -d: -f1)"
+  end_line="$(grep -nFx "$END_MARK" "$rcfile" | cut -d: -f1)"
+  if [ "$start_line" -gt "$end_line" ]; then
+    echo "Broken dotfiles block in $rcfile (end marker before start); fix it manually." >&2
+    return 1
+  fi
+  return 0
+}
+
+install_rc_block() {
+  rcfile="$1"
+  block="$2"
+  [ -f "$rcfile" ] || return 0
+  starts="$(grep -cFx "$START_MARK" "$rcfile" || true)"
+  if [ "$starts" -eq 0 ]; then
+    if ! printf '\n%s\n' "$block" >> "$rcfile"; then
+      echo "Failed to append dotfiles block to $rcfile" >&2
+      exit 1
+    fi
+    echo "Added dotfiles block to $rcfile."
+    return 0
+  fi
+  start_line="$(grep -nFx "$START_MARK" "$rcfile" | cut -d: -f1)"
+  end_line="$(grep -nFx "$END_MARK" "$rcfile" | cut -d: -f1)"
+  rc_tmp="$(mktemp)" || exit 1
+  # render 失敗 (head/tail どれか 1 つでも) は成功表示せず nonzero で終える
+  if ! {
+    head -n "$((start_line - 1))" "$rcfile" \
+      && printf '%s\n' "$block" \
+      && tail -n "+$((end_line + 1))" "$rcfile"
+  } > "$rc_tmp"; then
+    rm -f "$rc_tmp"
+    echo "Failed to render dotfiles block for $rcfile" >&2
+    exit 1
+  fi
+  # rc が symlink でも inode と permission を保ったまま中身だけ入れ替える
+  if ! cat "$rc_tmp" > "$rcfile"; then
+    rm -f "$rc_tmp"
+    echo "Failed to write dotfiles block to $rcfile" >&2
+    exit 1
+  fi
+  rm -f "$rc_tmp"
+  echo "Replaced dotfiles block in $rcfile."
+}
+
+rc_preflight_failed=0
+for rcfile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+  validate_rc_block "$rcfile" || rc_preflight_failed=1
 done
+if [ "$rc_preflight_failed" -ne 0 ]; then
+  echo "No rc file was modified." >&2
+  exit 1
+fi
+
+install_rc_block "$HOME/.bashrc" "$START_MARK
+$EXPORTS_LINE
+$END_MARK"
+install_rc_block "$HOME/.zshrc" "$START_MARK
+$EXPORTS_LINE
+$ZSH_LINE
+$END_MARK"

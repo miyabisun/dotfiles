@@ -4,7 +4,7 @@
       {
         "hooks": [
           {
-            "command": "bash ~/.dotfiles/agent/codex/hooks/block-git-discard.sh",
+            "command": "bash \"$HOME/.codex/hooks/block-git-discard.sh\"",
             "statusMessage": "git 破棄コマンドチェック",
             "timeout": 10,
             "type": "command"

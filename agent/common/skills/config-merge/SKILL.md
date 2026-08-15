@@ -2,7 +2,8 @@
 name: config-merge
 description: >-
   Reconcile the live Codex config at ~/.codex/config.toml with the portable
-  dotfiles config at ~/.dotfiles/agent/codex/config.toml. Use when Codex
+  dotfiles config at ~/projects/miyabisun/dotfiles/agent/codex/config.toml.
+  Use when Codex
   settings changed locally, dotfiles brought settings from another machine,
   or the user asks to merge, synchronize, promote, or distribute Codex config
   without losing machine-local state.
@@ -16,7 +17,7 @@ the live config.
 
 ## Files
 
-- Shared: `$HOME/.dotfiles/agent/codex/config.toml`
+- Shared: `$HOME/projects/miyabisun/dotfiles/agent/codex/config.toml`
 - Live: `$HOME/.codex/config.toml`
 
 Treat a live symlink resolving to the shared file as a migration blocker. Do
@@ -31,9 +32,9 @@ symlink first.
    config history:
 
    ```text
-   git -C "$HOME/.dotfiles" status --short
-   git -C "$HOME/.dotfiles" diff -- agent/codex/config.toml
-   git -C "$HOME/.dotfiles" log -p -5 -- agent/codex/config.toml
+   git -C "$HOME/projects/miyabisun/dotfiles" status --short
+   git -C "$HOME/projects/miyabisun/dotfiles" diff -- agent/codex/config.toml
+   git -C "$HOME/projects/miyabisun/dotfiles" log -p -5 -- agent/codex/config.toml
    ```
 
 4. Preserve unrelated dotfiles changes and any pre-staged work.
@@ -90,7 +91,8 @@ Local-only settings should remain in the live file and be absent from shared.
 
 1. Parse both files as TOML again.
 2. Run `codex --strict-config --version` against the live configuration.
-3. Run `git -C "$HOME/.dotfiles" diff --check` and inspect the complete shared
+3. Run `git -C "$HOME/projects/miyabisun/dotfiles" diff --check` and inspect
+   the complete shared
    config diff.
 4. Check that no secrets or local-only tables entered the shared diff.
 5. Confirm the live file is not a symlink and still contains retained local
