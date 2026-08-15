@@ -30,8 +30,8 @@ assert_absent() {
 }
 
 for skill in "$spike" "$polish"; do
-  assert_contains "$skill" '発火した pane の runtime である'
-  assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
+  assert_contains "$skill" 'pane の runtime が担う。'
+  assert_contains "$skill" 'runtime へ投げ直すことはできない'
   assert_contains "$skill" 'レビュワーは**同期召喚する `codex exec` の1プロセス**である'
   assert_absent "$skill" 'レビュワーは**発火 pane と同じ space の `review` タブ・常に1名**'
   assert_absent "$skill" 'review タブは原則として実務担当ではない'

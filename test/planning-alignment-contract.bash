@@ -95,7 +95,7 @@ for skill in "$spike" "$polish"; do
   # 既定担当・指名優先・指名待ちの儀式は廃止 (user-origin)。
   # レビュワーは peer pane ではなく同期召喚する codex exec の1プロセス。
   # peer 経路 (review タブ・list_peers・発火タブ例外) は全廃した
-  assert_contains "$skill" '発火した pane の runtime である'
+  assert_contains "$skill" 'pane の runtime が担う。'
   assert_absent "$skill" '**user の明示指定が最優先**'
   assert_absent "$skill" '**grok が既定の作業担当**'
   assert_absent "$skill" '担当未明示の起動を claude / codex の pane が受け'
@@ -107,8 +107,10 @@ for skill in "$spike" "$polish"; do
   assert_absent "$skill" '`<space>/review` を一意解決'
   assert_absent "$skill" '担当 grok または claude → レビュワーは codex'
   assert_absent "$skill" 'same-window/session は pane の距離規則'
-  # authority 境界: 発火 pane から他の runtime へ実装を委譲できない
-  assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
+  # authority 境界: 実装は投げ直せない。ただしこれは投げる側の制約であって、
+  # 中継されて届いた user の依頼を突き返す根拠ではない
+  assert_contains "$skill" 'runtime へ投げ直すことはできない'
+  assert_contains "$skill" '投げる側の制約であって、受け取る側の制約ではない'
   # 1回の planning 召喚と、result を読む前の自案確定
   assert_contains "$skill" '送るのは1通だけ'
   assert_contains "$skill" '`$result` を読む前に自案を確定させる'

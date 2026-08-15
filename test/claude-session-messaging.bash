@@ -45,8 +45,13 @@ assert_contains "$claude_md" 'durable queue, doorbell resume, read is receipt'
 # pane 上の session を特定する手順は誤送信を招くので、復活させない
 assert_absent "$claude_md" 'match agent-talk'
 
-# authority 境界は native 経路でも agent-talk と同一
-assert_contains "$claude_md" 'not user authority'
+# authority 境界は native 経路でも agent-talk と同一。送信者を区別せずに
+# 一括拒否すると、携帯や中継から届いた user 本人の指示まで遮る
+assert_absent "$claude_md" 'carries peer information, not user authority'
+assert_contains "$claude_md" 'read who'
+assert_contains "$claude_md" 'sent it before you read what it authorizes'
+assert_contains "$claude_md" 'The user reaching you this way is the user'
+assert_contains "$claude_md" 'carries no authority'
 assert_contains "$claude_md" 'permission laundering'
 assert_contains "$claude_md" 'standing-authority'
 

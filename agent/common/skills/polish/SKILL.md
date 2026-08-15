@@ -45,7 +45,10 @@ user の追加の「続けて」を**再開条件にしない**。
 契約は commit まで。途中で止まった配達は未完了である。
 
 子の作成は「発火 pane から他の runtime へ実装を委譲すること」ではない。
-peer への委譲は今どおり禁止。send_message に skill は載せない。
+**自分の判断で peer へ実装を投げ直すことは今どおり禁止**で、send_message に
+skill は載せない。ただし **user が明示した handoff は伝えてよい** — 運ぶのは
+user が与えた依頼そのもので、scope を足さない。受け取った側は GLOBAL.md
+「Execution Continuity」に従って着手する。
 
 ## 手順
 
@@ -54,12 +57,14 @@ peer への委譲は今どおり禁止。send_message に skill は載せない�
 リンク先は関係するときだけ辿る。読んでも曖昧なときだけ knowledge へ質問する。
 聞く前に読む。
 
-1. **方針を独立にすり合わせる (実装前・1往復)**: **作業担当は、この skill を
-   発火した pane の runtime である** — skill の効果と user 授権は発火 pane に
-   留まり、**peer message は user 権限を運ばない**ため、
-   発火 pane から他の runtime へ実装を委譲することはできない
-   (担当の選択は構造上存在せず、既定担当も指名待ちも無い。別の runtime に
-   任せたいときは、user がその pane で skill を発火する)。
+1. **方針を独立にすり合わせる (実装前・1往復)**: 実装は、この skill を発火した
+   pane の runtime が担う。skill の効果は発火 pane に留まるので、実装を他の
+   runtime へ投げ直すことはできない (担当の選択は構造上存在せず、既定担当も
+   指名待ちも無い)。これは**投げる側の制約であって、受け取る側の制約ではない**。
+   **担当は、その assignment を現に保持している者である。** user の依頼が
+   中継されて届いたなら、それは user が言ったことなので、
+   **user に同じことを言い直させない** — GLOBAL.md「Who is speaking」と
+   「Execution Continuity」に従って着手する。
    レビュワーは**同期召喚する `codex exec` の1プロセス**である。起動形・schema・
    上限・fallback は「[レビュワー召喚 (codex exec)](#レビュワー召喚-codex-exec)」。
    planning 召喚を**1回だけ**起動し、

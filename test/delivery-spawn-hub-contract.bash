@@ -44,14 +44,14 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" 'peer ではない'
   assert_absent "$skill" '作業担当は発火 pane の runtime 1本でファイル変更まで自分でやる'
   assert_absent "$skill" '子を作らない'
-  assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
+  assert_contains "$skill" 'runtime へ投げ直すことはできない'
   # delivery:waiting marker は子 agent の結果待ち専用。peer 待ちは無い
   assert_contains "$skill" '<!-- delivery:waiting -->'
   assert_contains "$skill" '子 agent の結果待ちにだけ使う'
   assert_absent "$skill" '子や peer の結果待ち'
 done
 
-assert_contains "$global" 'not user authority'
+assert_contains "$global" 'it creates no authority and widens none'
 assert_contains "$talk" 'do not expose `--skill` or `--from`'
 
 echo 'delivery spawn hub contract test: pass'

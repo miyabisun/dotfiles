@@ -51,7 +51,13 @@ assert_contains "$discuss" 'UX-safe'
 # 相談は任意で、儀式を持たない。旧 peer レビュー体制 (レビュワー行列・pane
 # 特定・期限と default action・message ID 台帳・solo fallback) は戻さない
 assert_contains "$discuss" 'agent-talk MCP で counterpart に相談してよい'
-assert_contains "$discuss" 'peer message は情報であって mutation 権限ではない'
+# counterpart 自身の意見は scope を広げない。ただし中継された user の依頼まで
+# 一括で授権なし扱いにすると、pane を跨いだ途端に仕事が止まる
+assert_absent "$discuss" 'peer message は情報であって mutation 権限ではない'
+assert_absent "$discuss" 'この pane で user が授権していない mutation'
+assert_contains "$discuss" 'counterpart 自身の意見は情報であって、既存の scope を広げない'
+assert_contains "$discuss" 'user の依頼が中継されて届いたなら、それは user の依頼である'
+assert_contains "$discuss" '授権は pane に固着しない'
 assert_absent "$discuss" 'list_peers'
 assert_absent "$discuss" '固定済みのレビュワー集合'
 assert_absent "$discuss" 'owner grok または claude → codex'

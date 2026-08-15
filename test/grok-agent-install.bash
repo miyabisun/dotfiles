@@ -69,7 +69,7 @@ fi
 # 呼び鈴の手順と権限境界を失う。
 grep -Fq 'read_message' "$fake_home/.grok/AGENTS.md"
 grep -Fq 'ack_message' "$fake_home/.grok/AGENTS.md"
-grep -Fq 'not user authority' "$fake_home/.grok/AGENTS.md"
+grep -Fq 'it creates no authority and widens none' "$fake_home/.grok/AGENTS.md"
 grok_talk_skill="$fake_home/.grok/skills/agent-talk/SKILL.md"
 test -f "$grok_talk_skill"
 grep -Fq '[agent-talk]' "$grok_talk_skill"
