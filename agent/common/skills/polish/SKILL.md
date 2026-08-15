@@ -49,6 +49,11 @@ peer への委譲は今どおり禁止。send_message に skill は載せない�
 
 ## 手順
 
+**どの手順よりも先に読む**: 対象 project の知識が knowledge repository にあるなら、
+その `library/index.md` と、対象 project の `projects/<name>/index.md` を読む。
+リンク先は関係するときだけ辿る。読んでも曖昧なときだけ knowledge へ質問する。
+聞く前に読む。
+
 1. **方針を独立にすり合わせる (実装前・1往復)**: **作業担当は、この skill を
    発火した pane の runtime である** — skill の効果と user 授権は発火 pane に
    留まり、**peer message は user 権限を運ばない**ため、
@@ -366,6 +371,9 @@ secret・権限境界・破壊的データ・version・将来のリリース可�
 ## 不変条件 (全段階共通)
 
 - push・merge・deploy・release はしない
+- ただし、user が起動した外側の worker skill が、この delivery の commit を
+  feature branch へ push することは妨げない。push を所有するのはその worker
+  skill であり、spike / polish 自身ではない
 - 判断履歴・TODO・plan・ledger・review log を **project repo へ file として残さない**。
   経緯は receipt と knowledge が持つ (GLOBAL.md「Project Memory Boundary」)
 - secret・`.env` をコミットしない。agent-talk journal に秘密を載せない

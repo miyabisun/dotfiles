@@ -53,6 +53,11 @@ peer への委譲は今どおり禁止。send_message に skill は載せない�
 
 ## 手順
 
+**どの手順よりも先に読む**: 対象 project の知識が knowledge repository にあるなら、
+その `library/index.md` と、対象 project の `projects/<name>/index.md` を読む。
+リンク先は関係するときだけ辿る。読んでも曖昧なときだけ knowledge へ質問する。
+聞く前に読む。
+
 0. **土台を確認する** (この手順は **Rust プロジェクトだけ**に効く。土台が
    Rust 向けなので、他 stack を突き合わせても意味がない。新規・既存の
    どちらでも通る — 「新規だけ」にすると既存 repo へ永久に届かない):
@@ -404,6 +409,9 @@ spike 自身は push しない。
 ## 不変条件 (全段階共通)
 
 - push・merge・deploy・release はしない
+- ただし、user が起動した外側の worker skill が、この delivery の commit を
+  feature branch へ push することは妨げない。push を所有するのはその worker
+  skill であり、spike / polish 自身ではない
 - secret・`.env` をコミットしない。agent-talk journal に秘密を載せない
 - レビュワー召喚の prompt・schema・result を tracked file にしない
 - 無関係な作業中変更 (他セッションの未コミット作業を含む) を保護する

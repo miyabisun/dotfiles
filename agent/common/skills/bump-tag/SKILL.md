@@ -5,7 +5,6 @@ description: >-
   (infer from commits), major, minor, patch, or first (explicit first
   release). Use when the user asks to bump version, cut a release, tag a
   release, or run bump-tag.
-disable-model-invocation: true
 ---
 
 # bump-tag
@@ -16,6 +15,20 @@ Release the current repository: bump version → commit → tag → push → con
 Default: `auto`
 
 This skill's invocation **is** explicit permission to commit, tag, and push — overriding the usual "never commit unless asked" rule.
+
+A release task the user issued can also carry that order, on narrower terms.
+**What a claimed task grants is the same procedure, not the same scope.**
+That authority covers only the repository, branch, and operation the task names,
+and it lives only while a worker skill the user invoked holds it. The authority
+ends when the task does — never manufacture it yourself.
+**Never create the release task that would authorize your own release.**
+
+## When a release happens
+
+**Release never rides along with ordinary delivery or a worker loop.** No
+routine delivery, review, or worker cycle fires this skill on its own. A
+release happens in exactly two cases: the user invokes this skill, or a
+release task the user issued is claimed and calls it.
 
 ## 1. Resolve bump level
 
@@ -39,6 +52,11 @@ truth — with `git ls-remote --tags origin`, and locally with `git tag -l 'v*'`
   outside bump-tag's guarantee.
 
 ### `auto`
+
+If a release task named the level (`auto` / `major` / `minor` / `patch` /
+`first`), take that value as given and resolve it in the matching section
+below. **Never substitute `auto` for a level the task named.** `auto` is the
+default only when neither the user nor the task named a level.
 
 1. Detect current version and existing tags (see §2–3). First-release and
    inconsistent-tag cases are handled by the check above — origin tags exist here.
@@ -76,8 +94,25 @@ state (first-release check above). Otherwise follow the first-release check abov
 
 ## 2. Preflight (abort and report on failure)
 
+**Verify before you move a local branch or tag.** The order below is deliberate,
+and the guarantee is precise: every check passes before the first command that
+moves a local branch or tag. It is not a promise of zero side effects.
+
+- Start by fetching the origin default branch and tags (`git fetch origin --tags`).
+  Fetching is a side effect: it
+  updates remote-tracking refs and `FETCH_HEAD`, but no local branch or tag,
+  so it is safe to run ahead of the checks below
+- Resolve the default branch name from remote HEAD
+  (`git symbolic-ref refs/remotes/origin/HEAD`) — never assume it is `main`
 - `git status --porcelain` must be empty (no unrelated changes in the release commit)
-- Current branch must be the default branch (usually `main`)
+- Current branch must be the default branch (usually `main`) — **abort** otherwise,
+  and move no ref until this check passes. A merge with no target named would
+  fast-forward whatever branch the caller happened to be on, before the abort fires
+- Only then sync the default branch **fast-forward only**, naming the target
+  explicitly (`git merge --ff-only origin/<default>`); if local is ahead of or
+  diverged from origin, **abort**
+- After the sync, `HEAD` must match `origin/<default>` — **abort** otherwise,
+  so a tag is never cut on a stale state
 - After computing the new version, `git ls-remote --tags origin` must not already have `vX.Y.Z`
 
 ## 3. Detect current version
