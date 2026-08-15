@@ -30,12 +30,13 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
 配達のたびに**毎回 agent を作成する**。親の同一長い文脈でファイル変更・
 CLI 待ちとログ読み・事実確認を続けてはならない。
 
-- **親が担う**: 初期の設計と判断、Codex との agent-talk、子への割り当て、
+- **親が担う**: 初期の設計と判断、review タブとの agent-talk、子への割り当て、
   子の完了待ち。親はハブである。
 - **子が担う**: ファイル変更、CLI 待ちとログ読み、事実確認。
   子は発火 pane の user 授権を継承する。peer ではない。
-- **Codex レビュー**: 親だけが agent-talk する。子は Codex へ
-  send_message しない。子の結果は親が待ち、親が Codex へ中継する。
+- **review タブレビュー**: 親だけが review タブと agent-talk する。
+  子は review タブへ send_message しない。
+  子の結果は親が待ち、親が review タブへ中継する。
 
 子や peer の結果待ちで親が未完了の turn を終了する場合、最終行に必ず
 `<!-- delivery:waiting -->` を置く。runtime hook はこの marker で中間 yield と
@@ -93,19 +94,19 @@ peer への委譲は今どおり禁止。send_message に skill は載せない�
    発火 pane から他の runtime へ実装を委譲することはできない
    (担当の選択は構造上存在せず、既定担当も指名待ちも無い。別の runtime に
    任せたいときは、user がその pane で skill を発火する)。
-   レビュワーは **codex 専任・常に1名**。担当から次のように決まる:
-   - 担当 grok または claude → レビュワーは codex
-   - 担当が codex のとき: Codex は原則として実務担当ではない。計画・
-     mutation の前に停止し、「Codex はレビュー専任。grok か claude の
-     pane で同じ依頼を発火してください。」と返す。同じ pane の user が
+   レビュワーは**発火 pane と同じ space の `review` タブ・常に1名**。
+   - 発火 pane が review タブ自身のとき: review タブは原則として実務担当ではない。
+     計画・mutation の前に停止し、「review タブはレビュー専任。chat 等の
+     作業タブで同じ依頼を発火してください。」と返す。同じ pane の user が
      実装を明示号令したときだけ例外として実装する。その場合レビュワーは
-     専任不在なので既存の self-review fallback を使う（Codex
-     自己レビューの正規経路は置かない）
-   - same-window/session は pane の距離規則であって、担当・レビュワーの
-     runtime を決める規則ではない
+     専任不在なので既存の self-review fallback を使う（自己レビューの
+     正規経路は置かない）。この例外では `<space>/review` の peer
+     レビュワー解決も planning・実装レビューの2往復も行わず、どちらも
+     self-review に置き換える
    `list_peers` はレビュワー pane の一意解決だけに使う。
-   確定したレビュワーの pane を `list_peers` で
-   同じ window、次に同じ session の順に一意固定し、その pane へ
+   `list_peers` で `<space>/review` を一意解決してレビュワーの pane を
+   固定し、planning (方針すり合わせ) と実装レビューの両方で
+   **同一 pane を固定する**。その pane へ
    **user 原文 (verbatim)・確認済みの事実・制約だけ**を送って
    「あなたならどう作る計画を立てるか」を求める。送るのは1通だけ。
    返信本文を読む前に自案を確定させる。返信は user 目的へ照合する。

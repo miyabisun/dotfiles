@@ -66,14 +66,14 @@ assert_contains "$spike" '**formatter / linter を機械的に叩く**'
 
 # counterpart は planning で list_peers により一意固定し、実装レビューは同じ
 # pane を使い回す (毎回引き直すと途中で相手が入れ替わる)
-assert_contains "$spike" '同じ window、次に同じ'
+assert_contains "$spike" '`<space>/review` を一意解決'
 assert_contains "$spike" '送るのは1通だけ'
 assert_contains "$spike" '毎回 agent を作成する'
 assert_contains "$spike" '親はハブである'
 assert_absent "$spike" 'レビュワーが2名の場合は同一内容を両 pane へ'
 assert_absent "$spike" '子を作らない'
 assert_contains "$spike" 'step 1 で固定した同じ pane へ'
-assert_contains "$spike" '同じ window、次に同じ session'
+assert_contains "$spike" '**同一 pane を固定する**'
 assert_contains "$spike" '不在・pane 消失・配達失敗のときだけ self review'
 
 # レビュワーの検査項目: テストの誠実さ・DRY・過度な YAGNI・実行確認

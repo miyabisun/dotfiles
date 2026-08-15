@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# spike / polish: spawn children for mutation/CLI/facts; parent hubs Codex.
+# spike / polish: spawn children for mutation/CLI/facts; parent hubs the
+# review tab.
 # shellcheck disable=SC2016
 set -euo pipefail
 
@@ -34,8 +35,8 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '事実確認'
   assert_contains "$skill" '初期の設計'
   assert_contains "$skill" '親はハブである'
-  assert_contains "$skill" '親が待ち、親が Codex へ中継する'
-  assert_contains "$skill" '子は Codex へ'
+  assert_contains "$skill" '親が待ち、親が review タブへ中継する'
+  assert_contains "$skill" '子は review タブへ'
   assert_contains "$skill" 'send_message しない'
   assert_contains "$skill" 'peer ではない'
   assert_absent "$skill" '作業担当は発火 pane の runtime 1本でファイル変更まで自分でやる'

@@ -5,6 +5,8 @@
 # ズレを先に潰す手順が存在すること。(2) その判定軸が「目的 vs 手段」を
 # 取り違えないこと — user が挙げた手段は正ではなく、より良い手段で
 # 置き換えてよい、という原則が消えないこと。
+# assert する文字列は対象ファイルの literal なので、$ や ` を展開させない
+# shellcheck disable=SC2016
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -87,25 +89,27 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '**B を未実施のまま契約化へ進んではならない。**'
   assert_absent "$skill" '### B. どちらの手段が優れているか (選択軸・non-blocking)'
 
-  # 担当→レビュワー行列: 担当は skill を発火した pane の runtime (常に)。
-  # 既定担当 grok・指名優先・指名待ちの儀式は廃止 (user-origin)。
-  # レビュワーは codex 専任1名。距離規則は runtime を決めない
+  # 担当→レビュワー: 担当は skill を発火した pane の runtime (常に)。
+  # 既定担当・指名優先・指名待ちの儀式は廃止 (user-origin)。
+  # レビュワーは発火 pane と同じ space の review タブ専任1名。
+  # runtime 名の分岐や pane の距離規則ではレビュワーを決めない
   assert_contains "$skill" '発火した pane の runtime である'
   assert_absent "$skill" '**user の明示指定が最優先**'
   assert_absent "$skill" '**grok が既定の作業担当**'
   assert_absent "$skill" '担当未明示の起動を claude / codex の pane が受け'
   assert_absent "$skill" '起動し直し'
-  assert_contains "$skill" '担当 grok または claude → レビュワーは codex'
-  assert_contains "$skill" 'Codex は原則として実務担当ではない'
-  assert_contains "$skill" 'Codex はレビュー専任。grok か claude の'
-  assert_contains "$skill" '担当・レビュワーの'
+  assert_contains "$skill" 'レビュワーは**発火 pane と同じ space の `review` タブ・常に1名**'
+  assert_contains "$skill" 'review タブは原則として実務担当ではない'
+  assert_contains "$skill" 'review タブはレビュー専任。chat 等の'
+  assert_absent "$skill" '担当 grok または claude → レビュワーは codex'
+  assert_absent "$skill" 'same-window/session は pane の距離規則'
   # authority 境界: 発火 pane から他の runtime へ実装を委譲できない
   assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
-  # 単一 Codex への1通と、読む前の自案確定
+  # 単一 review タブへの1通と、読む前の自案確定
   assert_contains "$skill" '送るのは1通だけ'
   assert_contains "$skill" '返信本文を読む前に自案を確定させる'
   assert_contains "$skill" '毎回 agent を作成する'
-  assert_contains "$skill" '親が待ち、親が Codex へ中継する'
+  assert_contains "$skill" '親が待ち、親が review タブへ中継する'
   assert_absent "$skill" '作業担当は発火 pane の runtime 1本でファイル変更まで自分でやる'
   assert_absent "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
   assert_absent "$skill" '担当 claude → レビュワーは codex。担当 codex → レビュワーは claude'

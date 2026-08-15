@@ -26,9 +26,9 @@ assert_absent() {
 }
 
 # polish: レビュワーは planning で一意固定し、実装レビューは同じ pane を使う。
-# レビュワーは codex 1名。旧2名並列は復活させない
+# レビュワーは同じ space の review タブ1名。旧2名並列は復活させない
 assert_contains "$polish" 'step 1 で固定した同じ pane へ'
-assert_contains "$polish" '同じ window、次に同じ'
+assert_contains "$polish" '`<space>/review` を一意解決'
 assert_contains "$polish" '送るのは1通だけ'
 assert_contains "$polish" '毎回 agent を作成する'
 assert_contains "$polish" '親はハブである'
