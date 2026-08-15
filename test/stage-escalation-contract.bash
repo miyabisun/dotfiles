@@ -50,10 +50,13 @@ assert_contains "$polish" '追加号令や段階の切り替えで止めない'
 assert_contains "$polish" '書きかけの変更は'
 assert_absent "$polish" '`$spike` 再依頼'
 
-# spike: version は停止理由にならず、v1.0.0+ では互換性影響を判定して続行
+# spike: version は停止理由にも段階切替の理由にもならない。337a1e9 以降は
+# 互換性影響の判定や next major の注記も持たず、水準決定は bump-tag の専権
 assert_contains "$spike" 'spike は spike のまま進む'
-assert_contains "$spike" '互換性影響'
-assert_contains "$spike" 'next major work'
+assert_contains "$spike" '理由にした判定や注記の儀式は追加しない'
+assert_contains "$spike" 'bump 水準の決定 (major を含む) は user の `bump-tag` だけが担う'
+assert_absent "$spike" '互換性影響'
+assert_absent "$spike" 'next major work'
 assert_absent "$spike" 'なんで spike やねん'
 
 echo "stage escalation contract test: pass"

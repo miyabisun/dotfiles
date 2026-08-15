@@ -59,9 +59,11 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '一つの枠内での粗探しに固定され'
   assert_contains "$skill" '設計判断を混ぜない'
 
-  # 独立性を規律ではなく順序で守る
+  # 独立性は「召喚前に自案を確定し、result はその後に読む」で守る
+  # (同期召喚なので、旧来の「返信は次ターン」という順序では守られない)
   assert_contains "$skill" '**同じターンで自分の案を起草する。**'
-  assert_contains "$skill" '返信本文を読む前に'
+  assert_contains "$skill" '`$result` を読む前に'
+  assert_absent "$skill" '返信本文を読む前に'
 
   # reconcile 前に実装へ進まない
   assert_contains "$skill" '**reconcile が終わるまでテストと実装を編集しない。**'
@@ -91,25 +93,27 @@ for skill in "$spike" "$polish"; do
 
   # 担当→レビュワー: 担当は skill を発火した pane の runtime (常に)。
   # 既定担当・指名優先・指名待ちの儀式は廃止 (user-origin)。
-  # レビュワーは発火 pane と同じ space の review タブ専任1名。
-  # runtime 名の分岐や pane の距離規則ではレビュワーを決めない
+  # レビュワーは peer pane ではなく同期召喚する codex exec の1プロセス。
+  # peer 経路 (review タブ・list_peers・発火タブ例外) は全廃した
   assert_contains "$skill" '発火した pane の runtime である'
   assert_absent "$skill" '**user の明示指定が最優先**'
   assert_absent "$skill" '**grok が既定の作業担当**'
   assert_absent "$skill" '担当未明示の起動を claude / codex の pane が受け'
   assert_absent "$skill" '起動し直し'
-  assert_contains "$skill" 'レビュワーは**発火 pane と同じ space の `review` タブ・常に1名**'
-  assert_contains "$skill" 'review タブは原則として実務担当ではない'
-  assert_contains "$skill" 'review タブはレビュー専任。chat 等の'
+  assert_contains "$skill" 'レビュワーは**同期召喚する `codex exec` の1プロセス**である'
+  assert_absent "$skill" 'レビュワーは**発火 pane と同じ space の `review` タブ・常に1名**'
+  assert_absent "$skill" 'review タブ'
+  assert_absent "$skill" 'list_peers'
+  assert_absent "$skill" '`<space>/review` を一意解決'
   assert_absent "$skill" '担当 grok または claude → レビュワーは codex'
   assert_absent "$skill" 'same-window/session は pane の距離規則'
   # authority 境界: 発火 pane から他の runtime へ実装を委譲できない
   assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
-  # 単一 review タブへの1通と、読む前の自案確定
+  # 1回の planning 召喚と、result を読む前の自案確定
   assert_contains "$skill" '送るのは1通だけ'
-  assert_contains "$skill" '返信本文を読む前に自案を確定させる'
+  assert_contains "$skill" '`$result` を読む前に自案を確定させる'
   assert_contains "$skill" '毎回 agent を作成する'
-  assert_contains "$skill" '親が待ち、親が review タブへ中継する'
+  assert_contains "$skill" '子の結果は親が待ち、親が召喚 prompt へまとめる'
   assert_absent "$skill" '作業担当は発火 pane の runtime 1本でファイル変更まで自分でやる'
   assert_absent "$skill" '担当 grok → レビュワーは claude と codex の**両方**'
   assert_absent "$skill" '担当 claude → レビュワーは codex。担当 codex → レビュワーは claude'
@@ -118,54 +122,63 @@ for skill in "$spike" "$polish"; do
   assert_absent "$skill" '**反対 runtime の登録 pane**'
   assert_absent "$skill" 'Claude の counterpart は Codex'
 
-  # 返信待ちは MUST yield: ただし「有用な独立作業が無い」条件付き
-  # (unconditional yield への退行も検出する)。任意形・poll の禁止と
-  # 未完了テンプレート
+  # 待機は「子 agent の結果待ち」だけ。レビュワー召喚は同期なので待ちにならない。
+  # MUST yield は「有用な独立作業が無い」条件付き (unconditional yield への
+  # 退行も検出する)。poll の禁止と未完了テンプレート
+  assert_contains "$skill" '**子 agent の結果待ち**'
   assert_contains "$skill" '他に有用な独立作業が無いなら'
   assert_contains "$skill" 'turn を終了して yield しなければならない'
   assert_absent "$skill" 'turn を yield してよい'
-  assert_contains "$skill" 'polling で turn を保持しない'
-  assert_contains "$skill" '返信待ちで一旦 turn を終了する。doorbell でこの delivery を自動再開する'
+  assert_contains "$skill" 'sleep・wait loop で turn を保持'
+  assert_contains "$skill" '子 agent の結果待ちにだけ使う'
+  assert_contains "$skill" '子の結果待ちで一旦 turn を終了する。子の完了でこの delivery を再開する'
   assert_contains "$skill" '完了報告と誤認される文言を使わない'
-
-  # 期限超過を fallback 条件にする以上、期限と default action の設定が要る
-  assert_contains "$skill" '**期限と default action を決めて記録する**'
-  # 返信待ち: 再開点を定義し、途中停止を未完了と明記 (旧曖昧句は禁止)
-  assert_contains "$skill" '**返信待ちの状態遷移**'
-  assert_contains "$skill" '同じ delivery の**再開 trigger**'
   assert_contains "$skill" '追加の「続けて」を**再開条件にしない**'
-  assert_contains "$skill" 'peer への返信要否**'
-  assert_contains "$skill" '進行中 user 授権 delivery の停止指示ではない'
   assert_contains "$skill" '契約は commit まで。途中で止まった配達は未完了である'
-  # planning route と implementation-review route を分離 (混線禁止)
-  assert_contains "$skill" '**planning 返信**が揃った'
-  assert_contains "$skill" 'A→B 照合 → 契約化以降'
-  assert_contains "$skill" '**実装レビュー返信**が揃った'
-  assert_contains "$skill" 'closure 後 → commit / 報告'
-  # 期限は単独で auto-wake しない
-  assert_contains "$skill" '**期限はそれ自体で wake しない。**'
-  assert_contains "$skill" '待っていた reply doorbell 到着時の自動再開'
+
+  # peer 待ちの機構は全廃: 期限と default action・doorbell 再開・返信待ちの
+  # 状態遷移・planning/実装レビューの返信 route
+  assert_absent "$skill" '**期限と default action を決めて記録する**'
+  assert_absent "$skill" '期限と default action'
+  assert_absent "$skill" '**返信待ちの状態遷移**'
+  assert_absent "$skill" 'doorbell'
+  assert_absent "$skill" '呼び鈴'
+  assert_absent "$skill" '同じ delivery の**再開 trigger**'
+  assert_absent "$skill" '**planning 返信**が揃った'
+  assert_absent "$skill" '**実装レビュー返信**が揃った'
+  assert_absent "$skill" 'closure 後 → commit / 報告'
+  assert_absent "$skill" '**期限はそれ自体で wake しない。**'
+  assert_absent "$skill" '待っていた reply doorbell 到着時の自動再開'
   assert_absent "$skill" '**次に delivery が再開した時点**で評価する'
   assert_absent "$skill" 'または期限・不在の default action が発火'
+  # planning result を読んだ後の進行先は残す
+  assert_contains "$skill" 'A→B 照合 → 契約化以降'
 
   # receipt の証跡。照合先は「原文」ではなく「目的」でなければならない
   assert_contains "$skill" '方針すり合わせについては次を残す'
   assert_contains "$skill" '**user の目的とのズレの有無と是正内容**'
   assert_contains "$skill" '原文中の目的と手段を'
   assert_contains "$skill" '**手段を置き換えた場合はその内容と理由**'
-  assert_contains "$skill" 'レビュワー不在時は該当レビュワーごとに'
+  # 記録は message ID / pane ではなく、召喚回数・schema 判定・fallback
+  assert_contains "$skill" '**召喚回数と各召喚の schema 判定**'
+  assert_contains "$skill" '**fallback の有無と `review_exec_failed` の理由**'
+  assert_absent "$skill" 'レビュワー不在時は該当レビュワーごとに'
+  assert_absent "$skill" 'message ID'
   assert_absent "$skill" 'user 原文とのズレの有無'
 
   # 文型ヒューリスティックを最終判断にしない
   assert_contains "$skill" '**最終判断は文型ではなく「置換しても望む結果が同一か」**'
 
-  # 不在時 fallback を「相互レビュー」と偽らない
-  assert_contains "$skill" 'planning_reviewer_unavailable: <runtime>'
-  assert_contains "$skill" 'planning_reviewers: unavailable'
-  assert_contains "$skill" '**レビュワー不在**'
+  # fallback は「レビュワー不在」ではなく「召喚の失敗」で発火し、
+  # self の見直しを「相互レビュー」と偽らない
+  assert_contains "$skill" 'review_exec_failed: <理由>'
+  assert_absent "$skill" 'planning_reviewer_unavailable: <runtime>'
+  assert_absent "$skill" 'planning_reviewers: unavailable'
+  assert_absent "$skill" '**レビュワー不在**'
+  assert_absent "$skill" '### レビュワー不在時'
+  assert_absent "$skill" 'idle も busy も存在扱いで送る'
   assert_absent "$skill" '**片方だけ不在** (レビュワー2名時)'
   assert_absent "$skill" '欠けた側の分だけ自案を A 軸で self-check する'
-  assert_contains "$skill" '不在を理由に担当を変更しない'
   assert_absent "$skill" 'planning_counterpart: unavailable'
   assert_contains "$skill" '**self の見直しを「相互レビュー」と呼ばない。**'
   assert_contains "$skill" 'ズレ検出だけは省略しない'
@@ -173,8 +186,8 @@ for skill in "$spike" "$polish"; do
   # discuss は独立提案の代替にならない
   assert_contains "$skill" '**blind な独立提案の代替にはならない**'
 
-  # peer 接触は2種類あり、混同しない
-  assert_contains "$skill" '**2つで別物**'
+  # 召喚は planning と実装レビューの2種で、混同しない
+  assert_contains "$skill" '### 召喚は2種・1 delivery で最大3回'
 
   # planning は1往復。統合案の再承認はしない
   assert_contains "$skill" '統合案の再承認・二段階照合は行わない'

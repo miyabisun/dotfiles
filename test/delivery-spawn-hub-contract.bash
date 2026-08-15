@@ -35,13 +35,20 @@ for skill in "$spike" "$polish"; do
   assert_contains "$skill" '事実確認'
   assert_contains "$skill" '初期の設計'
   assert_contains "$skill" '親はハブである'
-  assert_contains "$skill" '親が待ち、親が review タブへ中継する'
-  assert_contains "$skill" '子は review タブへ'
-  assert_contains "$skill" 'send_message しない'
+  assert_contains "$skill" '子の結果は親が待ち、親が召喚 prompt へまとめる'
+  # reviewer command は親の専権。実装 child は codex exec を実行しない
+  assert_contains "$skill" '**実装の子は `codex exec` を実行しない。**'
+  assert_contains "$skill" 'reviewer command は親が管理する'
+  assert_absent "$skill" '子は review タブへ'
+  assert_absent "$skill" '親が review タブへ中継する'
   assert_contains "$skill" 'peer ではない'
   assert_absent "$skill" '作業担当は発火 pane の runtime 1本でファイル変更まで自分でやる'
   assert_absent "$skill" '子を作らない'
   assert_contains "$skill" '発火 pane から他の runtime へ実装を委譲することはできない'
+  # delivery:waiting marker は子 agent の結果待ち専用。peer 待ちは無い
+  assert_contains "$skill" '<!-- delivery:waiting -->'
+  assert_contains "$skill" '子 agent の結果待ちにだけ使う'
+  assert_absent "$skill" '子や peer の結果待ち'
 done
 
 assert_contains "$global" 'not user authority'

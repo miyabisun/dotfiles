@@ -199,10 +199,25 @@ if hash_line="$(sha256sum "$probe_root/missing" 2>/dev/null)"; then
 fi
 test -z "$hash_line"
 
+# frontmatter は name / description / model の3キーで、各キーがちょうど1回ずつ。
+# 本質はキー数ではなく「roleの起動に要らない機構をここへ足さない」ことなので、
+# 未知keyは落とし、重複key (後勝ちで挙動が変わる) も落とす。
+# model は 3bfd674 の pin なので、キーの存在だけでなく値まで固定する —
+# 値を見ないと別modelへ差し替わっても素通りする
 frontmatter="$(sed -n '2,/^---$/p' "$role" | sed '$d')"
 printf '%s\n' "$frontmatter" | grep -Eq '^name: knowledge-inventory$'
 printf '%s\n' "$frontmatter" | grep -Eq '^description: '
-test "$(printf '%s\n' "$frontmatter" | grep -Ec '^[a-zA-Z_-]+:')" -eq 2
+printf '%s\n' "$frontmatter" | grep -Fqx 'model: claude-opus-5' || {
+  printf 'knowledge-inventory must stay pinned to claude-opus-5 in %s\n' "$role" >&2
+  exit 1
+}
+frontmatter_keys="$(printf '%s\n' "$frontmatter" | grep -Eo '^[a-zA-Z_-]+:' | sort)"
+expected_keys="$(printf '%s\n' 'description:' 'model:' 'name:')"
+if [ "$frontmatter_keys" != "$expected_keys" ]; then
+  printf 'frontmatter keys must be exactly name/description/model once each in %s, got:\n%s\n' \
+    "$role" "$frontmatter_keys" >&2
+  exit 1
+fi
 
 # dedicated roleには書込・release orchestrationを持たせない
 assert_contains "$role" 'arona-knowledgeでgit操作をしない'

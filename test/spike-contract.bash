@@ -64,17 +64,24 @@ assert_contains "$spike" '黙ってゴールから除外しない'
 # formatter / linter は機械的に実行する
 assert_contains "$spike" '**formatter / linter を機械的に叩く**'
 
-# counterpart は planning で list_peers により一意固定し、実装レビューは同じ
-# pane を使い回す (毎回引き直すと途中で相手が入れ替わる)
-assert_contains "$spike" '`<space>/review` を一意解決'
+# レビュワーは peer pane ではなく同期召喚する codex exec。pane 固定・不在
+# fallback の機構は全廃した (詳細な起動形は review-standards-contract が pin)
+assert_contains "$spike" 'レビュワーは**同期召喚する `codex exec` の1プロセス**である'
 assert_contains "$spike" '送るのは1通だけ'
 assert_contains "$spike" '毎回 agent を作成する'
 assert_contains "$spike" '親はハブである'
 assert_absent "$spike" 'レビュワーが2名の場合は同一内容を両 pane へ'
 assert_absent "$spike" '子を作らない'
-assert_contains "$spike" 'step 1 で固定した同じ pane へ'
-assert_contains "$spike" '**同一 pane を固定する**'
-assert_contains "$spike" '不在・pane 消失・配達失敗のときだけ self review'
+assert_absent "$spike" '`<space>/review` を一意解決'
+assert_absent "$spike" 'step 1 で固定した同じ pane へ'
+assert_absent "$spike" '**同一 pane を固定する**'
+assert_absent "$spike" '不在・pane 消失・配達失敗のときだけ self review'
+# 失敗時 fallback は召喚の失敗で発火する circuit breaker。開いたあとの
+# 残存 phase は self 系だけで処理し、codex exec を再度起動しない
+assert_contains "$spike" '### fallback (circuit breaker)'
+assert_contains "$spike" '**breaker が開いたら、その delivery の残りの codex exec 召喚は一切行わない。**'
+assert_contains "$spike" 'review_exec_failed: <理由>'
+assert_absent "$spike" 'fallback (1 delivery で1回だけ)'
 
 # レビュワーの検査項目: テストの誠実さ・DRY・過度な YAGNI・実行確認
 assert_contains "$spike" 'トートロジー'
@@ -165,12 +172,18 @@ assert_contains "$global_rules" 'Depositing findings'
 assert_contains "$global_rules" 'Asking knowledge a question is ordinary peer conversation'
 assert_contains "$global_rules" 'do not use a question to hand findings over'
 
-# version は停止理由にならず、v1.0.0+ では互換性影響を判定して続行する
+# version は停止理由にならない。337a1e9 以降、spike は version 判定そのものを
+# 持たない — 互換性影響の判定も next major の注記も撤去し、bump 水準の決定は
+# `bump-tag` の専権になった。ここで旧文言を absent に固定して復活を塞ぐ
 assert_contains "$spike" 'Cargo.toml'
-assert_contains "$spike" '既に 1.0.0 以上'
 assert_contains "$spike" 'spike は spike のまま進む'
-assert_contains "$spike" 'next major work'
+assert_contains "$spike" '理由にした判定や注記の儀式は追加しない'
+assert_contains "$spike" 'bump 水準の決定 (major を含む) は user の `bump-tag` だけが担う'
+assert_contains "$spike" 'bump 水準の推奨・判定はしない'
 assert_contains "$spike" 'Stopping work'
+assert_absent "$spike" '既に 1.0.0 以上'
+assert_absent "$spike" '互換性影響'
+assert_absent "$spike" 'next major work'
 assert_absent "$spike" 'なんで spike やねん'
 assert_absent "$spike" '外部公開・release artifact・第三者へ届く出力'
 

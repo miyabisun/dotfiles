@@ -83,7 +83,7 @@ assert_before "$polish" \
   '**直す**:'
 assert_before "$polish" \
   'pre-review mechanical gate' \
-  '門を通したら step 1 で固定した同じ pane へ、user 原文'
+  '門を通したら実装レビュー召喚を**1回だけ**起動し、user 原文'
 assert_before "$polish" \
   'pre-review mechanical gate' \
   '**コミットする**:'

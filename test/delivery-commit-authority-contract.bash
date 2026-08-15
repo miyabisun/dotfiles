@@ -28,13 +28,15 @@ assert_absent() {
 }
 
 # Shared runtime rules: explicit commit request OR a delivery skill whose
-# documented workflow includes committing ($spike / $polish / $deliver).
-assert_contains "$global_rules" 'NEVER commit unless the user explicitly requests a commit or invokes a delivery'
+# documented workflow includes committing ($spike / $polish / $deliver) OR a
+# repository that grants standing authority (c23f7d7). Chat alone never does.
+assert_contains "$global_rules" 'NEVER commit unless the user explicitly requests a commit, invokes a delivery'
 assert_contains "$global_rules" 'skill whose documented workflow includes committing'
 assert_contains "$global_rules" '`$spike`'
 assert_contains "$global_rules" '`$polish`'
 assert_contains "$global_rules" '`$deliver`'
 assert_contains "$global_rules" 'inherits its commit step'
+assert_contains "$global_rules" 'inside a repository that grants standing authority'
 assert_absent "$global_rules" 'NEVER commit unless the user explicitly instructs you to'
 
 # Named delivery skills actually document a commit step.
