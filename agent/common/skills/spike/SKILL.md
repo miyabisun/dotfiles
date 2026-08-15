@@ -163,8 +163,6 @@ peer への委譲は今どおり禁止。send_message に skill は載せない�
    それぞれを実行可能なテストとして表現する。「何が動けば体験できたことに
    なるか」がテスト名になる。ledger は作らない。独立提案の交換は step 1 の
    1往復だけで、統合案の再承認・二段階照合は行わない。
-   version が既に 1.0.0 以上の project では、既存の公開契約への互換性影響も
-   ここで判定する (詳細は「[続行](#続行)」)。
 3. **TDD で作る**: 失敗するテストを先に書き (red)、通す (green)。この順序に
    自己免除は無い。user が同じ依頼文で明示的に例外を許可した場合のみ省略でき
    (原文を receipt に引用する)。red を観測できなければ、観測できるまで実装を
@@ -198,9 +196,9 @@ peer への委譲は今どおり禁止。send_message に skill は載せない�
    manifest (Cargo.toml 等) は version が 0.1.0 であること、MIT LICENSE と
    土台の不要物除去が済んでいること、そして**リリースを妨げる既知事項**を
    receipt に列挙する (release/push 自体は行わない — それは user の
-   `bump-tag`)。既存プロジェクトの manifest が別の 0.x を持つ場合は勝手に
-   version を書き換えず、現在値と「v0.1.0 対象外 (既存)」を receipt に記録
-   する。
+   `bump-tag`)。既存プロジェクトでは version を書き換えず、現在値だけを
+   receipt に記録する。bump 水準の推奨・判定はしない — 水準の決定は user の
+   `bump-tag` だけが担う。
    方針すり合わせについては次を残す: 担当と各レビュワーの pane、レビュワー
    ごとの request と reply の
    message ID、**user の目的とのズレの有無と是正内容**、原文中の目的と手段を
@@ -311,12 +309,10 @@ secret・権限境界・破壊的データ・version・将来のリリース可�
 作業を止めたり段階を切り替えたりしない。止めてよい条件は GLOBAL.md
 「Stopping work」だけである。
 
-project の version (Rust なら Cargo.toml) が**既に 1.0.0 以上**でも
-**spike は spike のまま進む**。ただし契約段階 (step 2) で既存の公開契約
-(API・CLI・config・schema・可視の interaction) への**互換性影響**を判定し、
-破壊するなら「next major work: v<現 major+1>.0.0 系の作業」と根拠を
-receipt に明示して続行する。version file は変更しない — version 操作は
-user の `bump-tag` だけが担う。spike 自身は push しない。
+project の version がいくつでも **spike は spike のまま進む**。version を
+理由にした判定や注記の儀式は追加しない。version file は変更しない —
+bump 水準の決定 (major を含む) は user の `bump-tag` だけが担う。
+spike 自身は push しない。
 
 ## 不変条件 (全段階共通)
 
