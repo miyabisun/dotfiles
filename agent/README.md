@@ -139,6 +139,9 @@ Notable skills:
 - `consolidate` — semantic DRY inventory, safe unification, verified commit
 - `commit` — atomic staging and concise Conventional Commit messages
 - `bump-tag` — semver bump, tag, push
+- `knowledge-deposit` — fail-closed deposit of reusable knowledge: scan, preserve
+  the payload byte for byte, lock, file it with one `codex exec` summon, review it
+  with another, and commit locally
 
 `deliver` selects only the capabilities justified by risk. Agent split
 (producer ≠ approver):
@@ -147,7 +150,7 @@ Notable skills:
 - `dev` / `rev` — implement and semantic review (no self-approval)
 - `formatter` — applicability, format correction, and lint evidence for eligible source before commit
 - `ui-checker` — measure with evidence only (does not write strategy/tests)
-- `knowledge-inventory` — inventory durable delivery knowledge after commit and route one sanitized batch to the librarian
+- `knowledge-inventory` — inventory durable delivery knowledge after commit and hand one sanitized payload to `knowledge-deposit`
 
 ## Adding a new agent tool
 

@@ -19,6 +19,15 @@ assert_contains() {
   }
 }
 
+assert_absent() {
+  local file="$1"
+  local text="$2"
+  if grep -Fq -- "$text" "$file"; then
+    printf 'retired contract still present in %s: %s\n' "$file" "$text" >&2
+    return 1
+  fi
+}
+
 # dedicated role: provenance、空batch禁止、安全な1回送信
 test -f "$role"
 assert_contains "$role" 'source_request.fidelity=reconstructed'
@@ -40,17 +49,28 @@ assert_contains "$role" 'test "$host_status" -eq 1 || exit 2'
 assert_contains "$role" 'candidate_file="$(mktemp /tmp/agent-knowledge.XXXXXX)"'
 assert_contains "$role" 'host_file="$(mktemp /tmp/agent-knowledge-hosts.XXXXXX)"'
 
-# 送信は MCP の send_message 1回。旧 dispatcher の file-body 経路は撤去済みで、
-# その代わりに「scan 後に本文を変えない」規律と、失われた保証の明示が要る。
-assert_contains "$role" "\`send_message\` (\`to: 'knowledge/codex'\`, \`no_reply: true\`)"
+# 投入は knowledge-deposit の script 1回。role は body を組み立て直さず、
+# scan 済みの candidate_file を path のまま渡す。「scan 後に本文を変えない」
+# 規律はこの経路でも要 — 渡すのが path でも、途中で書き換えれば同じ穴が開く
+assert_contains "$role" 'scripts/knowledge-deposit --payload "$candidate_file"'
+assert_contains "$role" '渡すのはpathであってbodyではない'
 assert_contains "$role" 'scan後に本文を追記・整形・置換・要約しない'
 
-# exact-body の機械保証が transport から失われている間は fail-closed。
-# decision 0002 の受容範囲は lateral agent takeover 限定で、secret 弱体化を
-# polish の内側で受容できない (この根拠まで含めて固定する)
-assert_contains "$role" '**ただし現在この送信は行わない。`pending`を返して終える。**'
-assert_contains "$role" 'lateral agent takeoverに限定'
-assert_contains "$role" 'userがこの経路の再開をこの pane で明示承認する'
+# exact-body の機械保証が transport 側へ戻ったので fail-closed の停止は解除。
+# 解除の根拠 (script が byte copy し commit 前に sha256 を再照合する) まで
+# role 本文に書かせる — 根拠を書かない解除は、次に誰かが理由なく再停止する
+assert_contains "$role" 'exact-bodyの機械保証がtransport側に戻った'
+assert_contains "$role" '`cp`でinboxへbyte copy'
+# 停止条項の復活を塞ぐ。これが残ると skill があっても投入できない
+assert_absent "$role" '**ただし現在この送信は行わない。`pending`を返して終える。**'
+assert_absent "$role" 'userがこの経路の再開をこの pane で明示承認する'
+# 直せる blocked は直して呼び直す。user への再依頼を再開条件にしない
+assert_contains "$role" '呼び直しはuserへの再依頼を必要としない'
+# script が値まで検査するので、role 側も同じ集合を持たないと投入が通らない
+assert_contains "$role" 'open-question'
+assert_contains "$role" 'deferred-choice'
+assert_contains "$role" '`user-verbatim:` `agent-inference:` `repo-evidence:` のいずれかで'
+assert_contains "$role" 'runtime座標は知識ではない'
 if grep -Fq -- 'agent-talk-peer' "$role"; then
   echo 'knowledge handoff must not use the retired CLI dispatcher' >&2
   exit 1
@@ -73,8 +93,11 @@ case "$candidate_probe" in
 esac
 rm -f "$candidate_probe"
 rmdir "$alternate_tmp"
-assert_contains "$role" '送信は最大1回'
+assert_contains "$role" '投入は最大1回'
 assert_contains "$role" '自動再送しない'
+# 「再送しない」と「直して呼び直す」は別物。前者だけ固定すると、
+# secret 混入で blocked になった payload を直す道まで塞がる
+assert_contains "$role" '再送ではなく修正であり、これは行ってよい'
 assert_contains "$role" 'arona-knowledgeでgit操作をしない'
 assert_contains "$role" 'knowledgeは開発完了、routing、releaseを決めない'
 

@@ -13,9 +13,9 @@ this file.
   channel is the first choice: discover peers with `ListAgents`, then send
   with `SendMessage`. Address the target as `name [ref]`, copying the ref
   verbatim from a listing or an error — never invent a ref.
-- This narrows the shared rule that agent-talk is the only cross-runtime
-  agent interface. agent-talk remains the channel when the counterpart is
-  codex, grok, or cursor, when the target must be picked by herdr pane or
+- This narrows the shared rule that agent-talk is the only channel between
+  running agent sessions. agent-talk remains the channel when the counterpart
+  is codex, grok, or cursor, when the target must be picked by herdr pane or
   workspace, or when a workflow contract requires agent-talk delivery
   semantics (durable queue, doorbell resume, read is receipt).
 - A `<cross-session-message>` follows the same boundary as agent-talk: read who

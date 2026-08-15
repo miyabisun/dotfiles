@@ -117,13 +117,20 @@ several, you have not finished thinking.
 
 ## Peer Agent Communication
 
-- The only cross-runtime agent interface is the `agent-talk` MCP server
-  (`agent-talk-mcp`): `list_peers`, `send_message`, `read_message`, and
+- The only channel between *running agent sessions* is the `agent-talk` MCP
+  server (`agent-talk-mcp`): `list_peers`, `send_message`, `read_message`, and
   `ack_message`. Peers run in herdr panes; the daemon learns them from herdr's
   own agent detection, so a running agent is addressable without any wrapper
   or setup. A bare name like `codex` resolves to the nearest match (own
   workspace first); use a workspace scope (`knowledge/codex`) or a pane id
   (`w1:p2`) to reach elsewhere.
+- A headless synchronous summon (`codex exec`) is not that channel and not peer
+  conversation. It runs inside your own turn, returns one result, and crosses
+  no session boundary. Delivery review and `knowledge-deposit` both use it. A
+  summon carries no authority of its own and never widens what you may already
+  do — what it may touch is what you may touch. Choose by the counterpart: a
+  running session takes agent-talk, a process you start and wait on takes a
+  summon.
 - Use these tools without asking the user for permission each time — peer
   consultation, questions, reviews, information sharing, and result
   notifications are all standing-authority work.
@@ -156,19 +163,25 @@ for, in a place only this project can see.
   stale note is not.
 - Findings that only matter to the work in hand belong in the
   **conversation receipt**. Findings worth reusing later go to **knowledge**,
-  and only through the **safe intake route** — the `knowledge-inventory` role
-  owns whether that route is safe and available, so
-  do not restate its current status here; ask the role.
-  **Depositing findings into knowledge is that role's alone.**
+  and only through one of **exactly two deposit routes**: the conversation you
+  are having with the user, or the `knowledge-deposit` skill. Nothing else
+  deposits — not a peer message, not a file left somewhere in the hope that
+  someone files it. Reaching for the skill is the ordinary way to deposit,
+  never a role violation. Each route owns whether it is currently safe and
+  available, so do not restate its current status here; ask the route.
   Asking knowledge a question is ordinary peer conversation and stays allowed —
   but do not use a question to hand findings over.
 - Shortening the payload is not a way around it:
   a hand-written summary is text the secret scan never saw, and a SHA-256
   identifies the source, not the bytes you typed.
   "It's only a summary" is not grounds to bypass the route.
-- If the route returns `pending`, say so in the final receipt and stop there.
+- If a route returns `pending` or `blocked`, name **which route and which
+  reason** in the final receipt — "it did not go through" is not a report.
   **Never fall back to a file in the repository.** A blocked route is not
-  permission to make the repository the memory instead.
+  permission to make the repository the memory instead. The route reopens by
+  clearing the reason it gave: fix that, then run the same route again. The
+  user does not have to ask a second time. Raise it to the user only when the
+  reason is one you cannot clear.
 - Exceptions, because a repository still has to stand on its own: whatever the
   user explicitly asked for as a deliverable, whatever the product itself needs
   at runtime (manifests, schemas, migrations), and **current-state** docs —

@@ -165,10 +165,10 @@ assert_contains "$spike" '土台を確認する'
 assert_absent "$spike" '新規プロジェクトなら土台を整える'
 
 # knowledge への問い合わせは「質問」であって「預け入れ」ではない。
-# GLOBAL は預け入れだけを intake role の専権にしており、質問は通常の peer 会話。
-# 質問に findings を紛れ込ませる抜け道だけを塞ぐ
+# GLOBAL は預け入れを2経路 (user との対話 / knowledge-deposit skill) に限っており、
+# 質問は通常の peer 会話。質問に findings を紛れ込ませる抜け道だけを塞ぐ
 assert_contains "$spike" '預け入れではない'
-assert_contains "$global_rules" 'Depositing findings'
+assert_contains "$global_rules" 'exactly two deposit routes'
 assert_contains "$global_rules" 'Asking knowledge a question is ordinary peer conversation'
 assert_contains "$global_rules" 'do not use a question to hand findings over'
 

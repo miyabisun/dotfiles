@@ -105,30 +105,66 @@ done
 assert_contains "$inventory" 'project repoへ退避しない'
 
 # --- A3: 横展開の経路と、到達できる宛先 -----------------------------------
-# 送信は canonical role の専権。短くすれば安全になる、という誤りを塞ぐ —
+# 預け入れ経路は二本化された (user との対話 / knowledge-deposit skill)。
+# 単一 role の専権という旧裁定は退役 — 常駐 intake pane が止まった以上、
+# skill を使うこと自体が役割違反と読まれてはならない。
+# 短くすれば安全になる、という誤りを塞ぐのは従来どおり —
 # 手書きの要約は scan を一度も通っていない文字列であり、SHA-256 は source の
-# 同一性であって送信 body の同一性ではない
+# 同一性であって投入 body の同一性ではない
 # GLOBAL は恒常 invariant だけを持つ。route の可用性は変わり得る状態なので、
-# canonical role 側にしか置かない (discuss「配置規約」と同じ理由 —
+# 経路側にしか置かない (discuss「配置規約」と同じ理由 —
 # binding instruction に現状を焼くと、直った後も古い指示が全 runtime に残る)
-assert_contains "$global_rules" 'safe intake route'
-assert_contains "$global_rules" 'owns whether that route is safe and available'
-# 預け入れの専権は role にある。一方で「質問」まで禁じると、共通仕様を
-# 訊きに行く経路まで塞がる。両者を別の文として pin する
-assert_contains "$global_rules" 'Depositing findings into knowledge is that'
+deposit_skill="$repo_root/agent/common/skills/knowledge-deposit/SKILL.md"
+test -f "$deposit_skill" || {
+  printf 'knowledge-deposit skill must exist: %s\n' "$deposit_skill" >&2
+  exit 1
+}
+assert_contains "$global_rules" 'exactly two deposit routes'
+assert_contains "$global_rules" 'the conversation you'
+assert_contains "$global_rules" '`knowledge-deposit` skill'
+# 「これ以外から預け入れない」を明文で塞ぐ。経路を2本にしただけでは、
+# peer message や置き手紙が3本目として復活する
+assert_contains "$global_rules" 'Nothing else'
+# skill を使うこと自体を役割違反と読ませない (旧裁定の副作用を潰す)
+assert_contains "$global_rules" 'never a role violation'
+assert_contains "$global_rules" 'owns whether it is currently safe and'
 assert_contains "$global_rules" 'Asking knowledge a question is ordinary peer conversation'
 assert_contains "$global_rules" 'do not use a question to hand findings over'
 assert_contains "$global_rules" 'do not restate its current status here'
 assert_absent "$global_rules" 'That role is currently'
+# 退役した専権裁定を復活させない
+assert_absent "$global_rules" 'Depositing findings into knowledge is that'
+assert_absent "$global_rules" 'safe intake route'
 # bypass の口実を塞ぐのは機構の性質であって現状ではないので GLOBAL に残す
 assert_contains "$global_rules" 'a hand-written summary is text the secret scan'
 assert_contains "$global_rules" 'identifies the source, not the bytes you typed'
 assert_contains "$global_rules" 'not grounds to bypass the route'
 assert_absent "$global_rules" 'keeps the secret-scan guarantee intact'
-# 現状 (pending を返す) は canonical role が持つ
-assert_contains "$inventory" 'pending'
 # 経路が塞がっていることは repo を記憶にしてよい理由にならない
 assert_contains "$global_rules" 'A blocked'
+# blocked を黙って飲み込ませない。どの経路がどの理由で止めたかまで報告させる
+assert_contains "$global_rules" 'which route and which'
+# 塞がった経路は理由を潰せば再開する。user に同じ依頼をさせない
+assert_contains "$global_rules" 'run the same route again'
+assert_contains "$global_rules" 'does not have to ask a second time'
+
+# 同期召喚は peer 会話ではなく、権限を広げない。ここを曖昧にすると
+# 「codex exec を挟めば何でもできる」という抜け道が開く
+assert_contains "$global_rules" 'headless synchronous summon'
+assert_contains "$global_rules" 'carries no authority of its own and never widens'
+# agent-talk の守備範囲は「走っている session 同士」へ限定された
+assert_contains "$global_rules" 'between *running agent sessions*'
+assert_absent "$global_rules" 'The only cross-runtime agent interface'
+claude_md_rules="$repo_root/agent/claude/CLAUDE.md"
+assert_absent "$claude_md_rules" 'the only cross-runtime'
+assert_contains "$claude_md_rules" 'only channel between'
+
+# role は投入経路を skill へ委ね、自分では knowledge の git を触らない
+assert_contains "$inventory" 'knowledge-deposit'
+assert_contains "$inventory" 'stageとcommitは`knowledge-deposit`のscriptが所有する'
+# 旧経路の停止条項は退役。復活すると skill があっても投入できなくなる
+assert_absent "$inventory" 'ただし現在この送信は行わない'
+assert_absent "$inventory" "\`send_message\` (\`to: 'knowledge/codex'\`, \`no_reply: true\`)"
 
 # 宛先が古いままだと、横展開しようにも相手へ届かない (v0.11.0)
 talk_skill="$repo_root/agent/common/skills/agent-talk/SKILL.md"

@@ -55,8 +55,10 @@ assert_contains "$claude_md" 'carries no authority'
 assert_contains "$claude_md" 'permission laundering'
 assert_contains "$claude_md" 'standing-authority'
 
-# GLOBAL は runtime 中立の interface 分類だけを持つ
-assert_contains "$global_rules" 'The only cross-runtime agent interface'
+# GLOBAL は runtime 中立の interface 分類だけを持つ。agent-talk の守備範囲は
+# 「走っている session 同士の会話」であり、headless な同期召喚は別分類
+assert_contains "$global_rules" 'between *running agent sessions*'
+assert_contains "$global_rules" 'headless synchronous summon'
 
 # 共有ファイルに Claude 固有 tool 名を書かない (user 依頼の中核制約)
 for shared in "$global_rules" "$talk_skill"; do
