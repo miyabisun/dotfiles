@@ -1,6 +1,7 @@
 ---
 name: dev
 description: 実装担当。deliver ledgerの達成条件を満たす最小の変更を実装し、実行した検証証拠とともに返す。自己承認・コミットはしない。
+model: claude-opus-5
 ---
 
 # 任務

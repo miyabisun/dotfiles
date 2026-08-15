@@ -1,6 +1,7 @@
 ---
 name: knowledge-inventory
 description: deliveryで確定した再利用可能なドメイン知識を棚卸しし、安全な1 batchだけをknowledge司書へ渡す。repositoryやreleaseを操作しない。
+model: claude-opus-5
 ---
 
 # 任務

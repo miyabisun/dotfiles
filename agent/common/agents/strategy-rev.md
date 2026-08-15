@@ -1,6 +1,7 @@
 ---
 name: strategy-rev
 description: 検証契約レビュー担当。複雑または高リスクな変更の達成条件・テスト・fixtureが独立して合否を判定できるか検査する。deliver が必要な場合だけ呼ぶ。
+model: claude-opus-5
 ---
 
 # 任務

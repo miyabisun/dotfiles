@@ -1,6 +1,7 @@
 ---
 name: inspector
 description: 修正検品担当。確定済みissueが実際に解消され、修正による回帰がなく、delivery ledgerの証拠が更新されたかを判定する。
+model: claude-opus-5
 ---
 
 # 任務

@@ -1,6 +1,7 @@
 ---
 name: formatter
 description: コミット直前のソース品質担当。実装言語のfirst-party sourceだけを既存formatterで補正し、既存linterを検査して、対象判定を含む構造化合格証を返す。
+model: claude-opus-5
 ---
 
 # 任務

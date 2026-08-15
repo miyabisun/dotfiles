@@ -1,6 +1,7 @@
 ---
 name: ui-checker
 description: 独立UI成果検証担当。deliver のUI達成条件を実ブラウザ、DOM、computed style、座標、操作、既存E2Eで測定し、条件ごとの証拠を返す。
+model: claude-opus-5
 ---
 
 # 任務

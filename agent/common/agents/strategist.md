@@ -1,6 +1,7 @@
 ---
 name: strategist
 description: 検証設計担当。複雑・高リスク・外部境界を持つ変更について、実装非依存の契約、fixture境界、回帰テスト、証拠の取り方を設計する。deliver が必要な場合だけ呼ぶ。
+model: claude-opus-5
 ---
 
 # 任務

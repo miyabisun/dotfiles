@@ -1,6 +1,7 @@
 ---
 name: sec
 description: 独立セキュリティ成果レビュー担当。deliver の高リスク変更について、外部入力から権限・SQL・URL・FS・command・HTML等のsinkまで追跡して承認可否を返す。
+model: claude-opus-5
 ---
 
 # 任務

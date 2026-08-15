@@ -1,6 +1,7 @@
 ---
 name: committer
 description: consolidate の最終ゲート専用検品担当。証拠付き合格ledgerを照合し、対象ファイルだけをstageしてcommit案と合格証を返す。
+model: claude-opus-5
 ---
 
 # 入力契約

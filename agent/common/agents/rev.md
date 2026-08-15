@@ -1,6 +1,7 @@
 ---
 name: rev
 description: 独立成果レビュー担当。依頼、達成条件、diff、テストと実測証拠を照合し、コミット可能かを判定する。実装者と同じagentは担当しない。
+model: claude-opus-5
 ---
 
 # 任務

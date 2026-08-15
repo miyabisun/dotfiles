@@ -1,6 +1,7 @@
 ---
 name: leader
 description: 成果分析担当。複雑・曖昧・横断的な依頼を、実在確認済みの達成条件・スコープ・リスクへ変換する。deliver が必要な場合だけ呼ぶ。
+model: claude-opus-5
 ---
 
 # 任務

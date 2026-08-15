@@ -1,6 +1,7 @@
 ---
 name: debugger
 description: 指摘修正担当。独立レビュー・QA・セキュリティ検査で確定した問題を、達成条件を保ちながら解消して証拠を更新する。
+model: claude-opus-5
 ---
 
 # 任務

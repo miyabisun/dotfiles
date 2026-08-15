@@ -1,6 +1,7 @@
 ---
 name: designer
 description: UI成果設計担当。未解決の視覚・操作判断をデザインシステムに沿うbriefとブラウザで測れる達成条件へ変換する。deliver がUI判断を必要とする場合だけ呼ぶ。
+model: claude-opus-5
 ---
 
 # 任務
