@@ -1,138 +1,12 @@
 {
-  "effortLevel": "high",
-  "enabledPlugins": {
-    "claude-code-setup@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "code-simplifier@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "explanatory-output-style@claude-plugins-official": false,
-    "feature-dev@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "learning-output-style@claude-plugins-official": false,
-    "plugin-dev@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
-    "rust-analyzer-lsp@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
-  },
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.claude/hooks/notify-waiting.sh\"",
-            "type": "command"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "test -f Cargo.toml && cargo fmt --check 2>&1 && cargo clippy --quiet 2>&1 && cargo test --quiet 2>&1 || true",
-            "type": "command"
-          }
-        ],
-        "matcher": "Edit|Write"
-      },
-      {
-        "hooks": [
-          {
-            "command": "test -f package.json && { npx --no vitest --version >/dev/null 2>&1 || { echo 'ERROR: vitest is not installed. Run: npm install -D vitest'; exit 1; }; npx --no vitest run --reporter=verbose 2>&1; } || true",
-            "type": "command"
-          }
-        ],
-        "matcher": "Edit|Write"
-      },
-      {
-        "hooks": [
-          {
-            "command": "vite_config=$(ls vite.config.* client/vite.config.* 2>/dev/null | head -1) && test -n \"$vite_config\" && { dir=$(dirname \"$vite_config\"); if [ \"$dir\" != \".\" ]; then cd \"$dir\"; fi; npx vite build 2>&1 | tail -5; } || true",
-            "type": "command"
-          }
-        ],
-        "matcher": "Edit|Write"
-      },
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.claude/hooks/webfetch-fallback.sh\"",
-            "type": "command"
-          }
-        ],
-        "matcher": "WebFetch"
-      }
-    ],
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.claude/hooks/prefer-semble.sh\"",
-            "type": "command"
-          }
-        ],
-        "matcher": "Grep|Glob"
-      },
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.claude/hooks/block-git-discard.sh\"",
-            "statusMessage": "git 破棄コマンドチェック",
-            "timeout": 10,
-            "type": "command"
-          }
-        ],
-        "matcher": "Bash"
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session",
-            "timeout": 10,
-            "type": "command"
-          }
-        ],
-        "matcher": "*"
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.claude/hooks/stop-turn-end.sh\"",
-            "type": "command"
-          }
-        ]
-      }
-    ]
-  },
-  "language": "Japanese",
-  "mcpServers": {
-    "obscura": {
-      "args": [
-        "mcp"
-      ],
-      "command": "obscura",
-      "env": {},
-      "type": "stdio"
-    }
-  },
-  "model": "claude-fable-5[1m]",
   "permissions": {
     "allow": [
       "Skill(deliver)",
       "Skill(consolidate)",
-      "Skill(commit)",
+      "Skill(git)",
+      "Skill(knowledge-read)",
       "Bash(~/.local/bin/notify-file-permission.sh:*)"
     ],
-    "defaultMode": "auto",
     "deny": [
       "Bash(bw:*)",
       "Bash(rbw:*)",
@@ -157,10 +31,137 @@
       "Edit(**/.env.staging)",
       "Edit(**/.env.production)",
       "Edit(**/.env.production.local)"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/notify-waiting.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f Cargo.toml && cargo fmt --check 2>&1 && cargo clippy --quiet 2>&1 && cargo test --quiet 2>&1 || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f package.json && { npx --no vitest --version >/dev/null 2>&1 || { echo 'ERROR: vitest is not installed. Run: npm install -D vitest'; exit 1; }; npx --no vitest run --reporter=verbose 2>&1; } || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "vite_config=$(ls vite.config.* client/vite.config.* 2>/dev/null | head -1) && test -n \"$vite_config\" && { dir=$(dirname \"$vite_config\"); if [ \"$dir\" != \".\" ]; then cd \"$dir\"; fi; npx vite build 2>&1 | tail -5; } || true"
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/webfetch-fallback.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/prefer-semble.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/block-git-discard.sh\"",
+            "timeout": 10,
+            "statusMessage": "git 破棄コマンドチェック"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/stop-turn-end.sh\""
+          }
+        ]
+      }
     ]
   },
-  "skipAutoPermissionPrompt": true,
+  "enabledPlugins": {
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": false,
+    "feature-dev@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "learning-output-style@claude-plugins-official": false,
+    "plugin-dev@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "language": "Japanese",
+  "effortLevel": "high",
+  "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized",
-  "tui": "fullscreen"
+  "skipAutoPermissionPrompt": true,
+  "mcpServers": {
+    "obscura": {
+      "args": [
+        "mcp"
+      ],
+      "command": "obscura",
+      "env": {},
+      "type": "stdio"
+    }
+  }
 }
