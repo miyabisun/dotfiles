@@ -2,7 +2,8 @@
 # knowledge repository への知識投入を 1 プロセスで完結させる。
 #
 # この script が所有するのは検査・原文保全・排他・stage・commit で、
-# 仕訳 (writer) と独立レビュー (reviewer) は codex exec の同期召喚 2 回が担う。
+# 仕訳 (writer) と独立レビュー (reviewer) は review ラッパー経由の同期召喚
+# 2 回が担う (review が codex exec の共通起動形を所有する)。
 # 常駐 intake pane を前提にしないのが狙い。push は絶対に行わない。
 #
 # 判定はすべて fail-closed — 迷ったら blocked にして repository を汚さない。
@@ -130,14 +131,17 @@ fi
 [[ -d "$REPO" ]] || blocked "repository が directory ではない"
 REPO="$(cd -- "$REPO" && pwd -P)" || blocked "repository path を解決できない"
 
-CODEX_BIN="${KNOWLEDGE_DEPOSIT_CODEX:-codex}"
+REVIEW_BIN="${KNOWLEDGE_DEPOSIT_REVIEW:-review}"
 
-# 召喚は必ず timeout 配下で起動する。hang されると flock を握ったまま戻らず、
+# 召喚は必ず時間制限付きで起動する。hang されると flock を握ったまま戻らず、
 # 以後この repository へのすべての投入が lock timeout で blocked になり続ける。
+# 打ち切りは review が所有するので --timeout で渡し、超過は exit 124 で返る。
 # 既存の polish/spike の起動形と同じ 600 秒を既定にする。
+# 受け付ける値集合は review の --timeout と同一の正の整数に揃える (0 は
+# timeout 無効化の意味になり、召喚を打ち切るというここの目的を壊す)。
 SUMMON_TIMEOUT="${KNOWLEDGE_DEPOSIT_TIMEOUT:-600}"
-[[ "$SUMMON_TIMEOUT" =~ ^[0-9]+$ ]] \
-    || blocked "KNOWLEDGE_DEPOSIT_TIMEOUT は非負整数でなければならない"
+[[ "$SUMMON_TIMEOUT" =~ ^[1-9][0-9]*$ ]] \
+    || blocked "KNOWLEDGE_DEPOSIT_TIMEOUT は正の整数でなければならない"
 
 # hash 道具は最初に一度だけ決める。command substitution の中で blocked しても
 # 親 shell は終われないので、道具の欠落はここで確定させる。
@@ -468,8 +472,8 @@ fi
 
 # ---- 9. 道具の preflight -------------------------------------------------
 
-if ! command -v "$CODEX_BIN" >/dev/null 2>&1 && [[ ! -x "$CODEX_BIN" ]]; then
-    blocked "codex 実行ファイルが見つからない: ${CODEX_BIN}"
+if ! command -v "$REVIEW_BIN" >/dev/null 2>&1 && [[ ! -x "$REVIEW_BIN" ]]; then
+    blocked "review 実行ファイルが見つからない: ${REVIEW_BIN}"
 fi
 command -v jq >/dev/null 2>&1 || blocked "jq が無く codex の結果を検証できないため fail-closed"
 command -v flock >/dev/null 2>&1 || blocked "flock が無く排他できないため fail-closed"
@@ -740,19 +744,12 @@ PROMPT
 
 log "writer 召喚"
 writer_rc=0
-timeout "$SUMMON_TIMEOUT" "$CODEX_BIN" exec \
-    --strict-config \
-    --ignore-user-config \
-    --ephemeral \
-    -C "$REPO" \
-    -m gpt-5.6-sol \
-    -c 'model_reasoning_effort="high"' \
-    -c 'approval_policy="never"' \
-    -s workspace-write \
-    --color never \
-    --output-schema "$WRITER_SCHEMA" \
-    -o "$WRITER_RESULT" \
-    - < "$WRITER_PROMPT" >&2 || writer_rc=$?
+"$REVIEW_BIN" "$REPO" \
+    --sandbox workspace-write \
+    --schema "$WRITER_SCHEMA" \
+    --result "$WRITER_RESULT" \
+    --timeout "$SUMMON_TIMEOUT" \
+    < "$WRITER_PROMPT" || writer_rc=$?
 
 # ---- 16. 回収記録 (writer の成否に依らず残す) ----------------------------
 #
@@ -1020,19 +1017,11 @@ PROMPT
 
 log "reviewer 召喚"
 review_rc=0
-timeout "$SUMMON_TIMEOUT" "$CODEX_BIN" exec \
-    --strict-config \
-    --ignore-user-config \
-    --ephemeral \
-    -C "$REPO" \
-    -m gpt-5.6-sol \
-    -c 'model_reasoning_effort="high"' \
-    -c 'approval_policy="never"' \
-    -s read-only \
-    --color never \
-    --output-schema "$REVIEW_SCHEMA" \
-    -o "$REVIEW_RESULT" \
-    - < "$REVIEW_PROMPT" >&2 || review_rc=$?
+"$REVIEW_BIN" "$REPO" \
+    --schema "$REVIEW_SCHEMA" \
+    --result "$REVIEW_RESULT" \
+    --timeout "$SUMMON_TIMEOUT" \
+    < "$REVIEW_PROMPT" || review_rc=$?
 
 [[ "$review_rc" -ne 124 ]] || blocked "reviewer 召喚が ${SUMMON_TIMEOUT} 秒で timeout した"
 [[ "$review_rc" -eq 0 ]] || blocked "reviewer 召喚が失敗した (exit ${review_rc})"

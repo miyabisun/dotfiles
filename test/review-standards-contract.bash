@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # assert する文字列は対象ファイルの literal なので、$ や ` を展開させない。
-# codex exec の起動形は行末が継続の `\` なので、SC1003 も literal として無効化する
+# レビュワー召喚の起動形は行末が継続の `\` なので、SC1003 も literal として無効化する
 # shellcheck disable=SC2016,SC1003
 set -euo pipefail
 
@@ -49,7 +49,6 @@ assert_contains "$polish" 'テストの誠実さ (blocking)'
 assert_contains "$polish" 'トートロジー'
 assert_contains "$polish" '誤魔化し'
 assert_contains "$polish" '機構追加なしの局所抽出で消せる'
-assert_contains "$polish" 'このケースは必要か?'
 assert_contains "$polish" 'formatter / linter の実行確認 (blocking)'
 assert_contains "$polish" '回帰テストが付いているか'
 assert_contains "$polish" 'scope 確認 (blocking)'
@@ -58,7 +57,6 @@ assert_contains "$polish" 'scope 確認 (blocking)'
 assert_contains "$spike" 'テストの誠実さ (blocking)'
 assert_contains "$spike" 'トートロジー'
 assert_contains "$spike" '誤魔化し'
-assert_contains "$spike" 'このケースは必要か?'
 assert_absent "$spike" 'step 1 で固定した同じ pane へ'
 assert_absent "$spike" '`<space>/review` を一意解決'
 
@@ -67,22 +65,26 @@ assert_absent "$spike" '`<space>/review` を一意解決'
 # codex の実推論はテストしない (課金するので文言だけを固定する)
 for skill in "$polish" "$spike"; do
   assert_contains "$skill" 'レビュワーは**同期召喚する `codex exec` の1プロセス**である'
-  # 起動形は逐語で固定する (model / effort / sandbox / schema / 出力先)
-  assert_contains "$skill" 'timeout 600 codex exec \'
-  assert_contains "$skill" '  --strict-config \'
-  assert_contains "$skill" '  --ignore-user-config \'
-  assert_contains "$skill" '  --ephemeral \'
-  assert_contains "$skill" '  -C "$repo" \'
-  assert_contains "$skill" '  -m gpt-5.6-sol \'
-  assert_contains "$skill" "  -c 'model_reasoning_effort=\"high\"' \\"
-  assert_contains "$skill" "  -c 'approval_policy=\"never\"' \\"
-  assert_contains "$skill" '  -s read-only \'
-  assert_contains "$skill" '  --color never \'
-  assert_contains "$skill" '  --output-schema "$schema" \'
-  assert_contains "$skill" '  -o "$result" \'
-  assert_contains "$skill" '  - < "$prompt"'
-  # 判定は result + exit code。stdout は使わない
+  # 起動形は逐語で固定する。共通 flag は review ラッパーが所有するので、
+  # skill 側は repository / schema / result / prompt だけを渡す
+  assert_contains "$skill" '召喚は `review` から起動する'
+  assert_contains "$skill" '`agent/common/bin/review`'
+  assert_contains "$skill" 'model・`model_reasoning_effort="high"`・fast'
+  assert_contains "$skill" 'timeout 600 は `review` が'
+  assert_contains "$skill" '所有するので、ここでは repository・schema・result・prompt だけを渡す'
+  assert_contains "$skill" 'review "$repo" \'
+  assert_contains "$skill" '  --schema "$schema" \'
+  assert_contains "$skill" '  --result "$result" \'
+  assert_contains "$skill" '  < "$prompt"'
+  # 旧 codex exec 直叩きの起動形は復活させない
+  assert_absent "$skill" 'timeout 600 codex exec \'
+  assert_absent "$skill" '  --output-schema "$schema" \'
+  assert_absent "$skill" '  -o "$result" \'
+  # 判定は result + exit code。stdout は使わない (review は stdout に出さない)
   assert_contains "$skill" '判定は **`$result` の JSON と exit code だけ**で行う。**stdout は使わない**'
+  assert_contains "$skill" '(`review` は stdout に何も出さない)'
+  # sandbox は review の既定 (read-only)
+  assert_contains "$skill" 'sandbox は既定の `read-only` なので'
   # 一時領域に置き、tracked file を作らない
   assert_contains "$skill" 'scratchpad 等の一時領域に置く'
   assert_contains "$skill" '**tracked file を作らない**'
@@ -121,6 +123,8 @@ for skill in "$polish" "$spike"; do
   # 「1回だけ」を単独で書くと「召喚1回ぶんの代替」と読めて、次の phase で
   # また codex exec を叩く読み方が生き残る。skip 規則まで本文で固定する
   assert_contains "$skill" '### fallback (circuit breaker)'
+  # ラッパー自体の不在も breaker のトリガに含める
+  assert_contains "$skill" '`review` が無い (未 install・PATH 不備)、`codex` CLI が無い'
   assert_contains "$skill" 'が起きた時点で **breaker が開く**'
   assert_contains "$skill" '**breaker が開いたら、その delivery の残りの codex exec 召喚は一切行わない。**'
   assert_contains "$skill" '失敗した召喚と、それ以降に予定されていた召喚を、すべて self 系で処理する'

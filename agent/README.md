@@ -140,7 +140,7 @@ Notable skills:
 - `git` — house rules for commit messages and branch flow
 - `bump-tag` — semver bump, tag, push
 - `knowledge-deposit` — fail-closed deposit of reusable knowledge: scan, preserve
-  the payload byte for byte, lock, file it with one `codex exec` summon, review it
+  the payload byte for byte, lock, file it with one `review` summon, review it
   with another, and commit locally
 
 `deliver` selects only the capabilities justified by risk. Agent split

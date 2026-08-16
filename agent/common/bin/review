@@ -1,0 +1,100 @@
+#!/bin/bash
+# codex exec 召喚の唯一の起動形。spike / polish / chore / knowledge-deposit の
+# レビュワー召喚はすべてこの wrapper を通す。長い flag 列と fast mode の指定
+# (features.fast_mode / service_tier) はここが単独で所有する。
+#
+#   review <dir> --schema <file> --result <file>
+#          [--sandbox read-only|workspace-write] [--timeout <sec>]
+#
+# prompt は標準入力で受け取り、codex の stdin (`-` 形式) へそのまま流す。
+# stdout には何も出さない (codex 自身のログは stderr へ回す)。判定材料は
+# --result の JSON と exit code だけ。exit code は timeout の 124 を含めて
+# 無加工で透過する。実行ファイルは REVIEW_CODEX で差し替えられる。
+set -euo pipefail
+
+usage() {
+    echo 'usage: review <dir> --schema <file> --result <file> [--sandbox read-only|workspace-write] [--timeout <sec>]' >&2
+}
+
+# 使い方の誤りは stderr に 1 行だけ出して exit 2。stdout は常に空に保つ。
+die() {
+    echo "review: $1" >&2
+    exit 2
+}
+
+dir=""
+schema=""
+result=""
+sandbox="read-only"
+timeout_sec="600"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --schema)
+            [[ $# -ge 2 ]] || die '--schema requires a value'
+            schema="$2"
+            shift 2
+            ;;
+        --result)
+            [[ $# -ge 2 ]] || die '--result requires a value'
+            result="$2"
+            shift 2
+            ;;
+        --sandbox)
+            [[ $# -ge 2 ]] || die '--sandbox requires a value'
+            sandbox="$2"
+            shift 2
+            ;;
+        --timeout)
+            [[ $# -ge 2 ]] || die '--timeout requires a value'
+            timeout_sec="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 2
+            ;;
+        -*)
+            die "unknown option: $1"
+            ;;
+        *)
+            [[ -z "$dir" ]] || die "unexpected argument: $1"
+            dir="$1"
+            shift
+            ;;
+    esac
+done
+
+[[ -n "$dir" ]] || die 'missing <dir>'
+[[ -d "$dir" ]] || die "not a directory: $dir"
+[[ -n "$schema" ]] || die 'missing --schema'
+[[ -f "$schema" && -r "$schema" ]] || die "unreadable schema: $schema"
+[[ -n "$result" ]] || die 'missing --result'
+[[ -d "$(dirname -- "$result")" ]] || die "result directory does not exist: $result"
+case "$sandbox" in
+    read-only|workspace-write) ;;
+    *) die "invalid --sandbox: $sandbox" ;;
+esac
+[[ "$timeout_sec" =~ ^[1-9][0-9]*$ ]] || die "invalid --timeout: $timeout_sec"
+
+codex="${REVIEW_CODEX:-codex}"
+command -v -- "$codex" >/dev/null 2>&1 || {
+    echo "review: codex not found: $codex" >&2
+    exit 127
+}
+
+exec timeout "$timeout_sec" "$codex" exec \
+    --strict-config \
+    --ignore-user-config \
+    --ephemeral \
+    -C "$dir" \
+    -m gpt-5.6-sol \
+    -c 'model_reasoning_effort="high"' \
+    -c 'approval_policy="never"' \
+    -c 'features.fast_mode=true' \
+    -c 'service_tier="fast"' \
+    -s "$sandbox" \
+    --color never \
+    --output-schema "$schema" \
+    -o "$result" \
+    - >&2

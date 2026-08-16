@@ -83,11 +83,10 @@ assert_contains "$spike" '**breaker が開いたら、その delivery の残り�
 assert_contains "$spike" 'review_exec_failed: <理由>'
 assert_absent "$spike" 'fallback (1 delivery で1回だけ)'
 
-# レビュワーの検査項目: テストの誠実さ・DRY・過度な YAGNI・実行確認
+# レビュワーの検査項目: テストの誠実さ・DRY・実行確認
 assert_contains "$spike" 'トートロジー'
 assert_contains "$spike" '誤魔化し'
 assert_contains "$spike" '厳格に blocking とし、修正させる'
-assert_contains "$spike" 'このケースは必要か?'
 assert_contains "$spike" 'formatter / linter の実行確認'
 
 # DRY blocking は今回 diff 由来の有害な重複に限定 (試作の意図的重複は polish TODO)

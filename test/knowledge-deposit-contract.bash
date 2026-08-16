@@ -2,7 +2,7 @@
 # knowledge-deposit skill の契約を固定する。
 #
 # 前半 (A) は SKILL.md と script の literal 固定。後半 (B) が本体で、一時
-# directory に本物の git repository を作り、`KNOWLEDGE_DEPOSIT_CODEX` に stub を
+# directory に本物の git repository を作り、`KNOWLEDGE_DEPOSIT_REVIEW` に stub を
 # 刺して script を実際に叩く。fail-closed の判定・原文保全・排他・stage 境界は
 # 「文言があること」では守れないので、実挙動として測る。
 #
@@ -110,14 +110,23 @@ done <<<"$git_subcommands"
 # deploy へ到達できてしまうと「push しない」を script が保証できなくなる
 assert_contains "$script" 'git -C "$REPO" -c core.hooksPath=/dev/null commit'
 
-# 召喚は writer/reviewer のちょうど 2 回で、sandbox が別であること
-summon_count="$(grep -c '"\$CODEX_BIN" exec' "$script" || true)"
-[ "$summon_count" -eq 2 ] || fail "codex 召喚は 2 回のはずが ${summon_count} 回"
-assert_contains "$script" '-s workspace-write'
-assert_contains "$script" '-s read-only'
-# hang した召喚が flock を握ったまま戻らないよう、両方 timeout 配下で起動する
-timeout_count="$(grep -c 'timeout "\$SUMMON_TIMEOUT" "\$CODEX_BIN" exec' "$script" || true)"
-[ "$timeout_count" -eq 2 ] || fail "codex 召喚 2 回とも timeout 配下ではない (${timeout_count} 回)"
+# 召喚は writer/reviewer のちょうど 2 回で、共通起動形は review ラッパーが所有する
+summon_count="$(grep -c '"\$REVIEW_BIN" "\$REPO"' "$script" || true)"
+[ "$summon_count" -eq 2 ] || fail "review 召喚は 2 回のはずが ${summon_count} 回"
+# 旧 codex exec 直叩きは復活させない (共通起動形は review ラッパーが持つ)
+assert_contains "$script" 'REVIEW_BIN="${KNOWLEDGE_DEPOSIT_REVIEW:-review}"'
+if grep -Fq 'codex exec' <<<"$script_code"; then
+  fail 'script が codex exec を直接叩いている (review ラッパーを経由すること)'
+fi
+# sandbox は writer だけが workspace-write を明示し、reviewer は review の
+# 既定 (read-only) に任せる
+assert_contains "$script" '--sandbox workspace-write'
+sandbox_count="$(grep -c -- '--sandbox' "$script" || true)"
+[ "$sandbox_count" -eq 1 ] \
+  || fail "--sandbox の明示は writer の 1 回だけのはずが ${sandbox_count} 回"
+# hang した召喚が flock を握ったまま戻らないよう、両方に時間制限を渡す
+timeout_count="$(grep -c -- '--timeout "\$SUMMON_TIMEOUT"' "$script" || true)"
+[ "$timeout_count" -eq 2 ] || fail "召喚 2 回とも時間制限付きではない (${timeout_count} 回)"
 assert_contains "$script" 'command -v timeout'
 
 # flock で直列化し、lock は repository の外に置く (投入対象を汚さない)
@@ -151,23 +160,26 @@ trap 'rm -rf "$tmp_root"' EXIT
 stub="$tmp_root/codex-stub"
 stub_log="$tmp_root/stub.log"
 
-# --- stub codex -----------------------------------------------------------
-# 呼び出しごとに pid・sandbox・prompt 長を記録し、mode に従って -o の path へ
-# 所定の JSON を書く。writer と reviewer は -s の値で見分ける
+# --- stub review ----------------------------------------------------------
+# 呼び出しごとに pid・sandbox・prompt 長を記録し、mode に従って --result の path
+# へ所定の JSON を書く。writer と reviewer は --sandbox の値で見分ける
+# (reviewer は --sandbox を渡さず、review 既定の read-only に任せる)。
+# 時間制限は review が所有するので、stub 側で --timeout を実際に効かせる
 cat >"$stub" <<'STUB'
 #!/usr/bin/env bash
 set -uo pipefail
 
-repo=""; out=""; sandbox=""; schema=""; prev=""
-for arg in "$@"; do
-  case "$prev" in
-    -C) repo="$arg" ;;
-    -o) out="$arg" ;;
-    -s) sandbox="$arg" ;;
-    --output-schema) schema="$arg" ;;
+repo=""; out=""; sandbox=""; schema=""; summon_timeout=600
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --sandbox) sandbox="$2"; shift 2 ;;
+    --schema) schema="$2"; shift 2 ;;
+    --result) out="$2"; shift 2 ;;
+    --timeout) summon_timeout="$2"; shift 2 ;;
+    *) [ -n "$repo" ] || repo="$1"; shift ;;
   esac
-  prev="$arg"
 done
+sandbox="${sandbox:-read-only}"
 
 prompt="$(cat)"
 printf 'CALL pid=%s sandbox=%s schema=%s out=%s prompt_len=%s\n' \
@@ -190,7 +202,8 @@ if [ "$mode" = slow ]; then
 fi
 
 case "$mode" in
-  hang) sleep "${STUB_SLEEP:-10}"; exit 0 ;;
+  # review は打ち切りを自分で持ち、超過を exit 124 で透過する
+  hang) timeout "$summon_timeout" sleep "${STUB_SLEEP:-10}"; exit $? ;;
   fail) exit 3 ;;
   empty) : >"$out"; exit 0 ;;
   badschema) printf '%s' '{"status": "filed"}' >"$out"; exit 0 ;;
@@ -271,7 +284,7 @@ STUB
 chmod 755 "$stub"
 
 export STUB_LOG="$stub_log"
-export KNOWLEDGE_DEPOSIT_CODEX="$stub"
+export KNOWLEDGE_DEPOSIT_REVIEW="$stub"
 
 reset_stub() {
   export STUB_WRITER=normal
@@ -1002,6 +1015,39 @@ assert_status 'B16 reviewer timeout' blocked 1
 assert_reason_matches 'B16 reviewer timeout' 'timeout'
 assert_no_new_commit 'B16 reviewer timeout' "$repo" "$before"
 assert_index_clean 'B16 reviewer timeout' "$repo"
+
+# --- B30: 不正な KNOWLEDGE_DEPOSIT_TIMEOUT は repository を触る前に blocked ---
+# 打ち切りを所有する review は --timeout を正の整数しか受け付けない。preflight が
+# 0 や 01 を通すと、失敗するのは flock 取得と inbox 原文の作成が終わったあとの
+# 召喚時点になり、worktree に残骸が残る。しかも 0 は timeout 無効化の意味なので、
+# 「hang した召喚が lock を握り続けるのを防ぐ」という目的そのものが消える。
+# 不正な入力は repository を 1 byte も触る前に blocked にする (fail-closed)
+assert_timeout_rejected() {
+  local label="$1" value="$2" r p b status_before
+  reset_stub
+  export KNOWLEDGE_DEPOSIT_TIMEOUT="$value"
+  new_repo; r="$REPO_DIR"
+  new_payload "note: invalid summon timeout ${label}"; p="$PAYLOAD_FILE"
+  b="$(commit_count "$r")"
+  status_before="$(git -C "$r" status --porcelain -uall)"
+  deposit "$r" "$p"
+  assert_status "B30 ${label}" blocked 1
+  assert_reason_matches "B30 ${label}" 'KNOWLEDGE_DEPOSIT_TIMEOUT'
+  assert_no_new_commit "B30 ${label}" "$r" "$b"
+  assert_index_clean "B30 ${label}" "$r"
+  # 召喚まで到達していない = review の usage error に頼っていない
+  [ "$(stub_calls "$stub_log")" -eq 0 ] \
+    || fail "B30 ${label}: 不正な timeout なのに召喚した"
+  # inbox 原文も作られていない (作られていたら残骸として worktree に残る)
+  [ ! -d "$r/inbox" ] || fail "B30 ${label}: 不正な timeout なのに inbox 原文が作られた"
+  [ "$(git -C "$r" status --porcelain -uall)" = "$status_before" ] \
+    || fail "B30 ${label}: worktree が汚れた: $(git -C "$r" status --porcelain -uall | tr '\n' ' ')"
+}
+
+# 0 は「制限なし」であって「即時打ち切り」ではない
+assert_timeout_rejected '0' 0
+assert_timeout_rejected '先頭 0 埋め' 01
+assert_timeout_rejected '非数値' abc
 
 # --- B14: 並行実行 (flock) -------------------------------------------------
 reset_stub

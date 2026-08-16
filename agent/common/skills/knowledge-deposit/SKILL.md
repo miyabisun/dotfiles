@@ -3,7 +3,7 @@ name: knowledge-deposit
 description: >-
   Deposit reusable knowledge into the knowledge repository through a
   fail-closed script that scans, preserves, locks, stages, and commits, with
-  codex exec summoned once to file the entry and once to review it
+  review summoned once to file the entry and once to review it
   independently. Use when a delivery produced durable domain facts, decisions,
   rejected options, open questions, or lessons that belong in shared knowledge,
   when the knowledge intake pane is not running, or when the user asks to
@@ -19,8 +19,10 @@ delivery で確定した再利用可能な知識を、knowledge repository へ�
 排他・stage・commit まで 1 プロセスで終わる。常駐 intake pane を必要としない。
 
 仕訳 (writer) と独立レビュー (reviewer) は `codex exec` の同期召喚が担う。
+召喚は spike / polish と同じ `review` ラッパー (`agent/common/bin/review`)
+経由で起動し、model・timeout・固定 flag はそちらが所有する。
 **writer と reviewer は別召喚であり、self-review にならない** — reviewer は
-`-s read-only` で走り、writer が作った staged diff だけを見る。
+既定の `read-only` sandbox で走り、writer が作った staged diff だけを見る。
 
 この skill が扱うのは「あとで別の agent が再利用できる知識」だけである。
 今回の作業にしか意味がない発見は receipt に書いて終わる。

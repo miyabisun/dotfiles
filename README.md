@@ -64,6 +64,7 @@ See `agent/README.md` for details.
 
 #### `~/.local/bin`
 - `emit-turn-end.sh` -> `agent/common/bin/emit-turn-end.sh`
+- `review` -> `agent/common/bin/review` — the shared `codex exec` launch form used by every review summon
 - `tmux-session-picker` -> `config/tmux/bin/tmux-session-picker`
 - `tmux-mux` -> `config/tmux/bin/tmux-mux`
 
