@@ -125,6 +125,5 @@ user へ返すときは、衝突した 2 つが何をしようとしていたか
 - **自分の push を授権することになる task を自分で作らない**
 - HTTP API の直叩き、データベースファイルへの直接書き込みはしない
 - 判断履歴・TODO・plan・review log を tracked file に残さない
-  (GLOBAL.md「Project Memory Boundary」)
 - secret・`.env` をコミットしない
 - 破壊的 git 操作で他人の作業を巻き込まない。無関係な作業中変更を保護する

@@ -44,7 +44,7 @@ description: >-
 - 出口では「**明日 spike できる一歩**」を1つだけ選ぶ。選ぶ一歩は**承認済みかつ
   可逆**な効果の範囲内に限る。user が授権していない mutation を実行可能扱い
   にしない — ただし授権は pane に固着しない。中継されて届いた user の依頼は
-  user の依頼である (GLOBAL.md「Who is speaking」)。counterpart 自身の提案は
+  user の依頼である。counterpart 自身の提案は
   既存の scope を広げない。
 - 成果は応答 (または呼び出し元の receipt) に残す: 広げた案、選んだ次の実験と
   ワクワクする理由、最小の検証方法、保留案。repo は変更せず

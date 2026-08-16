@@ -328,7 +328,7 @@ log "構造検証: item ${items_seen} 件"
 # ---- 5. runtime 座標の拒否 -----------------------------------------------
 #
 # pane id や message id は、この machine の runtime 座標であって知識ではない
-# (GLOBAL.md「Project Memory Boundary」)。repository へ入れない。
+#。repository へ入れない。
 
 command -v rg >/dev/null 2>&1 || blocked "rg (ripgrep) が無く secret scan を実行できないため fail-closed"
 
@@ -425,7 +425,7 @@ git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
 # 残骸」と「他 session の作業」を見分ける唯一の手掛かりになる。runtime dir に
 # 置くと reboot で消えて再びデッドロックするので、repository scope で残り、
 # preflight で書き込み可能性を検証済みの .git 配下に置く。untracked なので
-# tracked artifact にはならない (GLOBAL.md「Project Memory Boundary」)。
+# tracked artifact にはならない。
 # key は sha8 ではなく完全な sha256 — 32 bit の衝突で他の payload の記録を
 # 踏み潰さないため。
 GIT_DIR_ABS="$(git -C "$REPO" rev-parse --absolute-git-dir)" || blocked "git dir を解決できない"

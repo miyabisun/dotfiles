@@ -5,7 +5,7 @@ description: >-
   得る。契約儀式・sec ゲート・知識棚卸しは省くが、実装前に counterpart と
   方針を独立にすり合わせ、TDD は死守 (テスト無き
   ゴールは存在しない)、formatter/linter は機械的に実行し、テストの誠実さと
-  DRY・過度な YAGNI を見る軽量な実装レビュー1回を通す。明示起動・段階明示・段階
+  DRY を見る軽量な実装レビュー1回を通す。明示起動・段階明示・段階
   未指定 $deliver からの自動判断で使う。push・deploy・release はしない。
 ---
 
@@ -16,8 +16,8 @@ description: >-
 言える粗さで、まず世に出せる形へ向かう (リリース行為そのものは user が
 `bump-tag` で行う)。抽象化・設定項目・将来対応・網羅的な堅牢性はあとの
 `polish` が引き受ける。完成度は8割で止めてよく、やり残しは
-**follow-up として receipt に返す** — project repo へ file として残さない
-(GLOBAL.md「Project Memory Boundary」)。ただし**作った分にはテストがある** —
+**follow-up として receipt に返す** — project repo へ file として残さない。
+ただし**作った分にはテストがある** —
 テスト無きゴールは存在しない。
 
 ## 起動条件
@@ -51,8 +51,7 @@ user の追加の「続けて」を**再開条件にしない**。
 子の作成は「発火 pane から他の runtime へ実装を委譲すること」ではない。
 **自分の判断で peer へ実装を投げ直すことは今どおり禁止**で、send_message に
 skill は載せない。ただし **user が明示した handoff は伝えてよい** — 運ぶのは
-user が与えた依頼そのもので、scope を足さない。受け取った側は GLOBAL.md
-「Execution Continuity」に従って着手する。
+user が与えた依頼そのもので、scope を足さない。受け取った側はそのまま着手する。
 
 ## 手順
 
@@ -108,8 +107,7 @@ user が与えた依頼そのもので、scope を足さない。受け取った
    指名待ちも無い)。これは**投げる側の制約であって、受け取る側の制約ではない**。
    **担当は、その assignment を現に保持している者である。** user の依頼が
    中継されて届いたなら、それは user が言ったことなので、
-   **user に同じことを言い直させない** — GLOBAL.md「Who is speaking」と
-   「Execution Continuity」に従って着手する。
+   **user に同じことを言い直させない** — そのまま着手する。
    レビュワーは**同期召喚する `codex exec` の1プロセス**である。起動形・schema・
    上限・fallback は「[レビュワー召喚 (codex exec)](#レビュワー召喚-codex-exec)」。
    planning 召喚を**1回だけ**起動し、
@@ -143,8 +141,8 @@ user が与えた依頼そのもので、scope を足さない。受け取った
 3. **TDD で作る**: 失敗するテストを先に書き (red)、通す (green)。この順序に
    自己免除は無い。user が同じ依頼文で明示的に例外を許可した場合のみ省略でき
    (原文を receipt に引用する)。red を観測できなければ、観測できるまで実装を
-   続ける。技術的に不能なら未達として報告する。GLOBAL.md「Stopping work」以外で
-   作業を拒否しない。
+   続ける。技術的に不能なら未達として報告する。第三者への迷惑か犯罪行為の
+   とき以外で作業を拒否しない。
    ファイル変更とテスト実行の CLI 待ちは毎回作成する子が行う。親は同一文脈で
    実装を続けない。
    **ゴール = 最大3項目の acceptance テストと、
@@ -166,7 +164,8 @@ user が与えた依頼そのもので、scope を足さない。受け取った
    「[レビュワー召喚 (codex exec)](#レビュワー召喚-codex-exec)」。
 7. **コミットする**: 既定は 1 invocation = 1 local commit。複数 checkpoint
    commit は、起動時の user 依頼文が明示的に許可した場合のみ (その原文を
-   receipt に引用し、件数と各 scope を報告する)。English Conventional Commits。
+   receipt に引用し、件数と各 scope を報告する)。message は `git` skill の
+   規則に従う (1 行のみ、経緯は knowledge へ)。
 8. **報告する**: 何が動くか、テスト結果、動作証拠、残した TODO と
    non-blocking の質問リスト、次に polish すべき点を短く返す。
    **v0.1.0 readiness の確認も完了条件に含む**: 新規プロジェクトの該当
@@ -288,8 +287,6 @@ timeout 600 codex exec \
   機構追加なしの局所抽出で消せるものだけを blocking とする。解消に抽象化を
   要するものや意図的な小さい重複は non-blocking の follow-up として receipt に
   落とす。
-- **過度な YAGNI (non-blocking)**: 落とされたケースに「このケースは必要か?」の
-  質問を残し、receipt で user に返す。delivery は止めない。
 - **formatter / linter の実行確認 (blocking)**: 実際に実行され、指摘が残って
   いないかを確認する。
 - **scope 確認 (blocking)**: commit 対象が今回の変更だけで、無関係な作業中変更を
@@ -403,8 +400,8 @@ user の目的とずれるなら不採用。
 ## 続行
 
 secret・権限境界・破壊的データ・version・将来のリリース可能性を理由に、
-作業を止めたり段階を切り替えたりしない。止めてよい条件は GLOBAL.md
-「Stopping work」だけである。
+作業を止めたり段階を切り替えたりしない。止めてよいのは第三者への迷惑か
+犯罪行為のときだけである。
 
 project の version がいくつでも **spike は spike のまま進む**。version を
 理由にした判定や注記の儀式は追加しない。version file は変更しない —

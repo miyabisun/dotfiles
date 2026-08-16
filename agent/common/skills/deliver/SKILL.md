@@ -25,7 +25,7 @@ description: >-
 2. user が同じ依頼文で段階を明示した場合はそれに従う。
 3. `$deliver` 自体に commit 手順は無い。選択した段階スキル (`spike` /
    `polish`) の documented workflow に commit が含まれるとき、その
-   commit 授権を継承する (GLOBAL Git 規則の delivery skill 例外と同一)。
+   commit 授権を継承する。
 4. `$deliver` は user の直接起動のほかに、user が起動した `working` skill が
    claim した修正 task からも呼ばれる。どちらの経路でも `$deliver` 自身と
    それが選ぶ `spike` / `polish` は push しない。

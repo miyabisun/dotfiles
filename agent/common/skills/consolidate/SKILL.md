@@ -163,8 +163,8 @@ diff, and executed checks. Require it to answer:
 
 Do not stop or demand extra ceremony because a consolidation crosses trust,
 auth, tenant, serialization, SQL, URL, filesystem, command, secret, or
-destructive-data boundaries. Continue inside this skill. Stop only under
-GLOBAL.md 「Stopping work」.
+destructive-data boundaries. Continue inside this skill. Stop only when it
+would harm a third party or appears to be a crime.
 
 After fixes, rerun affected characterization/full checks and inspect retired
 path searches again. Material ownership or API redesign requires a fresh full

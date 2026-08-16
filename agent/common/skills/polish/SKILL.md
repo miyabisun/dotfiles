@@ -47,8 +47,7 @@ user の追加の「続けて」を**再開条件にしない**。
 子の作成は「発火 pane から他の runtime へ実装を委譲すること」ではない。
 **自分の判断で peer へ実装を投げ直すことは今どおり禁止**で、send_message に
 skill は載せない。ただし **user が明示した handoff は伝えてよい** — 運ぶのは
-user が与えた依頼そのもので、scope を足さない。受け取った側は GLOBAL.md
-「Execution Continuity」に従って着手する。
+user が与えた依頼そのもので、scope を足さない。受け取った側はそのまま着手する。
 
 ## 手順
 
@@ -63,8 +62,7 @@ user が与えた依頼そのもので、scope を足さない。受け取った
    指名待ちも無い)。これは**投げる側の制約であって、受け取る側の制約ではない**。
    **担当は、その assignment を現に保持している者である。** user の依頼が
    中継されて届いたなら、それは user が言ったことなので、
-   **user に同じことを言い直させない** — GLOBAL.md「Who is speaking」と
-   「Execution Continuity」に従って着手する。
+   **user に同じことを言い直させない** — そのまま着手する。
    レビュワーは**同期召喚する `codex exec` の1プロセス**である。起動形・schema・
    上限・fallback は「[レビュワー召喚 (codex exec)](#レビュワー召喚-codex-exec)」。
    planning 召喚を**1回だけ**起動し、
@@ -145,7 +143,8 @@ user が与えた依頼そのもので、scope を足さない。受け取った
    fallback は「[レビュワー召喚 (codex exec)](#レビュワー召喚-codex-exec)」。
 7. **コミットする**: 1 invocation = **0または1個の prerequisite formatting
    commit + ちょうど1個の delivery commit**。既定 (基線 no-op) は delivery 1
-   個のみ。English Conventional Commits。style commit と delivery を混ぜない。
+   個のみ。message は `git` skill の規則に従う (1 行のみ、経緯は knowledge
+   へ)。style commit と delivery を混ぜない。
    知識棚卸しは行わない。
 8. **報告する**: 解消した不満と証拠、残る不満、追加した回帰テスト、review の
    結果、style commit の有無を短く返す。
@@ -261,8 +260,6 @@ timeout 600 codex exec \
   機構追加なしの局所抽出で消せるものだけを blocking とする。解消に抽象化を
   要するものや意図的な小さい重複は non-blocking の follow-up として receipt に
   落とす。
-- **過度な YAGNI (non-blocking)**: 落とされたケースに「このケースは必要か?」の
-  質問を残し、receipt で user に返す。delivery は止めない。
 - **formatter / linter の実行確認 (blocking)**: 実際に実行され、指摘が残って
   いないかを確認する。
 - **scope 確認 (blocking)**: commit 対象が今回の変更だけで、無関係な作業中変更を
@@ -370,8 +367,8 @@ user の目的とずれるなら不採用。
 ## 続行
 
 secret・権限境界・破壊的データ・version・将来のリリース可能性を理由に、
-作業を止めたり追加号令を求めたりしない。止めてよい条件は GLOBAL.md
-「Stopping work」だけである。polish のまま磨き続ける。
+作業を止めたり追加号令を求めたりしない。止めてよいのは第三者への迷惑か
+犯罪行為のときだけである。polish のまま磨き続ける。
 
 ## 不変条件 (全段階共通)
 
@@ -380,7 +377,7 @@ secret・権限境界・破壊的データ・version・将来のリリース可�
   feature branch へ push することは妨げない。push を所有するのはその worker
   skill であり、spike / polish 自身ではない
 - 判断履歴・TODO・plan・ledger・review log を **project repo へ file として残さない**。
-  経緯は receipt と knowledge が持つ (GLOBAL.md「Project Memory Boundary」)
+  経緯は receipt と knowledge が持つ
 - secret・`.env` をコミットしない。agent-talk journal に秘密を載せない
 - レビュワー召喚の prompt・schema・result を tracked file にしない
 - 無関係な作業中変更 (他セッションの未コミット作業を含む) を保護する

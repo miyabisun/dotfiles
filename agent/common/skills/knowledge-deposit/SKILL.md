@@ -23,8 +23,7 @@ delivery で確定した再利用可能な知識を、knowledge repository へ�
 `-s read-only` で走り、writer が作った staged diff だけを見る。
 
 この skill が扱うのは「あとで別の agent が再利用できる知識」だけである。
-今回の作業にしか意味がない発見は receipt に書いて終わる (GLOBAL.md
-「Project Memory Boundary」)。
+今回の作業にしか意味がない発見は receipt に書いて終わる。
 
 ## payload の書き方
 
@@ -157,14 +156,14 @@ exit code は `committed` と `no_op` が 0、`blocked` が 1。
 
 `blocked` のときは `reason` を receipt に残して次へ進む。**blocked を理由に
 project repository へ退避しない** — 投入できないことは、repository を記憶媒体に
-してよい理由にならない (GLOBAL.md「Project Memory Boundary」)。payload を
+してよい理由にならない。payload を
 tracked file として置き直すのも、要約を code comment に埋めるのも同じ違反である。
 payload を直せる blocked なら直して呼び直す。直せないなら pending として返す。
 
 ## 境界
 
 - **push・tag・release・deploy はしない**。script が行うのは local commit まで。
-  その先は GLOBAL.md「Git」に従って user の明示的な号令を待つ。
+  その先は user の明示的な号令を待つ。
 - **commit は repository の hooks を隔離して実行する** (`core.hooksPath=/dev/null`)。
   post-commit hook から push・tag・deploy へ到達できると、上の見出し不変条件を
   script が機械的に保証できなくなるため。この skill は自前の独立レビューを gate

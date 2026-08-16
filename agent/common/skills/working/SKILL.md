@@ -89,7 +89,7 @@ task の取得・状態遷移は **task-server が提供する MCP tool** を通
 7. **結果を state へ戻す**: 完了・失敗・部分成功のいずれも、MCP が提供する
    適切な state へ記録する。**失敗を close 扱いにしない** —
    失敗は失敗の state、判断が要るものは user 判断待ちの state へ返す。
-   **tracked file に log を残さない** (GLOBAL.md「Project Memory Boundary」)。
+   **tracked file に log を残さない**。
    経緯は receipt と task の state が持つ。
 8. **報告する**: 取った task、dispatch 先、作った branch、push の有無と対象、
    戻した state を短く返す。取る task が無かった周も、その 1 行だけ返す。

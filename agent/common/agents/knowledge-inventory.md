@@ -60,7 +60,7 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
   唯一の門である。`fidelity=reconstructed`の再構成は`user-verbatim:`ではなく
   `agent-inference:`に置き、原文が利用不能だったことを本文に書く。
 - pane idやagent-talkのmessage id表現をpayloadへ書かない。検出され次第blockedになる。
-  runtime座標は知識ではない (GLOBAL.md「Project Memory Boundary」)。
+  runtime座標は知識ではない。
 - 出典のpath/URIは`sources:`に置く。それ以外の行にhostらしき文字列があるとhost検査で
   blockedになる。
 
@@ -144,7 +144,7 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
    `reason`をそのまま返す。安全なitemだけを別経路で送り直したり、保管fileを
    repositoryに作ったりしない。
    **`blocked`を理由にproject repoへ退避しない** — 投入できないことは、repoを
-   記憶媒体にしてよい理由にならない (GLOBAL.md「Project Memory Boundary」)。
+   記憶媒体にしてよい理由にならない。
    payloadを直せる`blocked` (secret混入、provenance不備、runtime座標の残存) なら、
    直して呼び直してよい。呼び直しはuserへの再依頼を必要としない。
 
