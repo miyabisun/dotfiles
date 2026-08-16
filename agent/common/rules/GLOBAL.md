@@ -12,8 +12,8 @@
 | 場面 | スキル |
 |---|---|
 | git コマンドでの操作 | `git` |
-| ファイルの修正 (見込み合計〜20行) | `chore` |
-| ファイルの修正 (それ以上)・開発 | `knowledge-read` → `deliver` |
+| ファイルの修正 | `chore` |
+| 開発を行う | `knowledge-read` → `deliver` |
 | Herdr 内の他エージェントとの情報共有 (自己判断で可) | `agent-talk` |
 | プロンプトに `[agent-talk]` が含まれる (着信) | `agent-talk` |
 
