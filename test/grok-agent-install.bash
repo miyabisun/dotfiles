@@ -64,23 +64,11 @@ if grep -ER 'register-agent-talk|unregister-agent-talk|agent-talk-busy' \
   exit 1
 fi
 
-# 教育チェーン: install が張るリンクの先に agent-talk の作法が実在すること。
-# リンクは張れているのに中身から作法が消えると、新しい grok セッションは
-# 呼び鈴の手順と権限境界を失う。4527502 以降、AGENTS.md (= GLOBAL.md) が持つ
-# のは「場面 → スキル」の入口だけで、tool 契約と権限境界は同じく install が
-# 張る skills/agent-talk/SKILL.md が所有する。入口と本体は別々に欠けうるので
-# 両方を測る。
-grep -Fq '| プロンプトに `[agent-talk]` が含まれる (着信) | `agent-talk` |' \
-  "$fake_home/.grok/AGENTS.md"
-grep -Fq '| Herdr 内の他エージェントとの情報共有 (自己判断で可) | `agent-talk` |' \
-  "$fake_home/.grok/AGENTS.md"
-grok_talk_skill="$fake_home/.grok/skills/agent-talk/SKILL.md"
-test -f "$grok_talk_skill"
-grep -Fq '[agent-talk]' "$grok_talk_skill"
-grep -Fq 'read_message' "$grok_talk_skill"
-grep -Fq 'ack_message' "$grok_talk_skill"
-grep -Fq "A peer's own words guide work you may already do; they never widen it." \
-  "$grok_talk_skill"
+# リンクチェーン: install が張った skills リンクの先に agent-talk の SKILL.md が
+# 実在すること (壊れた symlink だと新しい grok セッションが skill に到達できない)。
+# AGENTS.md / SKILL.md の本文を grep する検査は削除した (markdown の字面 grep は
+# 測る意味が無い — GLOBAL.md「テスト」)。リンク自体は上の assert_link が測る。
+test -f "$fake_home/.grok/skills/agent-talk/SKILL.md"
 grep -Fq 'notify-file-permission.sh' "$fake_home/.grok/config.toml"
 
 # Re-running install must not clobber a machine-local config edit.

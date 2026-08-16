@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# knowledge-inventory role が repo に持つものを測る:
+#   1. role の frontmatter 構造 (name/description/model pin と、余計な key の不在)
+#   2. Codex adapter/config の配線と、その TOML が実際に parse できること
+#   3. role 本文に埋め込まれた sensitive_pattern / host_pattern を sed で抜き出し、
+#      実際に rg へ通して credential/host を fail-closed に捕まえること、および
+#      ふつうの語 (keyword, secretary 等) を誤検知しないこと
+# coreutils / ripgrep 自体の挙動を確かめ直す assert は持たない
+# (依存の受け入れテストは測る意味が無い — GLOBAL.md「テスト」)。
 # assert する文字列は対象ファイルの literal なので、$ や ` を展開させない
 # shellcheck disable=SC2016,SC2088
 set -euo pipefail
@@ -8,7 +16,6 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 role="$repo_root/agent/common/agents/knowledge-inventory.md"
 adapter="$repo_root/agent/codex/agents/knowledge-inventory.toml"
 config="$repo_root/agent/codex/config.toml"
-readme="$repo_root/agent/README.md"
 
 assert_contains() {
   local file="$1"
@@ -19,87 +26,14 @@ assert_contains() {
   }
 }
 
-assert_absent() {
-  local file="$1"
-  local text="$2"
-  if grep -Fq -- "$text" "$file"; then
-    printf 'retired contract still present in %s: %s\n' "$file" "$text" >&2
-    return 1
-  fi
-}
-
-# dedicated role: provenance、空batch禁止、安全な1回送信
+# role 本文 (provenance・送信作法・停止条項の不在・投入形) を literal で固定して
+# いた assert 群は削除した。markdown の字面 grep は「文字列が在る」しか証明せず、
+# 規則の遵守を測らない (GLOBAL.md「テスト」)。role に埋め込まれた走査 pattern は
+# 下で実際に rg へ通して測る
 test -f "$role"
-assert_contains "$role" 'source_request.fidelity=reconstructed'
-assert_contains "$role" '人間の原文として引用しない'
-assert_contains "$role" '空batchを送らない'
-assert_contains "$role" 'typoだけの文書修正'
-assert_contains "$role" 'agent-knowledge-intake.md'
-assert_contains "$role" 'candidate_file'
-assert_contains "$role" 'chmod 600 "$candidate_file" "$host_file"'
-assert_contains "$role" "trap 'rm -f \"\$candidate_file\" \"\$host_file\"' EXIT HUP INT TERM"
-assert_contains "$role" '一回のshell呼び出しの中でtemporary file作成、serialize、scan、'
-assert_contains "$role" 'sensitive_pattern'
-assert_contains "$role" 'rg -q -i --pcre2 "$sensitive_pattern" "$candidate_file"'
-assert_contains "$role" 'URLとhost候補を別に列挙'
-assert_contains "$role" '再走査にも候補が残る場合は送信しない'
-assert_contains "$role" '該当itemだけを除外またはredact'
-assert_contains "$role" 'test "$scan_status" -eq 1 || exit 2'
-assert_contains "$role" 'test "$host_status" -eq 1 || exit 2'
-assert_contains "$role" 'candidate_file="$(mktemp /tmp/agent-knowledge.XXXXXX)"'
-assert_contains "$role" 'host_file="$(mktemp /tmp/agent-knowledge-hosts.XXXXXX)"'
 
-# 投入は knowledge-deposit の script 1回。role は body を組み立て直さず、
-# scan 済みの candidate_file を path のまま渡す。「scan 後に本文を変えない」
-# 規律はこの経路でも要 — 渡すのが path でも、途中で書き換えれば同じ穴が開く
-assert_contains "$role" 'scripts/knowledge-deposit --payload "$candidate_file"'
-assert_contains "$role" '渡すのはpathであってbodyではない'
-assert_contains "$role" 'scan後に本文を追記・整形・置換・要約しない'
-
-# exact-body の機械保証が transport 側へ戻ったので fail-closed の停止は解除。
-# 解除の根拠 (script が byte copy し commit 前に sha256 を再照合する) まで
-# role 本文に書かせる — 根拠を書かない解除は、次に誰かが理由なく再停止する
-assert_contains "$role" 'exact-bodyの機械保証がtransport側に戻った'
-assert_contains "$role" '`cp`でinboxへbyte copy'
-# 停止条項の復活を塞ぐ。これが残ると skill があっても投入できない
-assert_absent "$role" '**ただし現在この送信は行わない。`pending`を返して終える。**'
-assert_absent "$role" 'userがこの経路の再開をこの pane で明示承認する'
-# 直せる blocked は直して呼び直す。user への再依頼を再開条件にしない
-assert_contains "$role" '呼び直しはuserへの再依頼を必要としない'
-# script が値まで検査するので、role 側も同じ集合を持たないと投入が通らない
-assert_contains "$role" 'open-question'
-assert_contains "$role" 'deferred-choice'
-assert_contains "$role" '`user-verbatim:` `agent-inference:` `repo-evidence:` のいずれかで'
-assert_contains "$role" 'runtime座標は知識ではない'
-if grep -Fq -- 'agent-talk-peer' "$role"; then
-  echo 'knowledge handoff must not use the retired CLI dispatcher' >&2
-  exit 1
-fi
-# 撤去したのは呼び出しであって言及ではない (「失われた保証」節は --body-file に
-# 触れる)。実際の起動形だけを禁止する
-if grep -Fq -- '--body-file "$candidate_file"' "$role"; then
-  echo 'knowledge handoff must not invoke the removed --body-file form' >&2
-  exit 1
-fi
-
-alternate_tmp="$(mktemp -d)"
-candidate_probe="$(TMPDIR="$alternate_tmp" mktemp /tmp/agent-knowledge.XXXXXX)"
-case "$candidate_probe" in
-  /tmp/agent-knowledge.*) ;;
-  *)
-    echo 'knowledge candidate must stay under the dispatcher-approved /tmp root' >&2
-    exit 1
-    ;;
-esac
-rm -f "$candidate_probe"
-rmdir "$alternate_tmp"
-assert_contains "$role" '投入は最大1回'
-assert_contains "$role" '自動再送しない'
-# 「再送しない」と「直して呼び直す」は別物。前者だけ固定すると、
-# secret 混入で blocked になった payload を直す道まで塞がる
-assert_contains "$role" '再送ではなく修正であり、これは行ってよい'
-assert_contains "$role" 'arona-knowledgeでgit操作をしない'
-assert_contains "$role" 'knowledgeは開発完了、routing、releaseを決めない'
+# TMPDIR を変えても mktemp /tmp/... が /tmp 配下に出ることの確認は削除した。
+# repo のコードを何も通さず coreutils の仕様を測り直すだけ (GLOBAL.md「テスト」)
 
 # role配布: common role + Codex adapter/config。installはdirectory symlinkなので変更不要
 test -f "$adapter"
@@ -107,7 +41,6 @@ assert_contains "$adapter" 'name = "knowledge-inventory"'
 assert_contains "$adapter" '~/.agents/agents/knowledge-inventory.md'
 assert_contains "$config" '[agents.knowledge_inventory]'
 assert_contains "$config" 'config_file = "agents/knowledge-inventory.toml"'
-assert_contains "$readme" '`knowledge-inventory`'
 
 python3 - "$adapter" "$config" <<'PY'
 import sys
@@ -183,14 +116,7 @@ if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate" \
   exit 1
 fi
 
-printf '%s\n' 'claim: immutable candidate' >"$probe_root/candidate"
-validated_hash="$(sha256sum "$probe_root/candidate" | cut -d ' ' -f 1)"
-printf '%s\n' 'unvalidated append' >>"$probe_root/candidate"
-send_hash="$(sha256sum "$probe_root/candidate" | cut -d ' ' -f 1)"
-if [[ "$validated_hash" == "$send_hash" ]]; then
-  echo "candidate mutation must invalidate the send hash" >&2
-  exit 1
-fi
+# 追記で sha256sum の出力が変わることの確認は削除した (coreutils の受け入れテスト)
 
 printf '%s\n' 'project: settings' 'claim: reusable public rule' >"$probe_root/candidate"
 if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/candidate" \
@@ -206,21 +132,8 @@ if rg -q -i --pcre2 "$host_pattern" "$probe_root/candidate"; then
   exit 1
 fi
 
-scan_failed=0
-if rg -q -i --pcre2 "$sensitive_pattern" "$probe_root/missing" 2>/dev/null; then
-  echo "missing scan input must not be clean" >&2
-  exit 1
-else
-  scan_status=$?
-  [[ "$scan_status" -eq 1 ]] || scan_failed=1
-fi
-test "$scan_failed" -eq 1
-
-if hash_line="$(sha256sum "$probe_root/missing" 2>/dev/null)"; then
-  echo "missing hash input must fail" >&2
-  exit 1
-fi
-test -z "$hash_line"
+# 存在しないファイルに対する rg / sha256sum の exit status 検査は削除した
+# (ripgrep / coreutils の受け入れテスト — GLOBAL.md「テスト」)
 
 # frontmatter は name / description / model の3キーで、各キーがちょうど1回ずつ。
 # 本質はキー数ではなく「roleの起動に要らない機構をここへ足さない」ことなので、
@@ -241,10 +154,5 @@ if [ "$frontmatter_keys" != "$expected_keys" ]; then
     "$role" "$frontmatter_keys" >&2
   exit 1
 fi
-
-# dedicated roleには書込・release orchestrationを持たせない
-assert_contains "$role" 'arona-knowledgeでgit操作をしない'
-assert_contains "$role" '`git add`、`git commit`、`git push`を実行しない'
-assert_contains "$role" 'release・deploy・pushを行わない'
 
 echo "deliver knowledge inventory contract test: pass"

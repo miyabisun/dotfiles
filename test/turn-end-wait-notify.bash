@@ -19,24 +19,9 @@ ln -s "$repo_root/agent/codex/hooks/notify-turn-end.sh" \
 ln -s "$repo_root/agent/claude/hooks" "$fake_home/.claude/hooks"
 ln -s "$repo_root/agent/grok/hooks" "$fake_home/.grok/hooks"
 
-# marker を書く義務は子 agent 待ちを持つ delivery skill だけが負う。
-# agent-talk は簡易通話機能なので marker 契約を持たない
-for skill in \
-  "$repo_root/agent/common/skills/spike/SKILL.md" \
-  "$repo_root/agent/common/skills/polish/SKILL.md"; do
-  grep -Fq "$marker" "$skill" || {
-    printf 'turn-end wait contract broken: marker missing from %s\n' "$skill" >&2
-    exit 1
-  }
-done
-
-talk_skill="$repo_root/agent/common/skills/agent-talk/SKILL.md"
-if grep -Fq "$marker" "$talk_skill"; then
-  printf 'turn-end wait contract broken: %s must not require the marker\n' \
-    "$talk_skill" >&2
-  exit 1
-fi
-
+# SKILL.md 側の marker 記述を grep する検査は削除した (markdown の字面 grep は
+# 測る意味が無い — GLOBAL.md「テスト」)。hook が marker をどう扱うかは以下の
+# 実行テストで測る。
 cat >"$fake_bin/emitter" <<'EMITTER'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$TURN_END_TEST_LOG"
