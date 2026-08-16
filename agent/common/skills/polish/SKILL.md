@@ -51,10 +51,13 @@ user が与えた依頼そのもので、scope を足さない。受け取った
 
 ## 手順
 
-**どの手順よりも先に読む**: 対象 project の知識が knowledge repository にあるなら、
-その `library/index.md` と、対象 project の `projects/<name>/index.md` を読む。
-リンク先は関係するときだけ辿る。読んでも曖昧なときだけ knowledge へ質問する。
-聞く前に読む。
+**どの手順よりも先に読む**: 対象 project の知識が knowledge repository に
+あるなら、**index だけを読む**のが既定である — `library/index.md` と、対象
+project の `projects/<name>/index.md`。リンク先は関係するときだけ辿る
+(辿り方は `knowledge-read` skill が持つ)。**その index からこの project の
+テスト戦略を読み、それに従う** — 無ければ GLOBAL.md「テスト」の default に
+従う。polish は戦略を決める側ではなく従う側である。
+読んでも曖昧なときだけ knowledge へ質問する。聞く前に読む。
 
 1. **方針を独立にすり合わせる (実装前・1往復)**: 実装は、この skill を発火した
    pane の runtime が担う。skill の効果は発火 pane に留まるので、実装を他の
@@ -122,7 +125,9 @@ user が与えた依頼そのもので、scope を足さない。受け取った
    - 変更に隣接する既存チェック (テスト・build・lint) を repo 標準コマンドで
      実行する。存在しないものを新設しない。CLI 待ちとログ読みは子が行う。
    - 直したバグ1件につき回帰テスト1本を実用的な範囲で追加する。
-     困難なら理由を receipt に1行で書く。
+     困難なら理由を receipt に1行で書く。対象は**実行可能コード**のバグに
+     限る。Markdown・設定・docs の修正に回帰テストは作らない
+     (GLOBAL.md「テスト」)。
    - 適用可能な repo-native formatter/linter だけを実行し、非適用/不在は理由付き N/A として記録する。
      独立な formatter 役職ゲートは立てない (機械的な自己実行であり、
      役職分離ではない)。tooling bootstrap は非目標。
@@ -254,6 +259,9 @@ review "$repo" \
   だけのテスト改変) を検知する。サボりや user に対して不誠実な挙動を見つけたら
   **厳格に blocking とし、修正させる**。直したバグに回帰テストが付いているかも
   見る。
+- **テストの妥当性 (blocking)**: Markdown を grep するだけのテスト、
+  ライブラリの受け入れテスト、トートロジーなテストを新しく作っていないか。
+  作っていたら消させる (GLOBAL.md「テスト」)。
 - **DRY**: 今回の diff が導入した同一知識・同一ロジックの有害な重複で、
   機構追加なしの局所抽出で消せるものだけを blocking とする。解消に抽象化を
   要するものや意図的な小さい重複は non-blocking の follow-up として receipt に

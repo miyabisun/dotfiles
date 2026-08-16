@@ -24,6 +24,9 @@ description: >-
 
 ## 手順
 
+**着手前に読む**: knowledge の index (`library/index.md` と対象 project の
+`projects/<name>/index.md`) **だけ**を読む。リンク先は辿らない。
+
 1. **子 agent に修正を割り当てる**: 変更内容・対象ファイル・検証コマンドを
    指示する。親は同一文脈でファイルを編集しない。子は codex exec を実行
    しない
