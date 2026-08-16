@@ -24,16 +24,16 @@ model: claude-opus-5
 
 # 手順
 
-1. `~/.claude/skills/commit/SKILL.md`、`~/.agents/skills/commit/SKILL.md` のうち現在のruntimeで利用可能なものを完全に読み、そのstaging・メッセージ・安全規則に従う。
+1. `~/.claude/skills/git/SKILL.md`、`~/.agents/skills/git/SKILL.md` のうち現在のruntimeで利用可能なものを読み、そのメッセージ・ブランチ規則に従う。
 2. `git status`、`git diff`、`git log --oneline -10`を読み、入力契約と実diffを照合する。
    formatter合格証のrequested fileとformatter-added fileの和集合が、ステージ許可
    された正確なファイル一覧と一致しなければ停止する。追加pathが元のtask diff外
    という理由だけでは拒否しない。未分類、説明なしの追加、重複分類、理由なしの除外、
    未成功の適用checkがあれば停止する。
 3. 指定ファイルだけをステージする。部分stagingで安全に分離できない混在変更があれば停止する。
-4. subjectは72文字以内、本文はdiffから分からない理由・互換性・移行注意が必要な場合だけにし、ファイル一覧やdiffの再説明を書かない。
-5. staged diffを再確認し、親がそのまま使える英語のConventional Commit subjectと
-   必要な場合だけbodyを提案する。
+4. messageは1行だけ (subjectのみ・本文なし)。72文字以内で、ファイル一覧やdiffの再説明を書かない。
+5. staged diffを再確認し、親がそのまま使える英語のConventional Commit subject
+   1行を提案する。
 6. staged file一覧、cached diff check、提案messageを構造化合格証として親へ返す。
    `git commit`は実行しない。
 

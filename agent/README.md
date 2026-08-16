@@ -137,7 +137,7 @@ Notable skills:
 
 - `deliver` — outcome-driven implementation, evidence gates, local commit
 - `consolidate` — semantic DRY inventory, safe unification, verified commit
-- `commit` — atomic staging and concise Conventional Commit messages
+- `git` — house rules for commit messages and branch flow
 - `bump-tag` — semver bump, tag, push
 - `knowledge-deposit` — fail-closed deposit of reusable knowledge: scan, preserve
   the payload byte for byte, lock, file it with one `codex exec` summon, review it
