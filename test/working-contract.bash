@@ -129,7 +129,8 @@ assert_contains "$working" '自分の push を授権することになる task �
 assert_contains "$working" 'HTTP API の直叩き、データベースファイルへの直接書き込みはしない'
 
 # この repository は PUBLIC。private path・pane 座標・生の HTTP 手段を
-# binding instruction へ焼かない (GLOBAL.md「Project Memory Boundary」)
+# binding instruction へ焼かない
+# (knowledge-deposit/SKILL.md「この machine の runtime 座標は知識ではない」)
 assert_absent "$working" '/projects/household'
 assert_absent "$working" 'w25:p'
 assert_absent "$working" 'curl'

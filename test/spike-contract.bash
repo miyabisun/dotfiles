@@ -6,7 +6,6 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 spike="$repo_root/agent/common/skills/spike/SKILL.md"
-global_rules="$repo_root/agent/common/rules/GLOBAL.md"
 
 assert_contains() {
   local file="$1"
@@ -92,7 +91,8 @@ assert_contains "$spike" 'formatter / linter の実行確認'
 # DRY blocking は今回 diff 由来の有害な重複に限定 (試作の意図的重複は polish TODO)
 assert_contains "$spike" '機構追加なしの局所抽出で消せる'
 # TODO を repo へ残す許可は撤去した。落とした案は receipt の follow-up として
-# user へ返す (GLOBAL.md「Project Memory Boundary」)
+# user へ返す (spike/SKILL.md「follow-up として receipt に返す —
+# project repo へ file として残さない」)
 assert_contains "$spike" 'non-blocking の follow-up として'
 assert_absent "$spike" 'non-blocking の polish TODO'
 
@@ -164,12 +164,12 @@ assert_contains "$spike" '土台を確認する'
 assert_absent "$spike" '新規プロジェクトなら土台を整える'
 
 # knowledge への問い合わせは「質問」であって「預け入れ」ではない。
-# GLOBAL は預け入れを2経路 (user との対話 / knowledge-deposit skill) に限っており、
-# 質問は通常の peer 会話。質問に findings を紛れ込ませる抜け道だけを塞ぐ
+# 質問は通常の peer 会話で、findings を質問に紛れ込ませる抜け道だけを塞ぐ。
+# 4527502 で GLOBAL.md ごと「預け入れは exactly two routes」の閉包は消滅
+# (repo に該当文言なし)。復元は user の判断
 assert_contains "$spike" '預け入れではない'
-assert_contains "$global_rules" 'exactly two deposit routes'
-assert_contains "$global_rules" 'Asking knowledge a question is ordinary peer conversation'
-assert_contains "$global_rules" 'do not use a question to hand findings over'
+assert_contains "$spike" 'findings を渡すのは intake role の仕事で、'
+assert_contains "$spike" '質問に混ぜて渡さない。'
 
 # version は停止理由にならない。337a1e9 以降、spike は version 判定そのものを
 # 持たない — 互換性影響の判定も next major の注記も撤去し、bump 水準の決定は
@@ -179,7 +179,8 @@ assert_contains "$spike" 'spike は spike のまま進む'
 assert_contains "$spike" '理由にした判定や注記の儀式は追加しない'
 assert_contains "$spike" 'bump 水準の決定 (major を含む) は user の `bump-tag` だけが担う'
 assert_contains "$spike" 'bump 水準の推奨・判定はしない'
-assert_contains "$spike" 'Stopping work'
+# 停止理由の閉包 (旧 `Stopping work` 見出し) は日本語の「## 続行」節へ移った
+assert_contains "$spike" 'secret・権限境界・破壊的データ・version・将来のリリース可能性を理由に、'
 assert_absent "$spike" '既に 1.0.0 以上'
 assert_absent "$spike" '互換性影響'
 assert_absent "$spike" 'next major work'

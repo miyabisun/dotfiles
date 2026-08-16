@@ -46,7 +46,8 @@ assert_contains "$skill_md" 'pane ID などの runtime 座標を payload に残�
 assert_contains "$skill_md" 'user-verbatim:'
 assert_contains "$skill_md" 'agent-inference:'
 assert_contains "$skill_md" 'repo-evidence:'
-# blocked を repo 退避の口実にさせない (GLOBAL.md「Project Memory Boundary」)
+# blocked を repo 退避の口実にさせない
+# (knowledge-inventory.md「`blocked`を理由にproject repoへ退避しない」)
 assert_contains "$skill_md" 'project repository へ退避しない'
 # 機械保証の見出し不変条件。文言が消えたら実装の約束も消えている
 assert_contains "$skill_md" 'commit は repository の hooks を隔離して実行する'

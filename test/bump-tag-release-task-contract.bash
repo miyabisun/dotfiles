@@ -88,7 +88,7 @@ assert_before "$bump_tag" '`git merge --ff-only origin/<default>`' \
   '`HEAD` must match `origin/<default>`'
 
 # この repository は PUBLIC。private path を binding instruction へ焼かない
-# (GLOBAL.md「Project Memory Boundary」)
+# (knowledge-deposit/SKILL.md「この machine の runtime 座標は知識ではない」)
 assert_absent "$bump_tag" '/projects/household'
 
 echo 'bump-tag release task contract test: pass'
