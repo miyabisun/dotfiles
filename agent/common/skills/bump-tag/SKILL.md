@@ -38,9 +38,9 @@ Before resolving any level, check release tags on **origin** — the source of
 truth — with `git ls-remote --tags origin`, and locally with `git tag -l 'v*'`:
 
 - **Origin has `v*` tags** → already released. Resolve the argument below.
-- **Origin has none, but local `v*` tags exist** → **abort**, whatever the
-  argument: inconsistent state (likely an interrupted or unpushed release).
-  Inspect and resolve the local tags, then rerun.
+- **Origin has none, but local `v*` tags exist** → an unpushed first release. The
+  target stays `v0.1.0` and §4 is skipped; whether the tag is reusable is decided by
+  the local-tag row of §2's resume table — one rule, the same for every argument.
 - **No `v*` tags on origin or local** and the manifest version (§3) is
   `0.1.0` → first release. Do **not** bump, whatever the argument. If an
   explicit `major` / `minor` / `patch` was given, state that the level is
@@ -58,7 +58,7 @@ If a release task named the level (`auto` / `major` / `minor` / `patch` /
 below. **Never substitute `auto` for a level the task named.** `auto` is the
 default only when neither the user nor the task named a level.
 
-1. Detect current version and existing tags (see §2–3). First-release and
+1. Detect the baseline version and existing tags (see §2–3). First-release and
    inconsistent-tag cases are handled by the check above — origin tags exist here.
 2. Inspect subjects and relevant diffs in
    `git log <latest-tag>..HEAD`; do not infer from the type token alone. Choose:
@@ -89,8 +89,8 @@ Use that level directly (still run all checks below).
 
 Explicit first release. If origin has any `v*` tag → **abort**: this
 repository has already released; use `auto` / `patch` / `minor` / `major`
-instead. If origin has none but local `v*` tags exist → abort as inconsistent
-state (first-release check above). Otherwise follow the first-release check above.
+instead. Otherwise follow the first-release check above — local tags included,
+since it defers to the same §2 rule every other argument uses.
 
 ## 2. Preflight (abort and report on failure)
 
@@ -98,32 +98,91 @@ state (first-release check above). Otherwise follow the first-release check abov
 and the guarantee is precise: every check passes before the first command that
 moves a local branch or tag. It is not a promise of zero side effects.
 
+**Invariants the checks defend.** Every check is a means to one of these; a state
+satisfying all four is safe to release, however it got there:
+
+- Origin's history is never lost — the branch push must fast-forward
+- The release commit carries only the version files §5 updates
+- The tag points at the intended default-branch commit for the target version
+- Both branch and tag are pushed (tag-only push leaves the branch behind)
+
+Checks:
+
 - Start by fetching the origin default branch and tags (`git fetch origin --tags`).
-  Fetching is a side effect: it
-  updates remote-tracking refs and `FETCH_HEAD`, but no local branch or tag,
-  so it is safe to run ahead of the checks below
+  Fetching is a side effect: it updates remote-tracking refs and `FETCH_HEAD`, but
+  no local branch or tag, so it is safe to run ahead of the checks below
 - Resolve the default branch name from remote HEAD
   (`git symbolic-ref refs/remotes/origin/HEAD`) — never assume it is `main`
-- `git status --porcelain` must be empty (no unrelated changes in the release commit)
+- `git status --porcelain` may list **only** the version manifests §5 updates
+  (`Cargo.toml`, `Cargo.lock`, `package.json`, `pyproject.toml`, …), staged or not —
+  that is an interrupted release (below). Any other path → **abort**: unrelated work
+  must not ride in the release commit
+- Paths are not enough — `git add` stages whole files. For each listed manifest read
+  both `git diff -- <file>` and `git diff --cached -- <file>`; every changed line must
+  be a version line moving to the target — judge this once §4 fixes it (`Cargo.lock`
+  may also carry its own package entry). Any other changed line → **abort**, naming
+  the file — an unrelated edit sharing a hunk with the version line rides in otherwise
 - Current branch must be the default branch (usually `main`) — **abort** otherwise,
   and move no ref until this check passes. A merge with no target named would
   fast-forward whatever branch the caller happened to be on, before the abort fires
-- Only then sync the default branch **fast-forward only**, naming the target
-  explicitly (`git merge --ff-only origin/<default>`); if local is ahead of or
-  diverged from origin, **abort**
-- After the sync, `HEAD` must match `origin/<default>` — **abort** otherwise,
-  so a tag is never cut on a stale state
+- Only then, if `git rev-list --count HEAD..origin/<default>` is non-zero, local is
+  behind: sync **fast-forward only**, naming the target explicitly
+  (`git merge --ff-only origin/<default>`), and **abort** if that fails
+- `git merge-base --is-ancestor origin/<default> HEAD` must then hold, so the push
+  fast-forwards. Being **ahead is fine** — §6 pushes the branch, so unpushed commits
+  ship with this release. Diverged fails here → **abort**
 - After computing the new version, `git ls-remote --tags origin` must not already have `vX.Y.Z`
 
-## 3. Detect current version
+### Resuming an interrupted release
 
-Priority:
+A previous run may have stopped partway. Once the target is fixed (§4, or §1 on the
+first-release path), keep each artifact below **only if it matches that target**;
+never rebuild a matching one.
+Commits may have landed since the interruption, so **re-resolve the level** (§1)
+rather than trusting the leftover bump; a target that changed is a mismatch.
 
-1. `Cargo.toml` → `[package] version`
-2. `package.json` → `.version`
-3. Else latest `v*` git tag
+| Already present | Match → | Mismatch → **abort**, reporting |
+|---|---|---|
+| Modified/staged version manifests | version-only changes (check above) → continue; §5 rewrites the same values | which file carries which version |
+| Release commit `release: vX.Y.Z` at HEAD | passes the release-commit check below → keep it; skip §5 and the commit | the commit's version vs the target, or the extra paths it touches |
+| Local `v*` tags **absent from origin** | exactly one such tag, named `vX.Y.Z` (the target), pointing at the commit §6 would tag — the release commit, or HEAD itself on the first-release path → keep it; skip `git tag` | which local-only tags exist and where the target tag points |
 
-## 4. Compute new version (semver)
+**Local-only tags.** Only those are traces of an interruption: subtract the tags origin
+advertises (`git ls-remote --tags origin 'v*'`, `^{}` stripped) from `git tag -l 'v*'`.
+The fetch above copies every past release into local, so `v1.0.0`, `v1.1.0`, … standing
+beside the target are expected — the last row never judges them.
+
+**Manifests at target.** Every root manifest §5 updates that exists at HEAD
+(`git show HEAD:Cargo.toml`, `HEAD:package.json`, …) must carry the target — not merely
+the ones some commit happened to touch. This is the resume paths' shared condition: it
+gates reusing a release commit and, on the first-release path, keeping a tag on HEAD.
+
+**Release-commit check.** The message is not evidence. Reuse one only if
+`git show --name-only --format= HEAD` lists solely §5's version files *and* the
+manifests-at-target check above passes — else **abort**.
+
+Every abort names what mismatched and the safe resume point (`git tag -d vX.Y.Z`,
+`git reset --soft HEAD~1`) — never adopt a stale bump silently.
+
+## 3. Detect the baseline version
+
+§1 fixes the level, §3 the baseline, §4 the target — in that order. The baseline
+never comes from the working tree, so a previous run's bump cannot shift it:
+
+- **Origin has `v*` tags** (§1) → the highest of them is the baseline:
+  `git ls-remote --tags origin 'v*' | sed 's,.*/v,,;s,\^{},,' | sort -V | tail -1`
+- **Origin has none** → first release; §1 already fixed the target at `v0.1.0`,
+  and §4 is skipped
+
+Read the root manifests too (`Cargo.toml` `[package] version`, else `package.json`
+`.version`): §1's first-release check needs that value and §5 rewrites it. It equals
+the baseline on the normal path and the **target** on a resume — the latter is the
+trace of an interrupted release (§2), not an error, since §4 bumps the baseline
+regardless and all three resume stages land on the same target.
+
+## 4. Compute the target version (semver)
+
+Apply the level to the **baseline** of §3 — never to the manifest version:
 
 | Level | Transform |
 |---|---|
@@ -151,7 +210,10 @@ git push origin <branch> && git push origin vX.Y.Z
 ```
 
 - Message: `release: vX.Y.Z` (Conventional Commits, English)
-- Push **both** branch and tag (tag-only push leaves main behind)
+- **Skip whatever §2 already found in place** — a matching release commit or local
+  tag is kept as is; `git add` only the version files of §5
+- Push **both** branch and tag (tag-only push leaves main behind). The branch push
+  carries every unpushed commit and must fast-forward — **never force**
 
 First-release path (no `v*` tags on origin or local): §4–5 were skipped, so only `git tag` + dual push here. The version is always `v0.1.0` (first-release check, §1).
 
