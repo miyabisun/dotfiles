@@ -12,9 +12,13 @@
 | 場面 | スキル |
 |---|---|
 | git コマンドでの操作 | `git` |
+| ファイルの修正 (見込み合計〜20行) | `chore` |
+| ファイルの修正 (それ以上)・開発 | `knowledge-read` → `deliver` |
 | Herdr 内の他エージェントとの情報共有 (自己判断で可) | `agent-talk` |
 | プロンプトに `[agent-talk]` が含まれる (着信) | `agent-talk` |
-| 開発を行う | `knowledge-read` → `deliver` |
+
+ファイルの修正は必ずスキルを通す (git 操作と同じ)。規模や場面が合わない
+ときは**拒否ではなくスキルを持ち替えて**自律的に進める。
 
 着信の例:
 `[agent-talk] knowledge/intake から連絡が届きました。read_message 123 で本文を確認してください。`
