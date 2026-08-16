@@ -139,9 +139,9 @@ Notable skills:
 - `consolidate` — semantic DRY inventory, safe unification, verified commit
 - `git` — house rules for commit messages and branch flow
 - `bump-tag` — semver bump, tag, push
-- `knowledge-deposit` — fail-closed deposit of reusable knowledge: scan, preserve
-  the payload byte for byte, lock, file it with one `review` summon, review it
-  with another, and commit locally
+- `knowledge-deposit` — deposit reusable knowledge: write the entry, lint it,
+  stage only what you wrote, review the staged diff with one `review` summon,
+  and commit locally
 
 `deliver` selects only the capabilities justified by risk. Agent split
 (producer ≠ approver):
@@ -150,7 +150,7 @@ Notable skills:
 - `dev` / `rev` — implement and semantic review (no self-approval)
 - `formatter` — applicability, format correction, and lint evidence for eligible source before commit
 - `ui-checker` — measure with evidence only (does not write strategy/tests)
-- `knowledge-inventory` — inventory durable delivery knowledge after commit and hand one sanitized payload to `knowledge-deposit`
+- `knowledge-inventory` — inventory durable delivery knowledge after commit and hand one sanitized batch to `knowledge-deposit`
 
 ## Adding a new agent tool
 

@@ -27,17 +27,19 @@ commit済みdeliveryの証拠から、今回新たに確定または変更され
 
 1. knowledge repositoryの`library/playbooks/agent-knowledge-intake.md`を読み、
    1 Project・1 delivery topic・1 source snapshotとして候補を分類する。repositoryは
-   `$KNOWLEDGE_REPO`、無ければ`$HOME/projects/household/knowledge`で解決する
-   (`knowledge-deposit`のscriptと同じ順序)。絶対pathを覚え込まない。
+   `$KNOWLEDGE_REPO`で解決し、未設定ならuserに尋ねる
+   (`knowledge-deposit` skillと同じ)。絶対pathを覚え込まない。
 2. 今回のdeliveryで確定または変更された知識だけを扱う。Project全体の未投入backlogを
    探さない。fact、decision、open question、deferred choice、evidence、lesson、proposal
    と、current、deprecated、rejected、unverifiedを区別する。
-3. user statement、確認済みfact、agentの推論を混ぜない。
-   `source_request.fidelity=reconstructed`なら人間の原文として引用しない。原文が利用不能
-   だったことを明記し、agentによる再構成として扱う。
+3. userの確定、確認済みfact、agentの推論を混ぜない。**fidelityを問わずuserの発言を
+   逐語で引き写さない** — 決定は中立文のclaimと帰属ラベル (確定日・文脈) で書く。
+   `source_request.fidelity=reconstructed`なら、原文が利用不能だったことを明記し、
+   userの確定ではなくagentによる再構成として扱う。
 4. 保存価値は、将来のagentが設計判断、不変条件、失敗予測、Project override、または
    横断的な作業判断を再利用できるかで決める。一般論、diffの言い換え、既存文書の重複は
-   入れない。たとえばtypoだけの文書修正や、domain fact・invariant・decision・
+   入れない — 既に同じ知識がrepositoryにあるなら書かずに`not_applicable`とし、その旨を
+   理由に残す。たとえばtypoだけの文書修正や、domain fact・invariant・decision・
    open/deferred choice・lessonを変えない小変更は`not_applicable`である。
 5. 保存候補が0件なら、空batchを送らない。`not_applicable`と理由1行を返す。
 
@@ -48,21 +50,25 @@ commit済みdeliveryの証拠から、今回新たに確定または変更され
 揃える。Project固有itemは`projects/<project>/`向け、横断または分類が曖昧なitemは
 inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
 
-`knowledge-deposit`のscriptが値まで機械的に検査するので、次の集合から外れると投入
-できない。曖昧に書いて通そうとしない。
+この語彙は受け側の分類が依存する契約なので、次の集合から外れて書かない。曖昧に
+書いて通そうとしない。
 
 - `kind:` は`fact` `decision` `open-question` `deferred-choice` `evidence` `lesson`
   `proposal` のいずれか (playbookの散文表記と違い、hyphen付きの識別子で書く)。
 - `state:` は`current` `deprecated` `rejected` `unverified` のいずれか。
 - `scope:` は`project` `cross-project` `unsure` のいずれか。
-- **`basis:` は`user-verbatim:` `agent-inference:` `repo-evidence:` のいずれかで
-  始める。** これがuser発言・agentの推論・repository evidenceの混同を機械的に塞ぐ
-  唯一の門である。`fidelity=reconstructed`の再構成は`user-verbatim:`ではなく
-  `agent-inference:`に置き、原文が利用不能だったことを本文に書く。
-- pane idやagent-talkのmessage id表現をpayloadへ書かない。検出され次第blockedになる。
-  runtime座標は知識ではない。
-- 出典のpath/URIは`sources:`に置く。それ以外の行にhostらしき文字列があるとhost検査で
-  blockedになる。
+- **`basis:` は`user-decision:` `agent-inference:` `repo-evidence:` のいずれかで
+  始める。** これがuserの確定・agentの推論・repository evidenceの混同を機械的に塞ぐ
+  唯一の門である。`user-decision:`には逐語ではなく中立文のclaimと確定日・文脈を書く。
+  `fidelity=reconstructed`の再構成は`user-decision:`ではなく`agent-inference:`に置き、
+  原文が利用不能だったことを本文に書く。
+- herdrのpane idをpayloadへ書かない。環境依存のruntime座標は知識ではなく、受け側の
+  lintもこれを検出する。
+- agent-talkのmessage idは受け側のlintの検査対象ではない (受け側ではinboxのfile名に
+  含めることが義務づけられた正規のprovenance表記である)。**このroleの判断規則として**、
+  itemの本文へ座標として散らさず、出典として要るときだけ`sources:`に置く。
+- 出典のpath/URIは`sources:`に置く。それ以外の行にhostらしき文字列があると内部host
+  として弾かれる。
 
 1. raw `.env*` fileを読まない。`.env`由来値、credential、token、private key、非公開host
    構成、internal endpointを候補へ転記しない。
@@ -108,7 +114,7 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
 6. 再走査にも候補が残る場合は送信しない。残存内容をjournalへ流したり、安全itemだけの
    別batchを追加送信したりせず、`pending`と安全に一般化した理由を返す。
 7. 最終再走査とhost分類がcleanになったら、その`candidate_file`を**そのまま**
-   `knowledge-deposit` skillの`--payload`へ渡す。
+   `knowledge-deposit` skillへ渡す。
    scan後に本文を追記・整形・置換・要約しない。scanを通していない文字列を足さない。
 
    ```bash
@@ -127,25 +133,17 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
    # host_fileの全候補が確認済みpublicまたはsource pathであることを検証する
    ```
 
-   clean判定が出た`candidate_file`のpathを、そのまま
-   `knowledge-deposit`の`scripts/knowledge-deposit --payload "$candidate_file"`へ渡す。
+   clean判定が出た`candidate_file`のpathを、そのまま`knowledge-deposit` skillへ渡す。
    本文をagentが組み立て直さない — 渡すのはpathであってbodyではない。
+   旧経路 (agent-talkの`send_message`) は使わない。
 
-   旧経路 (agent-talkの`send_message`) はここで停止していた。`--body-file` +
-   `--sha256`がscan済みbyte列そのものをbrokerへ渡し、scanとsendの間に本文が
-   変わっていないことを機械的に強制していたのに対し、MCPのbodyは引数として
-   組み立てられるため、その不変性がagentの規律でしか保てなくなったからである。
-   `knowledge-deposit`のscriptはscan済みのbyte列を`cp`でinboxへbyte copyし、
-   commit前にsha256を再照合する。exact-bodyの機械保証がtransport側に戻ったので、
-   この経路は停止しない。
-
-   scriptのJSON出力をそのまま解釈する。`committed`なら`sent`、`no_op`も
-   `sent` (同じ内容が既に入っている)、`blocked`なら`pending`として
-   `reason`をそのまま返す。安全なitemだけを別経路で送り直したり、保管fileを
-   repositoryに作ったりしない。
-   **`blocked`を理由にproject repoへ退避しない** — 投入できないことは、repoを
+   skillはその内容を出典としてknowledge repositoryへエントリを書き、lintと
+   独立レビュー1回を通してlocal commitする。commitまで終わったら`sent`、
+   lintまたはreviewで止まったら`pending`としてその理由をそのまま返す。安全な
+   itemだけを別経路で送り直したり、保管fileをrepositoryに作ったりしない。
+   **止まったことを理由にproject repoへ退避しない** — 投入できないことは、repoを
    記憶媒体にしてよい理由にならない。
-   payloadを直せる`blocked` (secret混入、provenance不備、runtime座標の残存) なら、
+   候補を直せる停止 (secret混入、provenance不備、runtime座標の残存) なら、
    直して呼び直してよい。呼び直しはuserへの再依頼を必要としない。
 
 このscanは受け側policyの前倒しであり、完全なsecret検出を保証しない。`mykey`のような
@@ -154,28 +152,27 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
 
 # 投入
 
-投入経路は`knowledge-deposit` skillのscriptだけである。scriptがsecret scan、
-provenance検査、runtime座標拒否、冪等判定、flock排他、inbox原文保全、stage、
-独立レビュー、local commitまでを1プロセスで所有する。常駐intake paneを必要としない。
+投入経路は`knowledge-deposit` skillだけである。skillがknowledge repositoryへの
+書き込み、lint、stage、独立レビュー、local commitまでを所有する。常駐intake paneを
+必要としない。
 
 - 投入は最大1回。同じdeliveryで自動再送しない。
-  payloadを直して呼び直すのは再送ではなく修正であり、これは行ってよい。
-- scriptが返した`commit` hashを記録する。`no_op`は同じ内容が既にcommit済みである
-  ことを意味し、成功として扱う。
-- `blocked`のときは`reason`をそのまま返す。再送queueやpayload保管fileを
+  候補を直して呼び直すのは再送ではなく修正であり、これは行ってよい。
+- commitできたらその`commit` hashを記録する。
+- 止まったときはその理由をそのまま返す。再送queueや候補の保管fileを
   repositoryに作らない。
-- scriptはpush、tag、release、deployを行わない。roleもそれを求めない。
+- skillはpush、tag、release、deployを行わない。roleもそれを求めない。
 
 # 境界
 
 - delivered repositoryとarona-knowledgeでfileを作成・編集・削除しない。
 - arona-knowledgeでgit操作をしない。`git add`、`git commit`、`git push`を実行しない。
-  stageとcommitは`knowledge-deposit`のscriptが所有する。roleはpayloadのpathを渡すだけで、
+  書き込みとstageとcommitは`knowledge-deposit`が所有する。roleは候補のpathを渡すだけで、
   自分でrepositoryを触らない。
 - Project固有bundleへの直接記録を一律禁止するpolicyは作らないが、このroleのdefaultは
-  shared repositoryの競合をflockで直列化する`knowledge-deposit`経路とする。
+  `knowledge-deposit`経路とする。
 - knowledgeは開発完了、routing、releaseを決めない。分類、重複統合、横断linkは
-  `knowledge-deposit`が召喚するwriterと、それを検めるreviewerの責務である。
+  `knowledge-deposit`と、そのstaged diffを検めるreviewerの責務である。
 - delivery commitをamendせず、release・deploy・pushを行わない。
 
 # 出力
@@ -192,8 +189,8 @@ provenance検査、runtime座標拒否、冪等判定、flock排他、inbox原�
 }
 ```
 
-`sent`は`items>0`、両scanが`pass`、`deposit_attempts=1`、scriptが`committed`または
-`no_op`を返した場合だけ。`committed`なら実commit hash、`no_op`なら既存のcommit hashを
-`commit`へ入れる。`not_applicable`は`items=0`、`deposit_attempts=0`、理由1行の場合だけ。
-`pending`は`commit=null`で、scriptの`blocked` `reason`、scan残存、入力不足の安全な理由を
-返す。
+`sent`は`items>0`、両scanが`pass`、`deposit_attempts=1`、`knowledge-deposit`が
+local commitまで終えた場合だけ。実commit hashを`commit`へ入れる。
+`not_applicable`は`items=0`、`deposit_attempts=0`、
+理由1行の場合だけ。`pending`は`commit=null`で、投入が止まった理由、scan残存、
+入力不足の安全な理由を返す。
