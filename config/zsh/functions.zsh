@@ -38,6 +38,26 @@ mfa() {
   oathtool --totp --base32 "$secret" | copy && echo "mfa: copied TOTP for $entry"
 }
 
+# Claude Code + OpenAI GPT-5.6 via local CLIProxyAPI (ChatGPT subscription).
+# Expects ~/.cli-proxy-api/client.key holding the same value as api-keys in
+# ~/.cli-proxy-api/config.yaml, and cli-proxy-api listening on 127.0.0.1:8317.
+_claudex() {
+  local model="$1"; shift
+  local key_file="$HOME/.cli-proxy-api/client.key"
+  [[ -r "$key_file" ]] || { echo "claudex: $key_file not found (run CLIProxyAPI setup first)" >&2; return 1; }
+  curl -s -o /dev/null -m 2 http://127.0.0.1:8317/ \
+    || { echo "claudex: CLIProxyAPI is not running on 127.0.0.1:8317" >&2; return 1; }
+  ANTHROPIC_BASE_URL=http://127.0.0.1:8317 \
+  ANTHROPIC_AUTH_TOKEN="$(<"$key_file")" \
+  CLAUDE_CODE_SUBAGENT_MODEL="$model" \
+  CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 \
+  CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY=3 \
+  ENABLE_TOOL_SEARCH=false \
+  claude --model "$model" "$@"
+}
+sol()  { _claudex gpt-5.6-sol  "$@"; }
+luna() { _claudex gpt-5.6-luna "$@"; }
+
 # tmux attach (outside) / switch (inside): pick a session with fzf, or pass a name
 a() {
   command -v tmux > /dev/null 2>&1 || { echo "tmux not found" >&2; return 1; }
