@@ -29,5 +29,5 @@ git コマンドで操作する場面の共通ルール。
 
 ## 専用スキルとの関係
 
-`merge` / `bump-tag` が明示起動された場合は、そのスキルの documented
+`merge` / `rebase` / `bump-tag` が明示起動された場合は、そのスキルの documented
 workflow に従う。本スキルはそれらに共通する土台。
