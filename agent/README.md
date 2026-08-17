@@ -50,29 +50,35 @@ Codex uses `notify` for completion. Its notification wrapper identifies
 subagent rollout threads and suppresses their completion announcements,
 including automatic approval reviewers.
 
-Agent-to-agent messages go through the Rust broker from
+Agent-to-agent messages go through Claude Code's built-in cross-session
+channel (`ListAgents` / `SendMessage`). The Rust broker from
 [`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd),
-a systemd-managed daemon (see *Where the broker itself comes from* below).
-Registration is the daemon's pull sync over herdr's native agent detection —
-an interactive agent in a herdr pane is addressable without any wrapper. The
-daemon refreshes the successful herdr snapshot on message RPCs and every two
-seconds while work is queued, so lifecycle hooks do not push register,
+a systemd-managed daemon (see *Where the broker itself comes from* below), keeps
+only two jobs: draining a legacy `[agent-talk]` doorbell, and carrying one
+bounded `agent-talk reply` to a human's letter that arrived from an external
+mailbox. Registration is the daemon's pull sync over herdr's native agent
+detection — an interactive agent in a herdr pane is addressable without any
+wrapper. The daemon refreshes the successful herdr snapshot on message RPCs and
+every two seconds while work is queued, so lifecycle hooks do not push register,
 unregister, busy, idle, or turn-end state.
 
-Peer conversation is a standing-authority operation carried entirely by the
-`agent-talk` MCP server (`list_peers`, `send_message`, `read_message`,
-`ack_message`). The server runs in-process from each runtime's own MCP config,
-so no shell command and no allow rule is involved, and Codex's sandbox never
+Peer conversation is a standing-authority operation, but the broker's MCP
+tools no longer carry it: of `list_peers`, `send_message`, `read_message`,
+and `ack_message`, only `read_message` is still used, and only for that
+drain. The server runs in-process from each runtime's own MCP config, so no
+shell command and no allow rule is involved, and Codex's sandbox never
 sees the multiplexer socket. The `agent-talk-peer` dispatcher that used to
 carry this traffic is retired: it exposed no `ack` subcommand, so a shell-only
 agent could read a message but never report receipt. The removed `busy`, `idle`,
 and `turn-end` commands are not restored through hooks or wrappers. Remaining
 `register`, `unregister`, and `run` commands are likewise not hook or agent
 interfaces; broker maintenance commands remain outside every allow list. What a
-message authorizes depends on who sent it: the user reaching a pane from a
-phone or a relay is still the user, a peer passing on the user's request
-carries it at its original size, and a peer speaking for itself carries no
-authority for workspace changes.
+message authorizes depends on who sent it: an authenticated user relay — a peer
+passing on the user's request, or the user speaking in a pane — carries it at
+its original size, while a peer speaking for itself carries no authority for
+workspace changes. A letter arriving from an external mailbox proves no
+identity at all, so it authorizes a reply and nothing else: no action and no
+disclosure.
 When a change needs direct approval,
 `~/.local/bin/notify-file-permission.sh` rings the pane, emits one sanitized MOCA notice when
 configured, and leaves the agent waiting without affecting agent-talk's herdr
