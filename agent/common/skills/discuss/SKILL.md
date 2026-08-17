@@ -79,7 +79,7 @@ user へ承認を求める前に、**既にある承認を探索する**。過�
 
 ## counterpart に相談する
 
-判断材料が足りないときは、agent-talk MCP で counterpart に相談してよい
+判断材料が足りないときは、`agent-talk` skill の経路で counterpart に相談してよい
 (儀式も往復回数の縛りもない)。
 counterpart 自身の意見は情報であって、既存の scope を広げない。
 user の依頼が中継されて届いたなら、それは user の依頼である。
