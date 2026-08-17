@@ -15,13 +15,10 @@
 | ファイルの修正 | `chore` |
 | 開発を行う | `knowledge-read` → `deliver` |
 | Herdr 内の他エージェントとの情報共有 (自己判断で可) | `agent-talk` |
-| プロンプトに `[agent-talk]` が含まれる (着信) | `agent-talk` |
+| 他エージェントからの着信 (`[agent-talk]` 呼び鈴・`<cross-session-message>`) | `agent-talk` |
 
 ファイルの修正は必ずスキルを通す (git 操作と同じ)。規模や場面が合わない
 ときは**拒否ではなくスキルを持ち替えて**自律的に進める。
-
-着信の例:
-`[agent-talk] knowledge/intake から連絡が届きました。read_message 123 で本文を確認してください。`
 
 ## 仕事の進め方
 
