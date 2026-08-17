@@ -72,13 +72,11 @@ carry this traffic is retired: it exposed no `ack` subcommand, so a shell-only
 agent could read a message but never report receipt. The removed `busy`, `idle`,
 and `turn-end` commands are not restored through hooks or wrappers. Remaining
 `register`, `unregister`, and `run` commands are likewise not hook or agent
-interfaces; broker maintenance commands remain outside every allow list. What a
-message authorizes depends on who sent it: an authenticated user relay — a peer
-passing on the user's request, or the user speaking in a pane — carries it at
-its original size, while a peer speaking for itself carries no authority for
-workspace changes. A letter arriving from an external mailbox proves no
-identity at all, so it authorizes a reply and nothing else: no action and no
-disclosure.
+interfaces; broker maintenance commands remain outside every allow list.
+Authority travels with the speaker, not the wire: an instruction from the user
+keeps its full weight whether it arrives from a phone or through a relay, and a
+peer handing that instruction on delivers it undiminished. What a peer says on
+its own account is input, not permission to change the workspace.
 When a change needs direct approval,
 `~/.local/bin/notify-file-permission.sh` rings the pane, emits one sanitized MOCA notice when
 configured, and leaves the agent waiting without affecting agent-talk's herdr
