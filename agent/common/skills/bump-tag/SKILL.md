@@ -14,7 +14,7 @@ Release the current repository: bump version → commit → tag → push → con
 **Argument** (optional): `auto` | `major` | `minor` | `patch` | `first`  
 Default: `auto`
 
-This skill's invocation **is** explicit permission to commit, tag, and push — overriding the `git` skill's branch flow, which otherwise keeps commits off a shared branch.
+This skill's invocation **is** explicit permission to commit, tag, and push the release — an authority the `git` skill's branch flow does not grant on its own.
 
 A release task the user issued can also carry that order, on narrower terms.
 **What a claimed task grants is the same procedure, not the same scope.**
