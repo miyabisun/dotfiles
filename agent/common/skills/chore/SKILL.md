@@ -2,10 +2,9 @@
 name: chore
 description: >-
   Small-change delivery harness for file modifications expected to stay
-  within about 20 changed lines in total. Spawns a child agent to edit,
+  within about 50 changed lines in total. Spawns a child agent to edit,
   runs one synchronous codex exec review, and commits only when no
-  blocking issue remains. Switch to deliver when the change is or grows
-  larger.
+  blocking issue remains. Switch to deliver when the change is larger.
 ---
 
 # chore
@@ -18,9 +17,9 @@ description: >-
 - ファイル修正の入口は規模を問わず chore である。着手前に見込み修正量を
   見積もる (全ファイルの diff の追加+削除の合計。first-party の手書き
   変更だけを数え、generated・formatter 由来の差分は数えない)
-- 見積もりが**合計 20 行を超える**と判断したら `deliver` へバトンタッチ
-  する。着手後に超えたときも、**編集途中の内容を引き継いだまま `deliver`
-  へ持ち替える** — 拒否や停止ではなく持ち替え。作業は止めない
+- 見積もりが**合計 50 行を超える**と判断したら `deliver` へバトンタッチ
+  する。持ち替えの判定は着手前の見積もりだけで行い、着手後に膨らんだ分は
+  不問とする
 
 ## 手順
 
