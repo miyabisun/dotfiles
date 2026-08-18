@@ -1,0 +1,50 @@
+#!/bin/bash
+# meiseki の決定論層。textlint だけを走らせて、その JSON をそのまま stdout へ返す。
+#
+#   meiseki-lint <file>
+#   echo "冗長な日本語" | meiseki-lint
+#
+# exit code は 0 = finding なし / 1 = finding あり / 2 = 前提エラー・使い方の誤り。
+# textlint (npx) 自身の exit code は finding があると非 0 になるため、判定は
+# JSON の messages を数えて行う。JSON として読めない出力は finding と混同せず
+# 前提エラー (exit 2) にする。
+#
+# 前提は npx と meiseki の textlint config だけで、claude も CLIProxyAPI も
+# client key も要らない (bin/install-apps が ~/.local/share/meiseki へ置く)。
+set -euo pipefail
+
+self="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || true)"
+[[ -n "$self" ]] || {
+    echo 'meiseki-lint: cannot resolve its own path' >&2
+    exit 2
+}
+meiseki_prog="meiseki-lint"
+meiseki_usage_note='textlint の JSON を stdout へ出す (0=clean / 1=finding / 2=error)。'
+# shellcheck source=meiseki-common.sh
+source "$(dirname "$self")/meiseki-common.sh"
+
+parse_args "$@"
+
+textlint_config="$skill_dir/references/textlint.config.json"
+[[ -r "$textlint_config" ]] \
+    || die "meiseki is not installed: $meiseki_home (run bin/install-apps)"
+command -v npx >/dev/null 2>&1 \
+    || die 'npx not found (node is required by the textlint layer)'
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+input="$work/input.md"
+read_input "$input"
+
+# textlint は finding があると非 0 で終わるので、exit code は判定に使わない。
+result="$work/result.json"
+build_textlint_cmd "$textlint_config" "$input"
+"${textlint_cmd[@]}" > "$result" || true
+
+# JSON として数えられなければ「finding なし」ではなく前提エラー。
+findings="$(jq '[.[].messages] | flatten | length' "$result" 2>/dev/null || true)"
+[[ "$findings" =~ ^[0-9]+$ ]] || die 'textlint did not return JSON'
+
+cat "$result"
+[[ "$findings" -eq 0 ]] || exit 1

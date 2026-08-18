@@ -103,6 +103,9 @@ managed_links="
 .agents/agents agent/common/agents
 .agents/designs agent/common/designs
 .local/bin/notify-turn-end.sh agent/codex/hooks/notify-turn-end.sh
+.local/bin/meiseki agent/common/bin/meiseki
+.local/bin/meiseki-lint agent/common/bin/meiseki-lint
+.local/bin/meiseki-rewrite agent/common/bin/meiseki-rewrite
 .local/bin/tmux-session-picker config/tmux/bin/tmux-session-picker
 .local/bin/tmux-mux config/tmux/bin/tmux-mux
 .config/sheldon/plugins.toml config/zsh/plugins.toml

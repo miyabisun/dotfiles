@@ -1,0 +1,106 @@
+#!/bin/bash
+# meiseki のリライト層。CLIProxyAPI 越しの headless claude に meiseki plugin を
+# 一時読み込みさせ、claude が書いた output.md の中身だけを stdout へ返す。
+#
+#   meiseki-rewrite <file>
+#   echo "冗長な日本語" | meiseki-rewrite
+#
+# どちらも一時ファイル経由で同じ経路へ正規化する。入力ファイルは書き換えない
+# (in-place 編集はしない)。claude 自身の発話とログは stdout には出さない
+# (成果物は output.md だけで、最後の発話は成果物ではない)。claude が非 0 で
+# 終わればその exit code を透過し、exit 0 でも output.md が無ければ exit 1。
+# 実行ファイルは MEISEKI_CLAUDE で差し替えられる。
+#
+# 前提: bin/install-apps が ~/.local/share/meiseki へ meiseki 本体を置き、
+# CLIProxyAPI が 127.0.0.1:8317 で動き、~/.cli-proxy-api/client.key がある。
+set -euo pipefail
+
+self="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || true)"
+[[ -n "$self" ]] || {
+    echo 'meiseki-rewrite: cannot resolve its own path' >&2
+    exit 2
+}
+meiseki_prog="meiseki-rewrite"
+meiseki_usage_note='リライト後の本文を stdout へ出す。入力ファイルは書き換えない。'
+# shellcheck source=meiseki-common.sh
+source "$(dirname "$self")/meiseki-common.sh"
+
+parse_args "$@"
+
+[[ -f "$skill_dir/SKILL.md" ]] \
+    || die "meiseki is not installed: $meiseki_home (run bin/install-apps)"
+[[ -r "$key_file" ]] \
+    || die "$key_file not found (run CLIProxyAPI setup first)"
+# meiseki の決定論層は npx 経由の textlint に依存する
+command -v npx >/dev/null 2>&1 \
+    || die 'npx not found (node is required by the textlint layer)'
+claude="${MEISEKI_CLAUDE:-claude}"
+command -v -- "$claude" >/dev/null 2>&1 \
+    || die "claude not found: $claude"
+curl -s -o /dev/null -m 2 "$base_url/" \
+    || die "CLIProxyAPI is not running on ${base_url#http://}"
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+# file / stdin のどちらも input.md へ正規化する。末尾改行だけは補う
+# (marker で囲む prompt の行境界を保つため)。
+input="$work/input.md"
+read_input "$input"
+[[ "$(tail -c1 "$input" | wc -l)" -eq 1 ]] || printf '\n' >>"$input"
+
+# skill の Step 2/6 (textlint の before/after) を単一コマンドで踏めるように、
+# 原稿の場所と実行すべきコマンドを prompt で固定する。複合コマンドは
+# --allowedTools の Bash(npx:*) に一致しないため、あえて 1 行に限定する。
+# 起動形そのものは meiseki-common.sh が持ち、meiseki-lint の実行と同じものを
+# 1 行へ展開する (prompt 内の対象は cwd 直下の相対 path)。
+build_textlint_cmd "$skill_dir/references/textlint.config.json" input.md
+textlint_line="${textlint_cmd[*]}"
+
+prompt="$work/prompt.txt"
+{
+    cat <<EOF
+meiseki スキル (Skill: meiseki:meiseki) を使って、日本語本文を明晰化してください。
+
+原稿は cwd 直下の \`input.md\` にあります。textlint (決定論層) は次の 1 行の
+コマンドだけで実行してください (mktemp・リダイレクト・&& を含む複合コマンドは
+許可されていません)。
+
+$textlint_line
+
+リライト後の本文は Write ツールで cwd 直下の \`output.md\` に書き、同じコマンドの
+対象を output.md に替えて after を検算してください。
+最後の応答はリライト後の本文のみとし、解説・前置き・コードブロックは付けないでください。
+
+--- 本文ここから ---
+EOF
+    cat "$input"
+    printf '%s\n' '--- 本文ここまで ---'
+} >"$prompt"
+
+# proxy の env はこの 1 コマンドにだけ前置する (export しない)。
+# claude の stdout は捨てる (成果物は output.md であって発話ではない)。
+set +e
+(
+    cd "$work" || exit 1
+    exec env \
+        ANTHROPIC_BASE_URL="$base_url" \
+        ANTHROPIC_AUTH_TOKEN="$(cat "$key_file")" \
+        "$claude" -p \
+        --model gpt-5.6-luna \
+        --plugin-dir "$meiseki_home" \
+        --permission-mode acceptEdits \
+        --allowedTools 'Bash(npx:*)' Read Write Edit Glob Grep Skill \
+        --strict-mcp-config
+) <"$prompt" >/dev/null
+status=$?
+set -e
+
+[[ "$status" -eq 0 ]] || exit "$status"
+
+output="$work/output.md"
+[[ -s "$output" ]] || {
+    echo "meiseki-rewrite: claude wrote no output.md" >&2
+    exit 1
+}
+cat "$output"
