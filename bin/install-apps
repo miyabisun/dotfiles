@@ -406,6 +406,53 @@ MSG
 }
 
 # ---------------------------------------------------------------------------
+# meiseki — 日本語明晰化の Agent Skill / claude plugin (MIT)
+# agent/common/bin/meiseki が --plugin-dir で一時読み込みする本体を
+# machine-local に置く。repo にはコピーせず上流のまま保つ。
+# 既にあれば触らない (上流更新は dest を消して再実行する)。
+# 決定論層は npx 経由の textlint なので、node が無い環境では入れない。
+# ---------------------------------------------------------------------------
+install_meiseki() (
+  repo_url="https://github.com/bamboo-nova/meiseki.git"
+  dest="$HOME/.local/share/meiseki"
+
+  if [ -d "$dest" ]; then
+    echo "==> meiseki already installed ($dest)"
+    return
+  fi
+  if [ -e "$dest" ] || [ -L "$dest" ]; then
+    echo "==> Refusing to replace unrecognized meiseki target: $dest" >&2
+    return 1
+  fi
+
+  if [ ! -x "$HOME/.local/share/fnm/aliases/default/bin/node" ] \
+    && ! command -v node >/dev/null 2>&1; then
+    echo "==> Skipping meiseki: node not found (its textlint layer needs npx)"
+    return
+  fi
+
+  tmpdir="$(mktemp -d)"
+  # 下の trap EXIT から呼ぶ (shellcheck は間接呼び出しを追えない)
+  # shellcheck disable=SC2329
+  cleanup() {
+    rm -rf "$tmpdir"
+  }
+  trap cleanup EXIT
+
+  echo "==> Installing meiseki..."
+  git clone --depth 1 "$repo_url" "$tmpdir/meiseki"
+  if [ ! -f "$tmpdir/meiseki/.claude-plugin/plugin.json" ] \
+    || [ ! -f "$tmpdir/meiseki/skills/meiseki/SKILL.md" ]; then
+    echo "==> Cloned meiseki does not look like the meiseki plugin" >&2
+    return 1
+  fi
+
+  mkdir -p "$HOME/.local/share"
+  mv "$tmpdir/meiseki" "$dest"
+  echo "==> meiseki installed ($dest)"
+)
+
+# ---------------------------------------------------------------------------
 
 install_agent_clis
 install_mux
@@ -413,3 +460,4 @@ install_pen
 install_delta
 install_rbw
 install_obscura
+install_meiseki

@@ -1,0 +1,129 @@
+#!/bin/bash
+# meiseki (日本語明晰化) 召喚の唯一の起動形。CLIProxyAPI 越しの headless claude に
+# meiseki plugin を一時読み込みさせ、リライト後の本文だけを stdout へ返す。
+#
+#   meiseki <file>
+#   echo "冗長な日本語" | meiseki
+#
+# どちらも一時ファイル経由で同じ経路へ正規化する。入力ファイルは書き換えない
+# (in-place 編集はしない)。結果は stdout のリライト後本文だけで、claude 自身の
+# ログは stderr へ流れる。exit code は claude のものを無加工で透過する。
+# 実行ファイルは MEISEKI_CLAUDE で差し替えられる。
+#
+# 前提: bin/install-apps が ~/.local/share/meiseki へ meiseki 本体を置き、
+# CLIProxyAPI が 127.0.0.1:8317 で動き、~/.cli-proxy-api/client.key がある。
+set -euo pipefail
+
+usage() {
+    echo 'usage: meiseki <file>   |   echo "text" | meiseki' >&2
+    echo '  リライト後の本文を stdout へ出す。入力ファイルは書き換えない。' >&2
+}
+
+# 前提の欠落は stderr に 1 行だけ出して exit 2。stdout は常に空に保つ。
+die() {
+    echo "meiseki: $1" >&2
+    exit 2
+}
+
+meiseki_home="$HOME/.local/share/meiseki"
+skill_dir="$meiseki_home/skills/meiseki"
+key_file="$HOME/.cli-proxy-api/client.key"
+base_url="http://127.0.0.1:8317"
+
+file=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 2
+            ;;
+        -*)
+            die "unknown option: $1"
+            ;;
+        *)
+            [[ -z "$file" ]] || die "unexpected argument: $1"
+            file="$1"
+            shift
+            ;;
+    esac
+done
+
+# claude が起動する子プロセス (npx / textlint) にも node を見せる。fnm の
+# per-shell path は非対話 shell から見えないため、安定 alias を前置する。
+PATH="$HOME/.local/share/fnm/aliases/default/bin:$PATH"
+
+if [[ -n "$file" ]]; then
+    [[ -f "$file" && -r "$file" ]] || die "unreadable file: $file"
+elif [[ -t 0 ]]; then
+    die 'no input: pass a file or pipe text into meiseki'
+fi
+
+[[ -f "$skill_dir/SKILL.md" ]] \
+    || die "meiseki is not installed: $meiseki_home (run bin/install-apps)"
+[[ -r "$key_file" ]] \
+    || die "$key_file not found (run CLIProxyAPI setup first)"
+# meiseki の決定論層は npx 経由の textlint に依存する
+command -v npx >/dev/null 2>&1 \
+    || die 'npx not found (node is required by the textlint layer)'
+claude="${MEISEKI_CLAUDE:-claude}"
+command -v -- "$claude" >/dev/null 2>&1 \
+    || die "claude not found: $claude"
+curl -s -o /dev/null -m 2 "$base_url/" \
+    || die "CLIProxyAPI is not running on ${base_url#http://}"
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+# file / stdin のどちらも input.md へ正規化する。末尾改行だけは補う
+# (marker で囲む prompt の行境界を保つため)。
+input="$work/input.md"
+if [[ -n "$file" ]]; then
+    cat -- "$file" >"$input"
+else
+    cat >"$input"
+fi
+[[ -s "$input" ]] || die 'empty input'
+[[ "$(tail -c1 "$input" | wc -l)" -eq 1 ]] || printf '\n' >>"$input"
+
+# skill の Step 2/6 (textlint の before/after) を単一コマンドで踏めるように、
+# 原稿の場所と実行すべきコマンドを prompt で固定する。複合コマンドは
+# --allowedTools の Bash(npx:*) に一致しないため、あえて 1 行に限定する。
+prompt="$work/prompt.txt"
+{
+    cat <<EOF
+meiseki スキル (Skill: meiseki:meiseki) を使って、日本語本文を明晰化してください。
+
+原稿は cwd 直下の \`input.md\` にあります。textlint (決定論層) は次の 1 行の
+コマンドだけで実行してください (mktemp・リダイレクト・&& を含む複合コマンドは
+許可されていません)。
+
+npx --min-release-age=7 --yes --package textlint@14.8.4 --package textlint-rule-preset-ja-technical-writing@10.0.2 --package textlint-rule-prh@6.1.0 textlint -c $skill_dir/references/textlint.config.json -f json input.md
+
+リライト後の本文は Write ツールで cwd 直下の \`output.md\` に書き、同じコマンドの
+対象を output.md に替えて after を検算してください。
+最後の応答はリライト後の本文のみとし、解説・前置き・コードブロックは付けないでください。
+
+--- 本文ここから ---
+EOF
+    cat "$input"
+    printf '%s\n' '--- 本文ここまで ---'
+} >"$prompt"
+
+# proxy の env はこの 1 コマンドにだけ前置する (export しない)。
+set +e
+(
+    cd "$work" || exit 1
+    exec env \
+        ANTHROPIC_BASE_URL="$base_url" \
+        ANTHROPIC_AUTH_TOKEN="$(cat "$key_file")" \
+        "$claude" -p \
+        --model gpt-5.6-luna \
+        --plugin-dir "$meiseki_home" \
+        --permission-mode acceptEdits \
+        --allowedTools 'Bash(npx:*)' Read Write Edit Glob Grep Skill \
+        --strict-mcp-config
+) <"$prompt"
+status=$?
+set -e
+
+exit "$status"

@@ -136,6 +136,8 @@ link "agent/common/designs" "$HOME/.agents"
 link "agent/codex/hooks/notify-turn-end.sh" "$HOME/.local/bin"
 # codex exec 召喚の共通起動形 (spike / polish / chore / knowledge-deposit)
 link "agent/common/bin/review" "$HOME/.local/bin"
+# 日本語明晰化 (本体は bin/install-apps が ~/.local/share/meiseki へ置く)
+link "agent/common/bin/meiseki" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-session-picker" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-mux" "$HOME/.local/bin"
 

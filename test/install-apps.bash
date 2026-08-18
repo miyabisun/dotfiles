@@ -15,11 +15,12 @@ mkdir -p "$fake_bin" "$fake_home/.local/bin" "$tmp_dir"
 
 make_stub() {
   local name="$1"
-  cat >"$fake_bin/$name" <<'STUB'
+  local dir="${2:-$fake_bin}"
+  cat >"$dir/$name" <<'STUB'
 #!/usr/bin/env bash
 exit 0
 STUB
-  chmod +x "$fake_bin/$name"
+  chmod +x "$dir/$name"
 }
 
 sha256_file() {
@@ -614,5 +615,86 @@ test "$unknown_pen_before" = "$(sha256_file "$unknown_pen_home/.local/bin/pen")"
 test ! -e "$test_root/unknown-pen-curl.log" \
   || test "$(grep -Fc 'pen-cli' "$test_root/unknown-pen-curl.log" || true)" -eq 0
 test -z "$(find "$unknown_pen_tmp" -mindepth 1 -print -quit)"
+
+# meiseki — clone した plugin 一式を ~/.local/share/meiseki へ配置し、
+# 再実行では clone し直さない。git / node は stub を PATH 先頭に置き、
+# 本物の network / clone は決して走らせない。
+meiseki_stub_bin="$test_root/meiseki-bin"
+meiseki_home="$test_root/meiseki-home"
+meiseki_tmp="$test_root/meiseki-tmp"
+meiseki_dest="$meiseki_home/.local/share/meiseki"
+meiseki_git_log="$test_root/meiseki-git.log"
+mkdir -p "$meiseki_stub_bin"
+prepare_mux_case "$meiseki_home" "$meiseki_tmp"
+cp "$fake_home/.local/bin/mux" "$meiseki_home/.local/bin/mux"
+cp "$fake_home/.local/bin/pen" "$meiseki_home/.local/bin/pen"
+make_stub node "$meiseki_stub_bin"
+
+# git stub: clone 引数を記録し、network の代わりに meiseki の実構成を作る
+cat >"$meiseki_stub_bin/git" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+
+{
+  printf '<call>\n'
+  printf '%s\n' "$@"
+} >>"$INSTALL_APPS_TEST_GIT_LOG"
+
+test "${1:-}" = clone
+shift
+test "${1:-}" = --depth
+shift 2
+test "${1:-}" = "https://github.com/bamboo-nova/meiseki.git"
+dest="$2"
+
+mkdir -p "$dest/.claude-plugin" "$dest/skills/meiseki/references" \
+  "$dest/hooks" "$dest/scripts" "$dest/examples"
+printf '%s\n' '{"name":"meiseki"}' >"$dest/.claude-plugin/plugin.json"
+printf '%s\n' '# meiseki skill' >"$dest/skills/meiseki/SKILL.md"
+printf '%s\n' '{}' >"$dest/skills/meiseki/references/textlint.config.json"
+printf '%s\n' license >"$dest/LICENSE"
+printf '%s\n' '# meiseki' >"$dest/README.md"
+printf '%s\n' '{"name":"meiseki"}' >"$dest/package.json"
+printf '%s\n' '{"lockfileVersion":3}' >"$dest/package-lock.json"
+printf '%s\n' hook >"$dest/hooks/meiseki-hook.mjs"
+printf '%s\n' script >"$dest/scripts/lint.mjs"
+printf '%s\n' example >"$dest/examples/before.md"
+STUB
+chmod +x "$meiseki_stub_bin/git"
+
+PATH="$meiseki_stub_bin:$fake_bin:$meiseki_home/.local/bin:/usr/bin:/bin" \
+  HOME="$meiseki_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/meiseki-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/meiseki-curl-args.log" \
+  INSTALL_APPS_TEST_GIT_LOG="$meiseki_git_log" \
+  TMPDIR="$meiseki_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/meiseki-1.out"
+
+grep -F "meiseki installed ($meiseki_dest)" "$test_root/meiseki-1.out" >/dev/null
+for meiseki_member in .claude-plugin/plugin.json \
+  skills/meiseki/SKILL.md \
+  skills/meiseki/references/textlint.config.json \
+  LICENSE README.md package.json package-lock.json \
+  hooks/meiseki-hook.mjs scripts/lint.mjs examples/before.md; do
+  if [ ! -f "$meiseki_dest/$meiseki_member" ]; then
+    echo "install-apps must place $meiseki_member under $meiseki_dest" >&2
+    exit 1
+  fi
+done
+test "$(grep -Fxc clone "$meiseki_git_log")" -eq 1
+test -z "$(find "$meiseki_tmp" -mindepth 1 -print -quit)"
+
+PATH="$meiseki_stub_bin:$fake_bin:$meiseki_home/.local/bin:/usr/bin:/bin" \
+  HOME="$meiseki_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/meiseki-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/meiseki-curl-args.log" \
+  INSTALL_APPS_TEST_GIT_LOG="$meiseki_git_log" \
+  TMPDIR="$meiseki_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/meiseki-2.out"
+
+grep -F "meiseki already installed ($meiseki_dest)" "$test_root/meiseki-2.out" >/dev/null
+test "$(grep -Fxc clone "$meiseki_git_log")" -eq 1
+test -f "$meiseki_dest/skills/meiseki/SKILL.md"
+test -z "$(find "$meiseki_tmp" -mindepth 1 -print -quit)"
 
 echo "install-apps Linux/macOS agent CLI test: pass"
