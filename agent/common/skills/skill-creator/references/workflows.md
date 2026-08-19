@@ -1,8 +1,9 @@
-# Workflow Patterns
+# workflow のパターン
 
-## Sequential Workflows
+## 逐次的な workflow
 
-For complex tasks, break operations into clear, sequential steps. It is often helpful to give Claude an overview of the process towards the beginning of SKILL.md:
+複雑なタスクでは、操作を明確な逐次の手順へ分ける。SKILL.md の冒頭付近で処理の
+全体像を Claude に示すと役立つことが多い:
 
 ```markdown
 Filling a PDF form involves these steps:
@@ -14,9 +15,9 @@ Filling a PDF form involves these steps:
 5. Verify output (run verify_output.py)
 ```
 
-## Conditional Workflows
+## 条件分岐のある workflow
 
-For tasks with branching logic, guide Claude through decision points:
+分岐のあるタスクでは、判断点を通して Claude を導く:
 
 ```markdown
 1. Determine the modification type:

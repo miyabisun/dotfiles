@@ -2,13 +2,13 @@
 version: alpha
 name: Sumi
 description: >
-  Canonical template of the Sumi design system for self-hosted,
-  single-user reader tools. Neutral ink-and-paper chrome with two named
-  themes — Washi (和紙, light) and Sumi (墨, dark) — up to two accent
-  colors per project (a required primary and an optional secondary,
-  each carrying a distinct persistent role), functional color reserved
-  for data semantics. Projects use this file as bootstrap input and adapt the
-  relevant rules into a self-contained project root DESIGN.md.
+  self-hosted・single-user の reader tool のための Sumi デザインシステムの
+  正式 template。中立な ink-and-paper の chrome、2 つの named theme —
+  Washi (和紙, light) と Sumi (墨, dark) —、project ごとに最大 2 色の accent
+  (必須の primary と任意の secondary。それぞれが独立した持続的な役割を担う)、
+  そして data semantics のために予約された機能的な色からなる。project は
+  この file を bootstrap input として使い、該当する規則を自己完結した
+  project root の DESIGN.md へ適合させる。
 colors:
   # --- Neutral chrome: Washi theme (light). Unsuffixed tokens = Washi. ---
   surface: "#fafafa"
@@ -133,252 +133,269 @@ components:
     padding: 4px
 ---
 
-# Sumi — Personal Reader Tools Design System (Template)
+# Sumi — 個人向け reader tool のデザインシステム (テンプレート)
 
-## Overview
+## 概要
 
-Sumi (墨 — ink) is the shared visual language for a family of self-hosted,
-single-user reader tools — apps whose whole job is displaying a feed or
-list of content and letting one person read it. They are dense,
-content-first utilities used daily on both a phone (one pane,
-gesture-driven) and a PC (two-pane, list + detail).
+Sumi (墨 — ink) は、self-hosted・single-user の reader tool 群が共有する
+視覚言語である。対象の app は、content の feed や list を表示し、1 人の
+人間がそれを読めるようにすることだけを仕事とする。情報密度が高く content
+優先の道具であり、スマートフォン (1 pane・ジェスチャー駆動) と PC
+(2 pane・list + detail) の両方で毎日使われる。
 
-The personality is **calm, quiet, and tool-like** — closer to a well-worn
-paper notebook than a consumer app. The content (text, thumbnails, pages)
-supplies all the visual interest; the UI chrome recedes into neutral
-ink-and-paper tones. Nothing in the chrome should compete with the content
-for attention: no gradients, no colorful icons, no decorative color.
+性格は **穏やかで、静かで、道具のようである** — consumer app よりも、
+使い込んだ紙のノートに近い。視覚的な面白さはすべて content (テキスト・
+サムネイル・ページ) が担い、UI chrome は中立な ink-and-paper の色調へ
+引き下がる。chrome の中に、content と注意を奪い合うものがあってはならない:
+グラデーションも、カラフルな icon も、装飾的な色も使わない。
 
-**The audience is one professional web engineer** who lives in the
-terminal and reads these apps daily alongside it. Two consequences: the
-UI may assume technical literacy (dense information, no onboarding, no
-hand-holding), and it should feel at home next to a terminal window.
+**想定利用者は 1 人のプロの web エンジニア**である。その人は terminal に
+住み、その隣でこれらの app を毎日読む。帰結は 2 つある。UI は技術
+リテラシーを前提にしてよい (高密度な情報・onboarding なし・手取り足取りの
+案内なし)。そして、terminal window の隣に置いても違和感のないものにする。
 
-The ink-and-paper metaphor is literal: the system ships **two named
-themes with distinct jobs**.
+ink-and-paper という比喩は文字どおりである。この system は **役割の異なる
+2 つの named theme** を備える。
 
-- **Sumi (墨) — dark, the primary theme.** The default for everyday
-  reading on ordinary screens. High contrast and high legibility, but
-  easy on the eyes: ink surfaces (#191919, deliberately never pure
-  black) with pale text. Design in Sumi first.
-- **Washi (和紙) — light, the e-paper theme.** Exists out of necessity:
-  dark themes collapse on e-paper displays (colors render too faint).
-  Washi therefore optimizes for **maximum contrast** — near-white paper,
-  very dark foregrounds. Hue carries little information here: e-paper
-  cannot render saturated color reliably, so data colors should be dark
-  enough to read as ink first, with hue as a barely-there secondary cue.
-  Minimize motion (e-paper ghosting makes animation harmful).
+- **Sumi (墨) — dark、primary な theme。** 通常の画面での日常的な読書に
+  おける既定である。contrast と可読性が高く、それでいて目に優しい: 淡い
+  テキストを載せた ink の surface (#191919 であり、意図的に純黒には
+  しない)。まず Sumi で設計する。
+- **Washi (和紙) — light、e-paper 向けの theme。** 必要に迫られて存在する。
+  dark theme は e-paper display 上で破綻する。色が薄くしか出ないためである。
+  そのため Washi は **contrast の最大化** に最適化する。ほぼ白の紙と、暗い
+  前景を使う。ここでは色相が運ぶ情報は少ない。e-paper は彩度の高い色を確実
+  には描けない。したがって data color は、まず ink として読める暗さにする。
+  色相は、かろうじて働く副次的な手がかりとしてのみ使う。motion は最小に
+  する。e-paper の残像により、アニメーションは有害になるためである。
 
-The system takes its name from Sumi, its signature theme. Every color
-token exists in both themes; apps switch by swapping CSS custom
-properties on a `data-theme` attribute.
+この system の名は、その象徴となる theme である Sumi に由来する。すべての
+color token は両方の theme に存在し、app は `data-theme` 属性上の CSS
+custom property を差し替えて切り替える。
 
-Color is a **carrier of meaning, not decoration**. Each project owns **one
-to two accent hues** — a required **primary** used sparingly for "you are
-here" and "this is the main action", and an optional **secondary** used
-for a distinct, persistent role the project needs to surface (subscribed
-state, online status, character-identity emphasis). If both are declared,
-they must not overlap in role: primary marks the *foreground of intent*,
-secondary marks a *background of state*. Additional colors appear only
-when they encode data (unread state, rating levels, ID frequency) and are
-defined per project on top of these accents.
+色は **装飾ではなく意味の担い手** である。各 project は **1〜2 個の accent
+色相**を所有する。必須の **primary** は、「いま自分はここにいる」「これが
+主要な操作である」と示すために控えめに使う。任意の **secondary** は、その
+project が表に出す必要のある、独立で持続的な役割に使う。たとえば
+subscribed 状態、online 状態、キャラクター identity の強調である。primary
+と secondary の両方を宣言する場合、役割を重ねてはならない。primary は
+**意図の前景** を、secondary は **状態の背景** を示す。追加の色は、data を
+符号化するときだけ現れる。未読状態、評価の段階、ID の頻度などがこれに
+あたる。これらの色は accent の上へ重ね、project ごとに定義する。
 
-**How projects consume this template:** use this file as bootstrap material,
-then copy and adapt the applicable rules into a self-contained project root
-`DESIGN.md`. That project-owned file becomes the sole ongoing authority for
-chrome, accents, data colors, and domain components. Future template changes do
-not update a Project implicitly; adopt them through an explicit review of the
-Project document and implementation.
+**project がこの template を取り込む方法:** この file を bootstrap 素材と
+して使う。そのうえで、該当する規則を自己完結した project root の
+`DESIGN.md` へ複写し、適合させる。その project が所有する file を、chrome・
+accent・data color・ドメイン component に関する唯一の継続 authority と
+する。今後の template の変更によって、Project が暗黙に更新されることは
+ない。Project の文書と実装を明示的にレビューして取り込む。
 
-## Colors
+## 色
 
-The palette is neutral grays with a single per-project accent, defined
-once per theme: **Washi** (light; the unsuffixed tokens) and **Sumi**
-(dark; the `-dark` tokens). Values below are written as Washi / Sumi
-pairs. Components never hardcode hex values — they reference the CSS
-custom properties, and the `data-theme` attribute decides which theme's
-values are live.
+palette は中立なグレーと、project ごとに 1 色の accent からなる。定義は
+theme ごとに一度だけ行う。**Washi** は light 用で、接尾辞のない token を
+使う。**Sumi** は dark 用で、`-dark` token を使う。以下の値は Washi / Sumi
+の対として記す。component が hex 値を直接埋め込むことはない。CSS custom
+property を参照し、有効な theme の値は `data-theme` 属性で決まる。
 
-- **Surface (#fafafa / #191919):** Page background. Slightly off-white /
-  off-black so raised cards read as a layer.
-- **Surface Raised (#ffffff / #232323):** Cards, list rows, modals, nav bar.
-- **On-Surface (#222222 / #e6e6e6):** Primary text. On Washi this is the
-  "maximum contrast" anchor (~15:1 against surface) — never lighten it.
-- **Muted (#4a4a4a / #9a9a9a):** Secondary text, captions, metadata, inactive
-  tabs, quiet icons. On Washi it must clear 7:1 (AAA) against surface —
-  e-paper grayscale quantization washes out mid-grays; on Sumi AA suffices.
-- **Border (#c9c9c4 / #333333):** Hairline 1px borders — the primary
-  separation tool in this flat system. The Washi value is dark enough for
-  a hairline to survive e-paper gray quantization while staying quiet.
-- **Accent (primary; template default #9a6a00 / #e0a800):** The project's
-  identity color. Used for: active tab indicator, primary action button,
-  focus ring, selection highlight, pull-to-refresh "release" state. One
-  primary accent per screen region; if everything is highlighted, nothing
-  is. Because the primary button sets surface-raised (white) text on
-  accent, a Washi primary must keep white-on-accent ≥ 4.5:1; e-paper-focused
-  projects should go darker than this default.
-- **Secondary (optional; no template default):** A second identity color
-  reserved for a *distinct persistent role* the project needs to surface
-  independently of the primary — subscribed / on-air / connected state,
-  character-identity emphasis (mascot color), or a domain "alive" indicator.
-  A project may declare it via `secondary` + `secondary-subtle` (Washi/Sumi
-  pairs). When declared, it may color chrome (icon-buttons, badges, toggle
-  ON states) but never the same regions primary already owns — the two must
-  read as different jobs, not as decoration piled on decoration. Contrast
-  requirements match primary. Omit the tokens entirely if unused.
-- **Link (#14506e / #7fdbff):** Hyperlinks and reference anchors only.
-  The Washi value is ink-dark blue, ≥7:1 against surface.
-- **Danger (#8f1d16 / #ff6b6b):** Destructive actions and error text, with
-  a subtle background tint (danger-subtle) for error banners. The Washi
-  value is ≥7:1 against surface.
+- **Surface (#fafafa / #191919):** ページの背景。わずかに off-white /
+  off-black とし、raised な card を層として読めるようにする。
+- **Surface Raised (#ffffff / #232323):** card、list row、modal、nav bar。
+- **On-Surface (#222222 / #e6e6e6):** 主要なテキスト。Washi ではこれが
+  「contrast 最大」の基準点であり (surface に対して ~15:1)、これを明るく
+  しない。
+- **Muted (#4a4a4a / #9a9a9a):** 副次的なテキスト、caption、メタデータ、
+  inactive な tab、目立たない icon。Washi では surface に対して 7:1 (AAA)
+  を満たさなければならない — e-paper のグレースケール量子化は中間グレーを
+  飛ばすためである。Sumi では AA で足りる。
+- **Border (#c9c9c4 / #333333):** hairline の 1px border であり、この
+  フラットな system における主要な区切り手段である。Washi の値は、目立た
+  ないままで hairline が e-paper のグレー量子化を生き延びる程度に暗い。
+- **Accent (primary; template default #9a6a00 / #e0a800):** その project の
+  identity color である。用途は、active な tab indicator と primary action
+  button である。focus ring、選択ハイライト、pull-to-refresh の "release"
+  状態にも使う。1 つの画面領域につき、primary accent は 1 つとする。すべて
+  を強調すれば、何も強調されない。primary button には、accent の上に
+  surface-raised (白) のテキストを置く。そのため、Washi の primary は
+  white-on-accent で ≥ 4.5:1 を保たなければならない。e-paper を主眼とする
+  project は、この既定よりも暗くする。
+- **Secondary (optional; no template default):** 2 つ目の identity color で
+  ある。その project が primary から独立して表へ出す必要のある、**独立で
+  持続的な役割** に予約する。該当する役割は、subscribed / on-air /
+  connected の状態である。キャラクター identity の強調 (マスコット色) や、
+  ドメイン上の "alive" indicator も含む。project は `secondary` +
+  `secondary-subtle` (Washi/Sumi の対) として宣言してよい。宣言した場合は、
+  chrome (icon-button、badge、toggle の ON 状態) に色を付けてよい。ただし、
+  primary がすでに所有する領域には決して使わない。primary と secondary は、
+  別々の仕事として読めなければならない。装飾の上に装飾を重ねてはならない。
+  contrast の要件は primary と同じである。使わない場合は token ごと省く。
+- **Link (#14506e / #7fdbff):** ハイパーリンクと参照 anchor だけに使う。
+  Washi の値は ink のように暗い青で、surface に対して ≥7:1 である。
+- **Danger (#8f1d16 / #ff6b6b):** 破壊的な操作と error のテキストに使う。
+  error banner には、控えめな背景の色味 (danger-subtle) を添える。Washi の
+  値は surface に対して ≥7:1 である。
 
-**Per-project accent rule:** after using this template as bootstrap input, a
-project declares its primary accent (as a Washi/Sumi pair) in its own project
-root `DESIGN.md` — that file is the sole authority for the project's accents.
-Optionally, the project may also declare a secondary accent
-alongside it, together with the role secondary carries in this project;
-without an explicit role secondary must not be declared. Pick primary so
-sibling projects are tellable apart at a glance; pick secondary so it is
-distinguishable from primary within the same project. When no override is
-declared, the template default (amber, primary only) applies. Everything
-else stays identical so the tools feel like one family.
+**project ごとの accent 規則:** この template を bootstrap input として
+使う。そのうえで project は、primary accent を自身の project root の
+`DESIGN.md` へ Washi/Sumi の対として宣言する。その file を、その project の
+accent に関する唯一の authority とする。project は任意で secondary accent
+も宣言できる。その場合は、project 内で secondary が担う役割を併記する。
+明示的な役割がない場合、secondary を宣言してはならない。primary は、兄弟
+project どうしを一目で見分けられるように選ぶ。secondary は、同じ project
+内で primary と区別できるように選ぶ。上書きの宣言がなければ、template の
+既定 (amber・primary のみ) を適用する。それ以外はすべて同一に保ち、tool
+群が 1 つの家族として感じられるようにする。
 
-**Functional data colors** (unread markers, per-ID heat levels, star-rating
-bars, live/shorts badges…) are project-domain tokens layered on top and
-documented in each project's root `DESIGN.md`. They must: (1) never be used
-for chrome, (2) come in Washi+Sumi pairs, (3) stay readable against
-surface-raised in both themes. On Washi, design them as a **darkness ramp**:
-low relative luminance first (so they read as ink and survive grayscale),
-monotonic lightness steps between levels, hue only as a secondary cue.
-They are exempt from the accent rules because they encode data, not
-decoration.
+**機能的な data color** は、その上に重ねる project ドメインの token で
+ある。未読マーカー、ID ごとの heat 段階、星評価の bar、live/shorts の badge
+などがこれにあたる。各 project の root `DESIGN.md` に記載する。満たすべき
+条件は 3 つある。(1) chrome に使わない、(2) Washi+Sumi の対で用意する、
+(3) 両方の theme で surface-raised に対して読める。Washi では
+**暗さの傾斜** として設計する。まず相対輝度を低くし、ink として読め、
+グレースケールを生き延びるようにする。段階どうしの明度の刻みは単調に
+する。色相は副次的な手がかりにのみ使う。これらは装飾ではなく data を
+符号化するため、accent の規則の対象外である。
 
-## Typography
+## タイポグラフィ
 
-One typeface: the platform's `system-ui` stack. No webfonts — these are
-fast, self-hosted tools and Japanese text renders best in the OS font.
+書体は 1 つだけで、platform の `system-ui` スタックを使う。webfont は
+使わない。これらは高速で self-hosted な tool であり、日本語も OS の font で
+もっともよく描画されるためである。
 
-- **Title (17px / 600):** Screen and thread titles, modal headers. Single
-  line, ellipsized.
-- **Body (16px / 400 / 1.6):** Reader content — the text the user came to
-  read. Never smaller: this is the reading surface.
-- **Body Small (14px / 400):** List-row subtitles, secondary content such as
-  quoted posts inside modals.
-- **Label (15px / 500):** Buttons, tabs, menu actions.
-- **Caption (12px / 400):** Timestamps, IDs, counts, metadata. Always in
-  `muted` unless carrying a data color.
+- **Title (17px / 600):** 画面と thread の title、modal の header。1 行に
+  収め、省略記号で切る。
+- **Body (16px / 400 / 1.6):** reader の content であり、user が読みに来た
+  テキストそのものである。これより小さくしない: ここが読むための面である。
+- **Body Small (14px / 400):** list row の subtitle、modal 内の引用投稿の
+  ような副次的な content。
+- **Label (15px / 500):** button、tab、menu の操作。
+- **Caption (12px / 400):** タイムスタンプ、ID、件数、メタデータ。data
+  color を担うとき以外は常に `muted` で表示する。
 
-Five levels only. If a new size feels needed, use weight or `muted` color
-instead.
+段階は 5 つだけである。新しいサイズが必要に思えたら、代わりに weight か
+`muted` の色を使う。
 
-## Layout
+## レイアウト
 
-Mobile-first single column (max 720px) that expands to a **two-pane
-list + detail grid** at ≥768px (list 18–22rem, detail flexible, max 1100px).
-Each pane scrolls independently; the viewport itself never scrolls on PC.
+モバイル優先の単一カラム (最大 720px) を基本とし、≥768px で **2 pane の
+list + detail grid** へ広がる。list は 18–22rem、detail は可変で最大
+1100px とする。pane はそれぞれ独立にスクロールし、PC では viewport 自体は
+スクロールしない。
 
-Spacing follows a **4px base scale** (4 / 8 / 12 / 16 / 24). Default
-rhythm: 8px between sibling cards, 10px card internal padding, 12px gutter
-between panes, 16px modal padding. No arbitrary values like 0.3rem or
-0.45rem — snap to the scale.
+spacing は **4px の基本スケール** (4 / 8 / 12 / 16 / 24) に従う。既定の
+リズムは、兄弟 card の間が 8px、card 内部の padding が 10px である。pane 間
+の gutter は 12px、modal の padding は 16px とする。0.3rem や 0.45rem の
+ような任意の値は使わない — スケールに吸着させる。
 
-Fixed chrome is minimal: a sticky top nav bar (~3.2rem) and, where a screen
-has a primary action, a sticky footer bar. Everything else scrolls.
+固定される chrome は最小限である。sticky な top nav bar (~3.2rem) を置く。
+画面に primary action がある場合は、sticky な footer bar も置く。それ以外は
+すべてスクロールする。
 
-## Elevation & Depth
+## 高さと奥行き
 
-The system is **flat**. Hierarchy comes from tonal layers (surface →
-surface-raised) plus 1px hairline borders — never from drop shadows on
-in-flow content.
+この system は **フラット** である。階層は、色調の層 (surface →
+surface-raised) と 1px の hairline border から生まれる。in-flow な content
+への drop shadow からは決して生まれない。
 
-Exactly two things float, and only they may cast shadow:
+浮くものはちょうど 2 つであり、shadow を落としてよいのはそれだけである:
 
-- **Modals / menus:** scrim (`scrim` token) + `0 8px 32px rgba(0,0,0,0.25)`.
-- **Image viewer:** near-black full-screen backdrop, no shadow needed.
+- **Modals / menus:** scrim (`scrim` token) + `0 8px 32px rgba(0,0,0,0.25)`。
+- **Image viewer:** ほぼ黒の全画面の背景。shadow は要らない。
 
-## Shapes
+## 形状
 
-Soft-rectangle language, three radii only:
+角の丸い矩形の語彙で、radius は 3 つだけである:
 
-- **6px (sm):** buttons, inputs, badges' container cousins — all small controls.
-- **8px (md):** cards and list rows.
-- **12px (lg):** modals and floating menus.
-- **Full (9999px):** count pills (e.g. unread badges) exclusively.
+- **6px (sm):** button、input、badge の同類にあたる容器 — 小さな control
+  すべてに使う。
+- **8px (md):** card と list row。
+- **12px (lg):** modal と浮遊する menu。
+- **Full (9999px):** 件数の pill (例: 未読 badge) にのみ使う。
 
-Circular buttons are not used. Never mix radii within one composite control.
+円形の button は使わない。1 つの複合 control の中で radius を混ぜない。
 
-## Iconography
+## アイコン
 
-Icons are **inline SVG, monochrome, drawn with `currentColor`** on a 24×24
-grid: `fill="none" stroke="currentColor" stroke-width="2"
-stroke-linecap="round" stroke-linejoin="round"` (Lucide/Feather style).
-Default size `1.2em`, aligned to the text baseline.
+icon は **inline SVG で、モノクロで、`currentColor` で描く**。24×24 の
+グリッド上に置き、`fill="none" stroke="currentColor" stroke-width="2"
+stroke-linecap="round" stroke-linejoin="round"` (Lucide/Feather 様式) と
+する。既定のサイズは `1.2em` で、テキストの baseline に揃える。
 
-- **Emoji are banned as UI icons** (🔄 ✏️ ☀ etc.) — they render colorful and
-  platform-dependent, breaking the monochrome chrome.
-- Text glyphs standing in for icons (▲ ▼ × ✗ ☾ ↑ ↓) are replaced by SVG
-  (chevron, x, sun, moon, arrow).
-- Icons inherit the color of their text context (`on-surface`, `muted`, or
-  accent when active) — never their own hardcoded color.
-- Data-visualization glyphs (e.g. star ratings ★) are not chrome and keep
-  their functional colors.
+- **絵文字を UI icon として使うことを禁じる** (🔄 ✏️ ☀ など) — カラフルかつ
+  platform 依存で描画され、モノクロの chrome を壊すためである。
+- icon の代わりに使うテキストグリフ (▲ ▼ × ✗ ☾ ↑ ↓) は SVG (chevron、x、
+  sun、moon、arrow) に置き換える。
+- icon はテキスト文脈の色 (`on-surface`、`muted`、active なら accent) を
+  継承する — 自前の固定色は決して持たない。
+- データ可視化のグリフ (例: 星評価の ★) は chrome ではなく、機能的な色を
+  保つ。
 
-## Components
+## コンポーネント
 
-- **Buttons:** Default = surface-raised bg, 1px border, label type, 6px
-  radius, 8×14px padding; hover swaps bg to `border`. Primary = accent bg,
-  white text — at most one per screen. Quiet = transparent bg for icon
-  buttons in bars. Danger = transparent with danger text, reserved for
-  destructive menu actions. Disabled = 50% opacity, no pointer.
-- **Icon buttons:** 36×36px hit area, quiet or default variant, SVG icon
-  centered. Always `aria-label`.
-- **Inputs & textareas:** surface bg (one level below the modal/card they
-  sit on), 1px border, 6px radius, body type. On focus: border becomes
-  `accent` and the UA outline is suppressed in favor of the shared focus
-  ring (below). Labels are caption-size muted text above the field.
-- **Focus ring (all interactive elements):** `outline: 2px solid` accent at
-  60% opacity, `outline-offset: 2px`, applied only on `:focus-visible`.
-  The browser default blue ring must never appear.
-- **List rows:** card-style (8px radius, surface-raised, 1px border), 8px
-  vertical gap, optional 4px left color bar when the row carries a data
-  color (rating, unread). Title in label weight, subtitle in caption.
-- **Badges / pills:** full-radius, caption type, bold count on a data color
-  bg (e.g. unread = project-defined). Whitespace-padded, never icon-bearing.
-- **Tabs (top nav):** label type, muted when inactive, on-surface + 2px
-  accent underline when active. No background change.
-- **Top-level navigation:** Every tab or primary view has a stable
-  router-backed URL. Navigation creates browser history entries; direct
-  loads and reloads restore the same view. Never keep the selected primary
-  tab only in volatile component state.
-- **Modals:** centered, 12px radius, 16px padding, scrim click / × / Esc to
-  close. The × is a quiet icon button (SVG x, not the character ×). Content
-  scrolls internally with hidden scrollbars; max-height 80dvh.
-- **Menus (context/long-press):** modal-presented stack of full-width
-  default buttons, section labels in caption-muted, danger actions last.
-- **Empty / loading states:** centered muted body-small text; spinners are
-  1.5px-stroke circles in accent, 1.1rem.
+- **Buttons:** Default は surface-raised の背景と 1px の border を持つ。
+  label type、6px の radius、8×14px の padding とする。hover では背景を
+  `border` に差し替える。Primary は accent の背景に白いテキストで、1 画面につき最大
+  1 つとする。Quiet は透明な背景で、bar の中の icon button に使う。Danger
+  は透明な背景に danger のテキストで、破壊的な menu 操作に予約する。
+  Disabled は 50% の不透明度で、pointer を無効にする。
+- **Icon buttons:** 36×36px の hit area、quiet または default の variant、
+  中央に置いた SVG icon とする。`aria-label` を必ず付ける。
+- **Inputs & textareas:** 背景は surface とする (載っている modal/card より
+  1 段下)。1px の border、6px の radius、body type とする。focus 時は border
+  が `accent` になる。UA の outline は抑止し、共通の focus ring (下記) を
+  使う。label は field の上に置く caption サイズの muted テキストである。
+- **Focus ring (all interactive elements):** accent を不透明度 60% にして
+  `outline: 2px solid` を引く。`outline-offset: 2px` を付け、
+  `:focus-visible` のときだけ適用する。ブラウザ既定の青い ring は決して
+  現れさせない。
+- **List rows:** card 風 (8px の radius、surface-raised、1px の border) と
+  し、垂直方向の gap は 8px とする。row が data color (評価、未読) を担う
+  ときは、左に 4px の色 bar を任意で付ける。title は label の weight、
+  subtitle は caption で表示する。
+- **Badges / pills:** full の radius、caption type とする。data color の背景
+  の上に太字の件数を置く (例: 未読は project ごとに定義)。余白で padding を
+  取り、icon は載せない。
+- **Tabs (top nav):** label type とする。inactive では muted、active では
+  on-surface に 2px の accent の下線を付ける。背景は変えない。
+- **Top-level navigation:** すべての tab と primary view は、router に裏付け
+  られた安定した URL を持つ。ナビゲーションはブラウザの履歴 entry を作り、
+  直接読み込みと再読み込みは同じ view を復元する。選択中の primary tab を、
+  揮発する component state だけに保持しない。
+- **Modals:** 中央に配置し、12px の radius、16px の padding とし、scrim の
+  クリック・×・Esc で閉じる。× は quiet な icon button (文字の × では
+  なく SVG の x) である。content は内部でスクロールし、スクロールバーは
+  隠す。max-height は 80dvh とする。
+- **Menus (context/long-press):** modal で提示する、全幅の default button を
+  積んだものとする。セクションの label は caption の muted、danger の操作は
+  最後に置く。
+- **Empty / loading states:** 中央寄せの muted な body-small のテキストと
+  する。spinner は accent の 1.5px stroke の円で、1.1rem とする。
 
-## Do's and Don'ts
+## すること・しないこと
 
-- Do define every color as a CSS custom property sourced from this file;
-  don't hardcode hex values inside components.
-- Do use exactly one primary (accent-filled) action per screen.
-- Don't use emoji or multicolor glyphs anywhere in the chrome.
-- Do suppress the UA focus ring and always substitute the shared
-  `:focus-visible` accent ring — never remove focus indication outright.
-- Don't introduce new font sizes or radii outside the defined scales.
-- Do keep chrome neutral: color in lists and posts must always mean
-  something (unread, own-post, rating, ID heat).
-- Do maintain WCAG AA (4.5:1) for all text in both themes; data colors on
-  borders/bars are exempt but should stay distinguishable.
-- Don't animate anything except height/opacity transitions ≤150ms and the
-  loading spinner; these are utilitarian tools, not showcases. In Washi,
-  prefer no animation at all (e-paper ghosting).
-- Do design in Sumi first; verify Washi on e-paper terms (contrast over
-  hue), not as a cosmetic light variant.
-- Don't rely on hue to carry meaning in Washi — use darkness and weight;
-  hue is a secondary cue at best on e-paper.
-- Do keep gesture affordances (pull-to-refresh, swipe-back) visually quiet:
-  muted text panels, accent only at the "release" threshold.
-- Do keep the project root `DESIGN.md` self-contained after bootstrap; do not
-  leave essential rules dependent on this external template.
+- する: すべての色を、この file を出所とする CSS custom property として定義
+  する。component の内部に hex 値を直接書かない。
+- する: 1 画面につき primary (accent で塗る) の操作をちょうど 1 つ置く。
+- しない: chrome のどこにも絵文字や多色のグリフを使わない。
+- する: UA の focus ring を抑止し、常に共通の `:focus-visible` の accent ring
+  で置き換える — focus の表示そのものを消さない。
+- しない: 定義されたスケールの外に、新しい font サイズや radius を持ち込ま
+  ない。
+- する: chrome を中立に保つ。list と投稿の中の色は、常に何かを意味しなければ
+  ならない (未読、自分の投稿、評価、ID の heat)。
+- する: 両方の theme で、すべてのテキストについて WCAG AA (4.5:1) を維持
+  する。border や bar の上の data color は対象外だが、見分けられる状態を
+  保つ。
+- しない: ≤150ms の height/opacity の transition と loading spinner を除いて、
+  何もアニメーションさせない。これらは実用の道具であって、見せ物では
+  ない。Washi では、そもそもアニメーションを使わないことを優先する
+  (e-paper の残像)。
+- する: まず Sumi で設計する。Washi は見た目上の light 版としてではなく、
+  e-paper の条件 (色相より contrast) で検証する。
+- しない: Washi では色相に意味を運ばせない — 暗さと weight を使う。e-paper
+  では色相はよくても副次的な手がかりである。
+- する: ジェスチャーのアフォーダンス (pull-to-refresh、swipe-back) は視覚的な
+  表現を控えめに保つ。muted なテキスト panel を使う。accent は "release" の
+  閾値でだけ使う。
+- する: bootstrap のあと、project root の `DESIGN.md` を自己完結に保つ。本質
+  的な規則を、この外部 template に依存させたまま残さない。

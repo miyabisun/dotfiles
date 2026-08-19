@@ -2,13 +2,13 @@
 version: alpha
 name: Kinari
 description: >
-  Canonical template of the Kinari (生成り) light theme — the
-  screen-first companion to the Sumi design system. Projects whose
-  users never read them on e-paper pair Sumi (dark, primary) with
-  Kinari (light) instead of Washi. Warm unbleached-cloth surfaces,
-  sepia ink, and gentle accent sprinkles replace Washi's stark
-  contrast-first paper. Use it with Sumi as bootstrap input, then adapt the
-  applicable rules into the project's self-contained root DESIGN.md.
+  Kinari (生成り) light theme の正式 template — Sumi デザインシステムと
+  対になる screen 優先の theme である。user が e-paper で決して読まない
+  project は、Washi ではなく Kinari (light) を Sumi (dark, primary) と
+  組み合わせる。温かい未晒しの布の surface、sepia のインク、控えめな accent
+  sprinkles が、Washi のそっけない contrast 優先の紙を置き換える。Sumi と
+  ともに bootstrap input として使い、該当する規則を project の自己完結した
+  root DESIGN.md へ適合させる。
 colors:
   # --- Neutral chrome: Kinari (light). Unsuffixed tokens = Kinari. ---
   # Dark theme tokens are NOT defined here — the dark theme is always
@@ -31,103 +31,102 @@ colors:
   danger-subtle: "#f9e9e4"
 ---
 
-# Kinari — Warm Light Theme for Screen-First Tools (Template)
+# Kinari — screen 優先の tool 向けの温かい light theme (テンプレート)
 
-## Overview
+## 概要
 
-Kinari (生成り — unbleached cloth) is the **screen-first light theme** of
-the Sumi family. It exists because Washi is not a light theme in the
-usual sense: Washi is an *e-paper survival mode* — contrast pushed to the
-maximum, hue drained of meaning, motion banned. Rendered on an ordinary
-LCD it reads as stark and joyless. Projects that are never used on
-e-paper (audio tools, dashboards, editors) deserve a light theme designed
-for glass, not for ink particles.
+Kinari (生成り — 未晒しの布) は Sumi family の **screen 優先の light theme**
+である。Kinari が存在するのは、Washi が通常の意味での light theme では
+ないからである。Washi は *e-paper 生存 mode* である — contrast を最大まで
+上げ、色相から意味を抜き、motion を禁じている。普通の LCD に描画すると、
+それは無愛想で味気なく見える。audio tool・dashboard・editor のように、
+e-paper で決して使われない project がある。そこにはインク粒子ではなく、
+ガラスのために設計された light theme がふさわしい。
 
-Kinari keeps the family's calm, tool-like personality — content first,
-chrome quiet — but swaps Washi's clinical white for **warm unbleached
-paper**: cream surfaces, sepia ink, and hairlines the color of aged
-cotton. Within that warmth, the project's accents are allowed to
-*decorate a little*: subtle accent-tinted fills, colored section
-markers, and chips may appear where Washi would demand bare ink. The
-result should feel cozy and lightly playful — a stationery desk, not a
-photocopy.
+Kinari は family の静かで道具的な性格を保つ — content が先、chrome は
+静かに。ただし Washi の臨床的な白は **温かい未晒しの紙** へ置き換える。
+cream の surface、sepia のインク、古びた綿の色をした hairline である。
+その温かさの中で、project の accent は *少しだけ装飾する* ことを許される。
+Washi なら素のインクを求める場所に、控えめな accent tint の fill・色付きの
+section marker・chip が現れてよい。結果は居心地よく、軽く遊び心のあるものに
+感じられるのが望ましい — 文房具の机であって、複写機のコピーではない。
 
-**Positioning within the family:**
+**family の中での位置づけ:**
 
-- **Sumi (墨) — dark, the primary theme.** Unchanged. Design in Sumi
-  first; it is the default everywhere.
-- **Kinari (生成り) — light, for screens.** This template. The
-  `prefers-color-scheme: light` face of projects that are used on
-  ordinary displays.
-- **Washi (和紙) — light, for e-paper.** Defined in the Sumi template.
-  Reader tools that are actually taken to bed on an e-ink device keep
-  Washi; they do not adopt Kinari.
+- **Sumi (墨) — dark、primary な theme。** 変更なし。まず Sumi で設計する。
+  どこでも既定である。
+- **Kinari (生成り) — light、screen 向け。** この template である。普通の
+  display で使われる project の `prefers-color-scheme: light` の顔である。
+- **Washi (和紙) — light、e-paper 向け。** Sumi template で定義されている。
+  e-ink 端末で実際に寝室へ持ち込まれる reader tool は Washi を保ち、
+  Kinari を採用しない。
 
-A project pairs exactly one light theme with Sumi — Kinari *or* Washi,
-never both. The choice is declared in the project root `DESIGN.md`.
+project は Sumi にちょうど 1 つの light theme を組み合わせる — Kinari
+*または* Washi であり、両方は使わない。この選択は project root の
+`DESIGN.md` で宣言する。
 
-## Colors
+## 色
 
-Unsuffixed tokens are Kinari values. The dark counterparts are always
-Sumi's `-dark` tokens from the Sumi template — Kinari never redefines
-them.
+接尾の無い token は Kinari の値である。dark の対応物は常に Sumi template の
+`-dark` token である — Kinari はそれを決して再定義しない。
 
-- **Surface (#faf6ef):** Page background. Warm cream — visibly warmer
-  than Washi's #fafafa, but light enough that raised cards still read
-  as a layer above it.
-- **Surface Raised (#fffdf8):** Cards, list rows, modals, nav bar.
-  Warm white, one step brighter than surface.
-- **On-Surface (#3a2f28):** Primary text. Dark sepia ink (~11:1 on
-  surface) — warm, but comfortably past AAA. Never pure black: this is
-  ink on cloth, not toner on paper.
-- **Muted (#6f6257):** Secondary text, captions, metadata, inactive
-  tabs. Warm gray-brown, ≥ 4.5:1 (AA) against surface. Kinari does not
-  need Washi's AAA rule — LCDs render mid-tones faithfully.
-- **Border (#e3d9c9):** Hairline 1px borders in aged-cotton beige.
-  Softer than Washi's border on purpose; tonal separation may lean on
-  the surface/raised difference more than on hard lines.
-- **Accent (primary; template default #9a6a00):** Same contract as
-  Sumi: the project's identity color for "you are here" and "the main
-  action". Filled primary buttons set white/raised text on accent, so a
-  Kinari primary must keep white-on-accent ≥ 4.5:1.
-- **Accent sprinkles (the Kinari license):** Unlike Washi, Kinari may
-  use `accent-subtle` (and `secondary-subtle`) as *gentle decoration*:
-  tinted card headers, hover fills, active-row washes, empty-state
-  illustrations. The limits: tints stay ≤ 12% opacity equivalents, body
-  text never sits on a tint below AA, and decoration never carries
-  meaning that isn't also carried by text or shape (the chrome must
-  survive grayscale).
-- **Link (#14506e) / Danger (#9c2b1d):** Same roles as Sumi. The danger
-  value is nudged warm to sit naturally on cream while keeping ≥ 4.5:1.
+- **Surface (#faf6ef):** ページの背景。温かい cream — Washi の #fafafa より
+  目に見えて温かいが、raised な card がその上の layer として読める程度には
+  明るい。
+- **Surface Raised (#fffdf8):** card・list row・modal・nav bar。surface より
+  一段明るい温かい白。
+- **On-Surface (#3a2f28):** 主要なテキスト。暗い sepia のインク (surface 上で
+  ~11:1) — 温かいが、AAA を余裕で超える。純黒は決して使わない。これは布の上の
+  インクであって、紙の上のトナーではない。
+- **Muted (#6f6257):** 副次的なテキスト・caption・メタデータ・inactive な tab。
+  温かい灰褐色で、surface に対して ≥ 4.5:1 (AA)。Kinari は Washi の AAA 規則を
+  必要としない — LCD は中間調を忠実に描画する。
+- **Border (#e3d9c9):** 古びた綿色の beige による hairline の 1px border。
+  意図的に Washi の border より柔らかい。色調の分離は、硬い線よりも
+  surface/raised の差に頼ってよい。
+- **Accent (primary; template default #9a6a00):** Sumi と同じ contract である。
+  「ここにいる」と「主要な操作」を表す project の identity color である。
+  塗りつぶした primary button は accent の上に white/raised のテキストを置く。
+  そのため Kinari の primary は white-on-accent を ≥ 4.5:1 に保つ。
+- **Accent sprinkles (the Kinari license):** Washi と違い、Kinari は
+  `accent-subtle` (と `secondary-subtle`) を *穏やかな装飾* として使ってよい。
+  色を付けた card header、hover の塗り、active な行の wash、empty state の
+  挿絵である。制限は次のとおりである。tint は ≤ 12% の opacity 相当に留める。
+  body のテキストは AA を下回る tint の上に決して置かない。装飾が運んでよい
+  意味は、テキストや形も運んでいるものに限る (chrome はグレースケールでも
+  生き残らなければならない)。
+- **Link (#14506e) / Danger (#9c2b1d):** Sumi と同じ役割である。danger の値は、
+  ≥ 4.5:1 を保ちながら cream 上で自然になじむよう、温かい側へ寄せてある。
 
-**Per-project accents and functional data colors** follow the Sumi
-template's rules verbatim (one required primary, optional role-bearing
-secondary, data colors documented per project). The only Kinari-specific
-change: data colors may use **hue as a first-class cue** — the Washi
-darkness-ramp requirement does not apply. Keep data colors ≥ 3:1 against
-surface-raised for non-text glyphs and AA for text.
+**project ごとの accent と機能的な data color** は、Sumi template の規則に
+そのまま従う。必須の primary が 1 つ、役割を持つ secondary は任意、
+data color は project ごとに文書化する。Kinari 固有の変更は 1 つだけである。
+data color は **色相を第一級の手がかり** として使ってよく、Washi の暗さ ramp
+の要件は適用されない。data color は、テキスト以外の字形では surface-raised に
+対して ≥ 3:1、テキストでは AA を保つ。
 
-## Everything else
+## その他のすべて
 
-Typography, spacing, radii, layout, elevation, iconography, and
-component recipes are **inherited from the Sumi template unchanged** —
-Kinari is a palette and a license, not a new system. Two deltas:
+typography・spacing・radii・layout・elevation・iconography・component の
+recipe は変えない。**Sumi template からそのまま継承する**。Kinari は palette と
+license であって、新しい system ではない。差分は 2 つある:
 
-- **Motion:** the Washi "no animation" rule does not apply. Kinari
-  follows the base Sumi rule (utilitarian transitions ≤ 150ms), and
-  honors `prefers-reduced-motion`.
-- **Focus ring:** accent at 60% opacity may be too faint on cream —
-  verify ≥ 3:1 against surface and darken the ring alpha if needed.
+- **Motion:** Washi の「アニメーション禁止」の規則は適用されない。Kinari は
+  基本の Sumi 規則 (実用的な transition は ≤ 150ms) に従い、
+  `prefers-reduced-motion` を尊重する。
+- **Focus ring:** opacity 60% の accent は cream の上では淡すぎることがある。
+  surface に対して ≥ 3:1 を検証し、必要なら ring の alpha を暗くする。
 
-## Do's and Don'ts
+## すること・しないこと
 
-- Do design in Sumi first, then verify Kinari as a *warm sibling*, not
-  as an inverted Sumi.
-- Do let accents decorate quietly (tints, chips, washes) — that is the
-  point of Kinari — but keep every meaning readable without color.
-- Don't adopt Kinari in a project whose content is read on e-paper;
-  that project keeps Washi.
-- Don't redefine dark tokens here or per-project — dark is always Sumi.
-- Do maintain WCAG AA (4.5:1) for all text; muted text included.
-- Don't reach for pure white (#ffffff) or pure black (#000000)
-  anywhere — Kinari's identity lives in its warmth.
+- する: まず Sumi で設計し、それから Kinari を *温かい兄弟* として検証する。
+  反転した Sumi としてではない。
+- する: accent に静かな装飾をさせる (tint・chip・wash)。それが Kinari の
+  要点である。ただし、あらゆる意味を色なしで読めるように保つ。
+- しない: content が e-paper で読まれる project に Kinari を採用しない。
+  その project は Washi を保つ。
+- しない: ここでも project ごとにも dark token を再定義しない — dark は
+  常に Sumi である。
+- する: すべてのテキストで WCAG AA (4.5:1) を維持する。muted のテキストも含む。
+- しない: どこでも純白 (#ffffff) や純黒 (#000000) に手を伸ばさない — Kinari の
+  identity はその温かさに宿る。

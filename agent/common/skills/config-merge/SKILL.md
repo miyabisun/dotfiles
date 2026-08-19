@@ -1,35 +1,33 @@
 ---
 name: config-merge
 description: >-
-  Reconcile the live Codex config at ~/.codex/config.toml with the portable
-  dotfiles config at ~/projects/miyabisun/dotfiles/agent/codex/config.toml.
-  Use when Codex
-  settings changed locally, dotfiles brought settings from another machine,
-  or the user asks to merge, synchronize, promote, or distribute Codex config
-  without losing machine-local state.
+  ~/.codex/config.toml の live Codex config と
+  ~/projects/miyabisun/dotfiles/agent/codex/config.toml の portable な dotfiles
+  config を突き合わせる。
+  Codex の設定がローカルで変わったとき、dotfiles が別のマシンから設定を
+  持ち込んだとき、または user がマシン固有の状態を失わずに Codex config の
+  merge・同期・promote・配布を求めたときに使う。
 ---
 
 # config-merge
 
-Synchronize Codex configuration by meaning, not by blindly combining TOML.
-Keep portable intent in dotfiles and runtime or machine-specific state only in
-the live config.
+Codex の設定は、TOML を闇雲に結合するのではなく意味で同期する。portable な
+意図は dotfiles に置き、runtime やマシン固有の状態は live config にだけ置く。
 
-## Files
+## ファイル
 
-- Shared: `$HOME/projects/miyabisun/dotfiles/agent/codex/config.toml`
-- Live: `$HOME/.codex/config.toml`
+- 共有: `$HOME/projects/miyabisun/dotfiles/agent/codex/config.toml`
+- 稼働: `$HOME/.codex/config.toml`
 
-Treat a live symlink resolving to the shared file as a migration blocker. Do
-not attempt a self-merge; report that `bin/install` must migrate the legacy
-symlink first.
+live が shared file へ解決される symlink なら、移行の blocker として扱う。
+self-merge を試みない。legacy symlink はまず `bin/install` が移行しなければ
+ならない、と報告する。
 
-## 1. Inspect both sides
+## 1. 両側を調べる
 
-1. Confirm both files exist and are distinct regular files.
-2. Parse both as TOML before editing. Stop without changes if either is invalid.
-3. Inspect the dotfiles working tree, the complete config diff, and recent
-   config history:
+1. 両方のファイルが存在し、別々の通常ファイルであることを確認する。
+2. 編集する前に両方を TOML として parse する。どちらかが不正なら、変更せずに止まる。
+3. dotfiles の作業ツリー、config diff の全体、直近の config 履歴を調べる:
 
    ```text
    git -C "$HOME/projects/miyabisun/dotfiles" status --short
@@ -37,73 +35,70 @@ symlink first.
    git -C "$HOME/projects/miyabisun/dotfiles" log -p -5 -- agent/codex/config.toml
    ```
 
-4. Preserve unrelated dotfiles changes and any pre-staged work.
-5. Save a temporary backup of the live config before editing it.
+4. dotfiles の無関係な変更と、事前に stage 済みの作業を保持する。
+5. live config を編集する前に、一時的な backup を保存する。
 
-## 2. Classify settings
+## 2. 設定を分類する
 
-Keep these local unless the user explicitly requests portability:
+user が portability を明示的に求めない限り、次はローカルに留める:
 
 - `projects.*`
 - `tui.model_availability_nux.*`
 - `hooks.state.*`
-- authentication, credentials, tokens, session state, and history
-- machine paths, device-specific commands, or host-specific endpoints
+- 認証・credential・token・session の状態・履歴
+- マシンの path・デバイス固有のコマンド・host 固有の endpoint
 
-Treat these as portable candidates when they contain no secrets or host-only
-values:
+secret や host 限定の値を含まないなら、次は portable の候補として扱う:
 
-- behavioral defaults such as model, personality, approvals, and sandbox
+- model・personality・approvals・sandbox といった振る舞いの既定値
 - `features.*`
 - `agents.*`
-- reusable `mcp_servers.*` definitions
-- durable TUI and notification preferences
-- reusable hooks and sandbox settings
+- 再利用できる `mcp_servers.*` の定義
+- 恒常的な TUI と通知の設定
+- 再利用できる hooks と sandbox の設定
 
-Classify mixed tables field by field. Never promote static authorization
-headers, bearer tokens, credentials, private keys, or secret environment
-values. Environment variable names are not secrets by themselves.
+混在する table は field ごとに分類する。静的な authorization header・bearer
+token・credential・秘密鍵・secret な環境変数の値は一切 promote しない。環境変数の
+名前それ自体は secret に当たらない。
 
-## 3. Reconcile
+## 3. reconcile する
 
-Build a ledger before editing:
+編集する前に ledger を組み立てる:
 
-- **promote**: portable setting present only in live config -> add to shared
-- **import**: portable setting present only in shared config -> add to live
-- **local**: machine/runtime setting -> retain only in live
-- **aligned**: equivalent on both sides -> leave unchanged
-- **conflict**: different portable values on both sides -> resolve from user
-  intent, config history, and surrounding changes
+- **promote**: live config にだけある portable な設定 -> shared へ追加する
+- **import**: shared config にだけある portable な設定 -> live へ追加する
+- **local**: マシン・runtime の設定 -> live にだけ残す
+- **aligned**: 両側で等価 -> 変更しない
+- **conflict**: 両側で portable な値が異なる -> user の意図・config 履歴・
+  周辺の変更から解決する
 
-For conflicts, prefer the value with clear evidence of a newer intentional
-change. If evidence is insufficient and behavior would materially change, keep
-both files unchanged for that key and report the conflict. Do not ask about
-independent entries that can be reconciled safely.
+conflict では、より新しい意図的な変更である証拠が明確な値を優先する。証拠が
+不十分で、かつ振る舞いが実質的に変わるなら、その key については両ファイルとも
+変更しないまま conflict を報告する。安全に reconcile できる独立した項目に
+ついては問い合わせない。
 
-Apply precise edits while preserving comments, ordering, and formatting. Do
-not serialize and replace an entire file merely to change a few values. Remove
-local-only state found in shared config after preserving it in live config.
+comment・順序・書式は保ったまま、正確な編集を加える。数個の値を変えるためだけに
+ファイル全体を serialize して置き換えない。shared config で見つかった local
+限定の状態は、live config に保持したうえで取り除く。
 
-After reconciliation, every portable setting should agree across both files.
-Local-only settings should remain in the live file and be absent from shared.
+reconcile 後は、portable な設定がすべて両ファイルで一致しているはずである。
+local 限定の設定は live file に残り、shared には無いはずである。
 
-## 4. Verify
+## 4. 検証する
 
-1. Parse both files as TOML again.
-2. Run `codex --strict-config --version` against the live configuration.
-3. Run `git -C "$HOME/projects/miyabisun/dotfiles" diff --check` and inspect
-   the complete shared
-   config diff.
-4. Check that no secrets or local-only tables entered the shared diff.
-5. Confirm the live file is not a symlink and still contains retained local
-   state.
+1. 両方のファイルを再び TOML として parse する。
+2. live の設定に対して `codex --strict-config --version` を実行する。
+3. `git -C "$HOME/projects/miyabisun/dotfiles" diff --check` を実行する。
+   shared config diff の全体を確認する。
+4. secret や local 限定の table が shared の diff に入っていないことを確認する。
+5. live file が symlink ではなく、保持した local の状態を今も含むことを確認する。
 
-Do not commit, pull, push, reset, restore, or discard changes. Those operations
-require separate explicit user intent.
+commit・pull・push・reset・restore・変更の破棄はしない。これらの操作には、
+user の明示的な意図が別途必要である。
 
-## Output
+## 出力
 
-Report:
+次を報告する:
 
 ```text
 promoted: <portable settings moved to dotfiles>

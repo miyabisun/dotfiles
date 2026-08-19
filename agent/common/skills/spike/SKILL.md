@@ -12,7 +12,7 @@ description: >-
 # spike
 
 目的はただ一つ: **最短で動くものを作り、体験を得る**。spike は
-**v0.1.0 のリリースを目指す**段階である — バグを踏まれても「v0.1.0 だから」と
+**v0.1.0 のリリースを目指す**段階である。バグを踏まれても「v0.1.0 だから」と
 言える粗さで、まず世に出せる形へ向かう (リリース行為そのものは user が
 `bump-tag` で行う)。抽象化・設定項目・将来対応・網羅的な堅牢性はあとの
 `polish` が引き受ける。完成度は8割で止めてよく、やり残しは
@@ -25,7 +25,8 @@ description: >-
 ## 起動条件
 
 user の明示的な `$spike` 起動、同じ依頼文での段階明示、または段階未指定の
-`$deliver` からの自動判断 (dispatcher が選択と根拠を宣言する) が起動根拠。
+`$deliver` からの自動判断が起動根拠。自動判断では dispatcher が選択と根拠を
+宣言する。
 
 ## 作業の分担 (毎回 agent を作成する)
 
@@ -40,13 +41,13 @@ CLI 待ちとログ読み・事実確認を続けてはならない。
   子の結果は親が待ち、親が召喚 prompt へまとめる。
 
 **子 agent の結果待ち**で blocked かつ他に有用な独立作業が無いなら、**現在の
-turn を終了して yield しなければならない** (sleep・wait loop で turn を保持
-しない)。その turn の最終行に必ず `<!-- delivery:waiting -->` を置く。runtime
+turn を終了して yield しなければならない**。sleep・wait loop で turn を保持
+しない。その turn の最終行に必ず `<!-- delivery:waiting -->` を置く。runtime
 hook はこの marker で中間 yield と delivery 完了を区別する。**この marker は
 子 agent の結果待ちにだけ使う** — レビュワー召喚は同期なので待ちにならない。
 yield 直前の user 向け最終出力は
 「子の結果待ちで一旦 turn を終了する。子の完了でこの delivery を再開する」
-の形にし、完了報告と誤認される文言を使わない。
+の形にする。完了報告と誤認される文言を使わない。
 user の追加の「続けて」を**再開条件にしない**。
 契約は commit まで。途中で止まった配達は未完了である。
 
@@ -58,15 +59,15 @@ user が与えた依頼そのもので、scope を足さない。受け取った
 ## 手順
 
 **どの手順よりも先に読む**: 対象 project の知識が knowledge repository に
-あるなら、**index だけを読む**のが既定である — `library/index.md` と、対象
-project の `projects/<name>/index.md`。リンク先は関係するときだけ辿る
+あるなら、**index だけを読む**のが既定である。読むのは `library/index.md` と、
+対象 project の `projects/<name>/index.md`。リンク先は関係するときだけ辿る
 (辿り方は `knowledge-read` skill が持つ)。**その index からこの project の
 テスト戦略を読む** — 無ければ手順 2 で決める (GLOBAL.md「テスト」)。
 読んでも曖昧なときだけ knowledge へ質問する。聞く前に読む。
 
-0. **土台を確認する** (この手順は **Rust プロジェクトだけ**に効く。土台が
-   Rust 向けなので、他 stack を突き合わせても意味がない。新規・既存の
-   どちらでも通る — 「新規だけ」にすると既存 repo へ永久に届かない):
+0. **土台を確認する** (この手順は **Rust プロジェクトだけ**に効く):
+   土台が Rust 向けなので、他 stack を突き合わせても意味がない。新規・既存の
+   どちらでも通る — 「新規だけ」にすると既存 repo へ永久に届かない。
    - agent-talk で knowledge セクションの登録 pane へ**共通開発仕様**を
      1回だけ聞く。土台の所在と現在の中身もここで解決する。これは**質問で
      あって預け入れではない** — findings を渡すのは intake role の仕事で、
@@ -89,7 +90,7 @@ project の `projects/<name>/index.md`。リンク先は関係するときだけ
      template と選んだ profile を **read-only** で突き合わせ、足りない点を
      **推奨 gap** として receipt に返す。「飛ばす」だけにすると、推奨は
      既存 repo へ永久に届かない。
-     - **比べるのは再利用可能な土台まわり (foundation surface) だけ** —
+     - **比べるのは再利用可能な土台まわり (foundation surface) だけ**。
        toolchain の固定、license、build/test/deploy の足場など。
        **product 固有の source と、その product 自身の docs は比べない。**
        既存 product が template から分岐しているのは当たり前で、そこまで
@@ -122,12 +123,12 @@ project の `projects/<name>/index.md`。リンク先は関係するときだけ
      一つの枠内での粗探しに固定され、第二の設計空間が探索されなくなる。
    - 確認済みの事実に**設計判断を混ぜない** (現状・制約・再現証拠だけ)。
      混ぜるとアンカリングが復活する。
-   - **同じターンで自分の案を起草する。** 同期召喚では `$result` が同じ turn に
-     返るので、順序では独立性が守られない — **召喚を起動する前に自案を会話内で
+   - **同じターンで自分の案を起草する**。同期召喚では `$result` が同じ turn に
+     返るので、順序では独立性が守られない。**召喚を起動する前に自案を会話内で
      確定させ、`$result` はその後に読む**という規律で守る。
    - 求める項目は各1〜数行: 狙う体験 / 最大3項目の acceptance /
-     最小の実装 / 最大のリスク・疑問 (schema の `dissatisfaction` /
-     `minimal_plan` / `regression_evidence` / `ux_risks` に対応させる)。
+     最小の実装 / 最大のリスク・疑問。schema の `dissatisfaction` /
+     `minimal_plan` / `regression_evidence` / `ux_risks` に対応させる。
    - **reconcile が終わるまでテストと実装を編集しない。**
    すり合わせの詳細は「[方針すり合わせの判定軸](#方針すり合わせの判定軸)」。
 2. **契約はテストで書く**: browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)
@@ -135,7 +136,7 @@ project の `projects/<name>/index.md`。リンク先は関係するときだけ
    読み、そこにある UI surface 判定・Project design authority・実装規則を
    適用する。拡張子や「使い勝手」だけでは発火しない。CLI/TUI・terminal 出力
    のみ・Node backend 専用 JavaScript・設定・docs・test-only は対象外。
-   修正が必要だと確認できなければ使わない（迷ったら適用しない）。未解決の
+   修正が必要だと確認できなければ使わない (迷ったら適用しない)。未解決の
    視覚・操作判断や design contract の変更がある場合だけ `designer` を呼び、
    その brief を契約へ含める。
    **契約を書く前にテスト戦略を決める**: この project で何を実行可能コード
@@ -174,16 +175,16 @@ project の `projects/<name>/index.md`。リンク先は関係するときだけ
    成立しない spike は未完成である。
 5. **formatter / linter を機械的に叩く**: repo に設定があればそのまま実行し、
    指摘を修正する。未導入で stack に標準のゼロ設定ツールがあるなら導入して
-   よい (導入・実施コストが低く効果が大きい。user-origin の標準方針)。
+   よい (導入・実施コストが低く効果は大きい。user-origin の標準方針)。
 6. **実装レビュー1回**: 実装レビュー召喚を**1回だけ**起動し、user 原文
    (verbatim)・diff・達成条件・実行済みの検証結果 (テスト・実行証拠) を渡す。
    `blocking` を直したら再検証召喚を**1回だけ**起動する。それ以外は記録して
    進む。召喚の種類・上限・検査項目・fallback は
    「[レビュワー召喚 (codex exec)](#レビュワー召喚-codex-exec)」。
 7. **コミットする**: 既定は 1 invocation = 1 local commit。複数 checkpoint
-   commit は、起動時の user 依頼文が明示的に許可した場合のみ (その原文を
-   receipt に引用し、件数と各 scope を報告する)。message は `git` skill の
-   規則に従う (1 行のみ、経緯は knowledge へ)。
+   commit は、起動時の user 依頼文が明示的に許可した場合のみとする。許可された
+   場合は、その原文を receipt に引用し、件数と各 scope を報告する。message は
+   `git` skill の規則に従う (1 行のみ、経緯は knowledge へ)。
 8. **報告する**: 何が動くか、テスト結果、動作証拠、残した TODO と
    non-blocking の質問リスト、次に polish すべき点を短く返す。
    **v0.1.0 readiness の確認も完了条件に含む**: 新規プロジェクトの該当
@@ -293,12 +294,12 @@ review "$repo" \
 
 ### 実装レビュー prompt に書かせる検査項目
 
-- **テストの誠実さ (blocking)**: テストを読み、トートロジー (実装の言い換え、
-  常に真になる assert、実装と同じ計算式での期待値生成) と誤魔化し (期待値の
-  ハードコード合わせ、assert の削除・弱体化、skip での回避、green にするため
-  だけのテスト改変) を検知する。サボりや user に対して不誠実な挙動を見つけたら
-  **厳格に blocking とし、修正させる**。直したバグに回帰テストが付いているかも
-  見る。
+- **テストの誠実さ (blocking)**: テストを読み、トートロジーと誤魔化しを検知
+  する。トートロジーは実装の言い換え、常に真になる assert、実装と同じ計算式
+  での期待値生成。誤魔化しは期待値のハードコード合わせ、assert の削除・弱体化、
+  skip での回避、green にするためだけのテスト改変。サボりや user に対して
+  不誠実な挙動を見つけたら**厳格に blocking とし、修正させる**。直したバグに
+  回帰テストが付いているかも見る。
 - **テストの妥当性 (blocking)**: Markdown を grep するだけのテスト、
   ライブラリの受け入れテスト、トートロジーなテストを新しく作っていないか。
   作っていたら消させる (GLOBAL.md「テスト」)。
@@ -328,7 +329,7 @@ review "$repo" \
 exit code が nonzero、`$result` が空、`$result` が schema に合わない —
 このいずれかが起きた時点で **breaker が開く**。
 
-**breaker が開いたら、その delivery の残りの codex exec 召喚は一切行わない。**
+**breaker が開いたら、その delivery の残りの codex exec 召喚は一切行わない**。
 失敗した召喚と、それ以降に予定されていた召喚を、すべて self 系で処理する:
 
 - **planning** — 自案を A 軸で**もう一巡 self-check する**
@@ -348,8 +349,8 @@ exit code が nonzero、`$result` が空、`$result` が schema に合わない 
   明記する。
 
 receipt には **breaker が開いた時点 (どの召喚か) と理由**を
-`review_exec_failed: <理由>` の形で記録し、以降どの phase を self で処理したかを
-併記して delivery を続行する。
+`review_exec_failed: <理由>` の形で記録する。以降どの phase を self で
+処理したかを併記して delivery を続行する。
 
 これは可用性の fallback であって達成条件の代替ではない。
 
@@ -365,7 +366,7 @@ receipt には **breaker が開いた時点 (どの召喚か) と理由**を
 
 ### A. user の目的との一致 (最優先・blocking)
 
-**照合先は「目的」であって「手段」ではない。** user が挙げた具体的な手段
+**照合先は「目的」であって「手段」ではない**。user が挙げた具体的な手段
 (ファイル名・コマンド・実装方針) は強いヒントだが**正ではない** — 同じ目的を
 より良く果たす手段があれば置き換えてよい。一方、明示された制約・非目標・
 権限境界は手段ではなく前提なので破れない。
@@ -411,8 +412,8 @@ user の目的とずれるなら不採用。
 
 ### `discuss` との境界
 
-方針すり合わせは spike/polish の**毎回の必須手順**で、依頼整合の確認と第二の
-設計空間の探索を行う。`discuss` はそのあとに残った product/UX の選択が実装
+方針すり合わせは spike/polish の**毎回の必須手順**で、依頼整合を確認し、
+第二の設計空間を探索する。`discuss` はそのあとに残った product/UX の選択が実装
 結果を変えるときだけ起動する収束機構である。`discuss` は自案や候補を添えて
 反証を求める形式なので、**blind な独立提案の代替にはならない**。`discuss` は
 レビュワー召喚とは別経路であり、同一争点の重複照会だけを避ける。

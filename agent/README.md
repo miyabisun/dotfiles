@@ -1,6 +1,6 @@
-# Agent Configuration Layer
+# agent の設定レイヤー
 
-All AI agent tooling lives under `agent/`.
+AI agent の tooling はすべて `agent/` 以下にある。
 
 ```
 agent/
@@ -26,9 +26,9 @@ agent/
     └── config.toml  # portable template → seed ~/.grok/config.toml
 ```
 
-`bin/install` symlinks:
+`bin/install` が張る symlink:
 
-| Home | Source |
+| home 側 | source 側 |
 |------|--------|
 | `~/.claude/skills`, `~/.grok/skills` | `agent/common/skills` |
 | `~/.claude/agents`, `~/.grok/agents` | `agent/common/agents` |
@@ -37,127 +37,126 @@ agent/
 | `~/.codex/config.toml`, `~/.codex/hooks.json` | `agent/codex/*` |
 | `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.claude/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.grok/hooks` | `agent/grok/hooks` |
-| `~/.grok/config.toml` | seeded copy of `agent/grok/config.toml` (not a symlink) |
+| `~/.grok/config.toml` | `agent/grok/config.toml` の seed copy (symlink ではない) |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
-Agent completion events call `~/.local/bin/emit-turn-end.sh`. When
-`MOCA_URL` is set it asks MOCA to announce the event; a successful turn is
-announced only when every other agent in the same herdr workspace has
-settled to done/idle (so a claude↔codex review round produces one
-completion notice at the end instead of one per turn). This script does not
-report lifecycle state to agent-talk; the broker reads it directly from herdr.
-Codex uses `notify` for completion. Its notification wrapper identifies
-subagent rollout threads and suppresses their completion announcements,
-including automatic approval reviewers.
+agent の完了イベントは `~/.local/bin/emit-turn-end.sh` を呼ぶ。`MOCA_URL` が
+設定されているときは、MOCA へイベントの通知を依頼する。成功した turn を
+通知するのは、同じ herdr workspace のほかの agent がすべて done/idle に
+落ち着いたときだけである。claude↔codex のレビュー往復が、turn ごとではなく
+最後に1回だけ完了通知を出すようにするためである。この script は lifecycle の
+状態を agent-talk へ報告しない。broker は herdr から直接それを読む。Codex は
+完了に `notify` を使う。その通知 wrapper は subagent の rollout thread を
+識別し、自動承認の reviewer を含めて、その完了通知を抑止する。
 
-Agent-to-agent messages go through Claude Code's built-in cross-session
-channel (`ListAgents` / `SendMessage`). The Rust broker from
-[`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd),
-a systemd-managed daemon (see *Where the broker itself comes from* below), keeps
-only two jobs: draining a legacy `[agent-talk]` doorbell, and carrying one
-bounded `agent-talk reply` to a human's letter that arrived from an external
-mailbox. Registration is the daemon's pull sync over herdr's native agent
-detection — an interactive agent in a herdr pane is addressable without any
-wrapper. The daemon refreshes the successful herdr snapshot on message RPCs and
-every two seconds while work is queued, so lifecycle hooks do not push register,
-unregister, busy, idle, or turn-end state.
+agent 間の message は Claude Code 組み込みの cross-session channel
+(`ListAgents` / `SendMessage`) を通る。broker は
+[`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd)
+の Rust 実装である。systemd が管理する daemon である
+(下の *broker 自体はどこから来るか* を見よ)。仕事は 2 つしか残っていない。
+1 つは legacy の `[agent-talk]` 呼び鈴を捌くこと。もう 1 つは、外部 mailbox
+から届いた人間の手紙へ bounded な `agent-talk reply` を1通運ぶことである。
+登録は、herdr 固有の agent 検出に対する daemon 側の pull 同期である。herdr の
+pane にいる対話的な agent は、wrapper なしで宛先にできる。daemon は message
+RPC のたびと、仕事が queue にある間は 2 秒ごとに、成功した herdr の snapshot
+を取り直す。だから lifecycle hook が register・unregister・busy・idle・turn-end
+の状態を push することはない。
 
-Peer conversation is a standing-authority operation, but the broker's MCP
-tools no longer carry it: of `list_peers`, `send_message`, `read_message`,
-and `ack_message`, only `read_message` is still used, and only for that
-drain. The server runs in-process from each runtime's own MCP config, so no
-shell command and no allow rule is involved, and Codex's sandbox never
-sees the multiplexer socket. The `agent-talk-peer` dispatcher that used to
-carry this traffic is retired: it exposed no `ack` subcommand, so a shell-only
-agent could read a message but never report receipt. The removed `busy`, `idle`,
-and `turn-end` commands are not restored through hooks or wrappers. Remaining
-`register`, `unregister`, and `run` commands are likewise not hook or agent
-interfaces; broker maintenance commands remain outside every allow list.
-Authority travels with the speaker, not the wire: an instruction from the user
-keeps its full weight whether it arrives from a phone or through a relay, and a
-peer handing that instruction on delivers it undiminished. What a peer says on
-its own account is input, not permission to change the workspace.
-When a change needs direct approval,
-`~/.local/bin/notify-file-permission.sh` rings the pane, emits one sanitized MOCA notice when
-configured, and leaves the agent waiting without affecting agent-talk's herdr
-state sync.
+peer との会話は standing-authority の操作である。しかし broker の MCP tool は
+もうそれを担わない。`list_peers`・`send_message`・`read_message`・`ack_message`
+のうち、まだ使うのは `read_message` だけである。しかも、その drain のためだけ
+に使う。server は各 runtime 自身の MCP config から in-process で動くので、shell
+command も allow rule も関与しない。Codex の sandbox が multiplexer の socket
+を見ることも決してない。この traffic を運んでいた `agent-talk-peer` dispatcher
+は退役した。`ack` subcommand を持たなかったので、shell だけの agent は message
+を読めても受領を報告できなかった。削除された `busy`・`idle`・`turn-end`
+コマンドは、hook でも wrapper でも復活させない。残る `register`・`unregister`・
+`run` コマンドも同様に、hook の interface でも agent の interface でもない。
+broker の保守コマンドは、どの allow list にも入っていない。権威は wire では
+なく話者に付いて回る。user からの指示は、phone から届いても relay を経由して
+届いても、元の大きさの授権をそのまま保つ。その指示を渡す peer も、それを減じ
+ずに届ける。peer が自分の考えで言うことは input であって、workspace を変える
+許可ではない。直接の承認が要る変更のときは、
+`~/.local/bin/notify-file-permission.sh` が pane を鳴らす。設定されていれば、
+sanitize した MOCA 通知を1回出す。そして agent-talk の herdr 状態同期に影響を
+与えないまま、agent を待たせておく。
 
-### Where the broker itself comes from
+### broker 自体はどこから来るか
 
-`bin/install-apps` no longer installs the broker, and nothing here writes
-`~/.local/bin/agent-talk`. The broker is a resident service, so it follows the
-home-server layout: immutable `~/.local/share/agent-talk/releases/vX.Y.Z/` with
-an atomically switched `current` symlink. `~/.local/bin/<service>` is the
-retired layout that `moca-server` and `shoebox` already migrated away from; the
-only thing that ever put a copy there was this repository's deleted
-`install_agent_talk`.
+`bin/install-apps` はもう broker を install しない。ここにあるものは何も
+`~/.local/bin/agent-talk` を書かない。broker は常駐 service なので、home-server
+の layout に従う。immutable な `~/.local/share/agent-talk/releases/vX.Y.Z/` を
+置く。`current` symlink は atomic に切り替える。`~/.local/bin/<service>` は退役
+した layout であり、`moca-server` と `shoebox` は既にそこから移行した。そこへ
+copy を置いた唯一のものは、この repository から削除された `install_agent_talk`
+である。
 
-Runtime MCP configs invoke
-`~/.local/share/agent-talk/current/agent-talk-mcp` from the same release as the
-daemon. Hooks and notification scripts do not invoke the broker binary.
+runtime の MCP config は `~/.local/share/agent-talk/current/agent-talk-mcp` を
+起動する。これは daemon と同じ release のものである。hook と通知 script は
+broker の binary を起動しない。
 
-The `agent-talk.service` user unit runs that binary as a daemon and
-`agent-talk-update.timer` fetches new releases; both units, plus
-`agent-talk-update.sh` and `agent-talk-takeover.sh`, are installed from the
-home-server repository (`make -C systemd install-agent-talk`), not from here.
-Do not run `agent-talk update` on such a host: self-update rewrites the release
-directory in place, which desynchronizes the timer's recorded version.
+`agent-talk.service` の user unit が、その binary を daemon として動かす。
+`agent-talk-update.timer` は新しい release を取ってくる。この 2 つの unit と
+`agent-talk-update.sh`・`agent-talk-takeover.sh` は、ここからは install しない。
+home-server の repository (`make -C systemd install-agent-talk`) から install
+する。そのような host で `agent-talk update` を実行しない。self-update は
+release ディレクトリをその場で書き換え、timer が記録した version をずらす。
 
-Since v0.8.0 the release tarball carries `agent-talk-mcp` alongside the
-`agent-talk` binary and its LICENSE, and the updater refuses to switch `current`
-for an archive that lacks the adapter. Claude, Codex, and Grok therefore point their MCP
-config at `~/.local/share/agent-talk/current/agent-talk-mcp`, so the daemon and
-the adapter always come from one release and advance together. Do not reinstate
-a hand-built copy under `~/.local/bin`: the timer would keep upgrading the
-daemon while that copy stood still, which is the version skew this layout
-removes.
+v0.8.0 以降、release の tarball は `agent-talk` binary とその LICENSE に並べて
+`agent-talk-mcp` を同梱する。updater は、adapter を欠く archive のために
+`current` を切り替えることを拒む。Claude・Codex・Grok はそこで MCP config を
+`~/.local/share/agent-talk/current/agent-talk-mcp` へ向ける。daemon と adapter
+は常に 1 つの release から来て、一緒に進む。`~/.local/bin` の下に手製の copy
+を復活させない。timer が daemon を upgrade し続ける一方でその copy は止まった
+ままになり、それがこの layout の取り除く version skew である。
 
-Grok owns its general completion notification under `agent/grok/hooks` and
-turns off Claude/Cursor compat for skills, rules, agents, mcps, and hooks so
-a leftover `~/.cursor` does not fire compatibility hooks twice. Claude Code plugins under
-`~/.claude/plugins` may still appear in `grok inspect` (Grok has no separate
-compat cell for plugins); their skills are disabled when `compat.claude.skills`
-is off, and Grok's own hooks remain the general notification source.
+Grok は全般の完了通知を `agent/grok/hooks` の下で所有する。また skills・rules・
+agents・mcps・hooks の Claude/Cursor compat を切る。残った `~/.cursor` が互換
+hook を二重に発火させないためである。`~/.claude/plugins` の下の Claude Code
+plugin は、`grok inspect` になお現れることがある。Grok は plugin 用の compat
+セルを別に持たないためである。`compat.claude.skills` が off なら、その skill は
+無効になる。全般の通知元は Grok 自身の hook のままである。
 
-## Agents (`common/agents`)
+## agent (`common/agents`)
 
-Role definitions shared by Claude Code and Grok. Frontmatter keeps only
-`name` / `description` so the parent chat model is inherited (`model`
-defaults to `inherit`). Claude-specific `model` / `effort` / `tools` are
-intentionally omitted.
+Claude Code と Grok が共有する役割定義である。frontmatter は `name` /
+`description` だけを持つので、親の chat model を継承する (`model` の既定は
+`inherit`)。Claude 固有の `model` / `effort` / `tools` は意図的に省く。
 
-Google-style `DESIGN.md` templates live here as bootstrap inputs. Each project
-owns a self-contained root `DESIGN.md` after adopting and adapting a template;
-shared templates do not remain an external authority. Existing projects that
-only have `docs/DESIGN.md` may read it as a legacy fallback until an explicit
-migration, but root and docs are never merged implicitly.
+Google 形式の `DESIGN.md` テンプレートは、bootstrap input としてここに置く。
+各 project は、テンプレートを取り込んで適合させたあと、自己完結したルートの
+`DESIGN.md` を所有する。共有テンプレートは外部の authority として残らない。
+`docs/DESIGN.md` しか持たない既存 project は、明示的な移行までそれを legacy
+fallback として読んでよい。ただしルートと docs が暗黙に merge されることは
+決してない。
 
-## Adding a new skill
+## 新しい skill を足す
 
-1. Create `agent/common/skills/<name>/SKILL.md`
-2. Existing symlinks pick it up for Claude Code, Codex, and Grok
+1. `agent/common/skills/<name>/SKILL.md` を作る
+2. 既存の symlink が、それを Claude Code・Codex・Grok へ届ける
 
-Notable skills:
+主な skill:
 
-- `deliver` — outcome-driven implementation, evidence gates, local commit
-- `consolidate` — semantic DRY inventory, safe unification, verified commit
-- `git` — house rules for commit messages and branch flow
-- `bump-tag` — semver bump, tag, push
-- `knowledge-deposit` — deposit reusable knowledge: write the entry, lint it,
-  stage only what you wrote, review the staged diff with one `review` summon,
-  and commit locally
+- `deliver` — 成果駆動の実装、証拠ゲート、local commit
+- `consolidate` — 意味的な DRY の inventory、安全な統合、検証済みの commit
+- `git` — commit message とブランチフローの house rule
+- `bump-tag` — semver の bump、tag、push
+- `knowledge-deposit` — 再利用できる knowledge を預ける。エントリを書き、lint
+  し、自分が書いた path だけを stage する。staged diff を `review` の召喚1回で
+  レビューし、local で commit する
 
-`deliver` selects only the capabilities justified by risk. Agent split
-(producer ≠ approver):
+`deliver` は、risk が正当化する能力だけを選ぶ。agent の分担 (作る側 ≠
+承認する側):
 
-- `strategist` / `strategy-rev` — contracts & tests; strategy-rev holds the gate
-- `dev` / `rev` — implement and semantic review (no self-approval)
-- `formatter` — applicability, format correction, and lint evidence for eligible source before commit
-- `ui-checker` — measure with evidence only (does not write strategy/tests)
-- `knowledge-inventory` — inventory durable delivery knowledge after commit and hand one sanitized batch to `knowledge-deposit`
+- `strategist` / `strategy-rev` — 契約とテスト。ゲートを持つのは strategy-rev
+- `dev` / `rev` — 実装と意味レビュー (自己承認はしない)
+- `formatter` — commit 前に、対象となる source の適用判定・整形の補正・lint の証拠
+- `ui-checker` — 証拠付きで実測するだけ (戦略やテストは書かない)
+- `knowledge-inventory` — commit 後に持続する delivery の knowledge を
+  inventory する。sanitize した 1 batch を `knowledge-deposit` へ渡す
 
-## Adding a new agent tool
+## 新しい agent tool を足す
 
-1. Create `agent/<tool>/` with tool-specific config
-2. Symlink `agent/common/skills` (and adapt rules format if needed)
-3. Add install steps to `bin/install`
+1. tool 固有の設定を持つ `agent/<tool>/` を作る
+2. `agent/common/skills` を symlink する (必要なら rules の形式を合わせる)
+3. `bin/install` へ install 手順を足す

@@ -1,9 +1,9 @@
 ---
 name: git
 description: >-
-  Use before any git operation: worktree, branch, commit, merge, push.
-  Holds the house rules for commit messages and branch flow shared by
-  every runtime.
+  git のあらゆる操作の前に使う: worktree, branch, commit, merge, push。
+  commit message とブランチフローについて、すべての runtime で共有する
+  共通ルールを持つ。
 ---
 
 # git
@@ -21,8 +21,8 @@ git コマンドで操作する場面の共通ルール。
 
 ## ブランチフロー
 
-- **既定は今いるブランチに積む。** 新規ブランチは必須ではない。デフォルト
-  ブランチへ直接 commit してよい
+- **既定は今いるブランチに積む。** 新規ブランチの作成は任意である。
+  既定ブランチへ直接 commit してよい
 - **git 操作として新規ブランチを切った側が、そのブランチを完走させる** —
   worktree / branch の作成 → commit → push → `merge` skill で既定ブランチへ
   反映 → 成功後に local / remote の branch を片付ける。**追加の号令を待たない**

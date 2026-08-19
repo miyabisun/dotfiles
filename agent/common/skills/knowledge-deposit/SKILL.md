@@ -1,13 +1,12 @@
 ---
 name: knowledge-deposit
 description: >-
-  Deposit reusable knowledge into the knowledge repository by writing the
-  entry directly, linting it, staging only what you wrote, and committing
-  once one independent review passes. Use when a delivery produced durable
-  domain facts, decisions, rejected options, open questions, or lessons that
-  belong in shared knowledge, when the knowledge intake pane is not running,
-  or when the user asks to record, deposit, file, or hand over findings to
-  knowledge.
+  再利用できる知識を knowledge repository へ預ける。エントリを直接書き、
+  lint し、自分が書いた path だけを stage し、独立レビュー1回に通ったら
+  commit する。delivery が、共有 knowledge に属する持続的なドメイン事実・
+  決定・却下した選択肢・未解決の疑問・教訓を生んだとき、knowledge の
+  intake pane が動いていないとき、または user が発見を記録・deposit・file
+  するよう、あるいは knowledge へ引き渡すよう求めたときに使う。
 ---
 
 # knowledge-deposit
@@ -122,7 +121,7 @@ git commit -m '<message>'   # message は git skill の規則
 rm -rf "$tmp"
 ```
 
-lint は exit 0 = finding 無し / 1 = finding あり / 2 = 使い方の誤りで、finding は
+lint は exit 0 = finding 無し / 1 = finding あり / 2 = 使い方の誤りである。finding は
 stdout に 1 行 1 件 `<path>:<line>: <CODE> <理由>` で出る。
 **機械で見られること (書式・secret・参照・命名・scope) は lint が唯一の正**で
 あり、その検査規則をこの skill へ書き写さない。ここに残すのは判断が要ることだけ。
@@ -133,14 +132,14 @@ review の判定材料は **`$result` の JSON と exit code だけ**である
 
 どの gate が落ちても block は **commit の手前で終わる**。止まったら理由を
 receipt に残す。**余分な path は他 session の変更**なので、巻き込んで commit
-しない — stage を解いたり、上に重ねて commit したりしない (`git reset` で index
+しない。stage を解いたり、上に重ねて commit したりしない (`git reset` で index
 を奪い返しにいかない)。
 
 ## 境界
 
 - **自分が書いた path だけを stage する**。knowledge repository に他 session の
   未コミット変更があっても巻き込まない。これは手順 1・3・6 の照合で機械的に
-  確かめる — pre-commit hook は staged markdown の書式しか見ず、誰が stage した
+  確かめる。pre-commit hook は staged markdown の書式しか見ず、誰が stage した
   かは検査しない
 - lint が exit 1 なら直してから再実行する。exit 2 は使い方の誤りなので、path の
   渡し方を直す
@@ -152,7 +151,7 @@ receipt に残す。**余分な path は他 session の変更**なので、巻�
 - **push・tag・release・deploy はしない**。local commit まで。その先は user の
   明示的な号令を待つ
 - lint の secret 検査は既知形式のトークンしか見ない (汎用の `password:` 風
-  pattern は散文に誤爆するため意図的に無い)。**秘密を書かない責任は agent 側に
+  pattern は散文で誤爆するため意図的に無い)。**秘密を書かない責任は agent 側に
   ある** — lint を過信しない
 - **user の逐語をそのまま保存しない**。決定は中立文の claim と帰属ラベル
   (user が対話で確定・日付) で書く。claim が意図を歪めていないかの照合は投入の

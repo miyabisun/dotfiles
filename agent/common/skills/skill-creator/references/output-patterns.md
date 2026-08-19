@@ -1,12 +1,12 @@
-# Output Patterns
+# 出力パターン
 
-Use these patterns when skills need to produce consistent, high-quality output.
+skill が一貫した高品質の出力を生む必要があるとき、これらのパターンを使う。
 
-## Template Pattern
+## template パターン
 
-Provide templates for output format. Match the level of strictness to your needs.
+出力形式の template を用意する。厳しさの水準は必要に合わせる。
 
-**For strict requirements (like API responses or data formats):**
+**厳格な要件のとき (API 応答やデータ形式など):**
 
 ```markdown
 ## Report structure
@@ -28,7 +28,7 @@ ALWAYS use this exact template structure:
 2. Specific actionable recommendation
 ```
 
-**For flexible guidance (when adaptation is useful):**
+**柔軟な指針のとき (適応が役立つとき):**
 
 ```markdown
 ## Report structure
@@ -49,9 +49,9 @@ Here is a sensible default format, but use your best judgment:
 Adjust sections as needed for the specific analysis type.
 ```
 
-## Examples Pattern
+## 例のパターン
 
-For skills where output quality depends on seeing examples, provide input/output pairs:
+出力の質が例を見ることに左右される skill では、入力と出力の組を示す:
 
 ```markdown
 ## Commit message format
@@ -79,4 +79,4 @@ Use UTC timestamps consistently across report generation
 Follow this style: type(scope): brief description, then detailed explanation.
 ```
 
-Examples help Claude understand the desired style and level of detail more clearly than descriptions alone.
+例は、説明だけの場合よりも明確に、望ましい文体と詳細さの水準を Claude に伝える。

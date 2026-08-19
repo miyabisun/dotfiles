@@ -1,206 +1,214 @@
 ---
 name: bump-tag
 description: >-
-  Bump semver, commit, tag, and push to fire release CI. Supports auto
-  (infer from commits), major, minor, patch, or first (explicit first
-  release). Use when the user asks to bump version, cut a release, tag a
-  release, or run bump-tag.
+  semver を bump し、commit・tag・push して release CI を起動する。auto
+  (commit から推定)・major・minor・patch・first (明示的な初回 release) を
+  サポートする。user が version の bump、release の切り出し、release への
+  tag 付け、bump-tag の実行を求めたときに使う。
 ---
 
 # bump-tag
 
-Release the current repository: bump version → commit → tag → push → confirm CI.
+現在の repository を release する: version を bump → commit → tag → push → CI 確認。
 
-**Argument** (optional): `auto` | `major` | `minor` | `patch` | `first`  
-Default: `auto`
+**引数** (任意): `auto` | `major` | `minor` | `patch` | `first`  
+既定: `auto`
 
-This skill's invocation **is** explicit permission to commit, tag, and push the release — an authority the `git` skill's branch flow does not grant on its own.
+この skill の起動は、release の commit・tag・push を行う明示的な許可**そのものである**。これは `git` skill のブランチフローが単独では与えない authority である。
 
-A release task the user issued can also carry that order, on narrower terms.
-**What a claimed task grants is the same procedure, not the same scope.**
-That authority covers only the repository, branch, and operation the task names,
-and it lives only while a worker skill the user invoked holds it. The authority
-ends when the task does — never manufacture it yourself.
-**Never create the release task that would authorize your own release.**
+user が発行した release task も、より狭い条件でその号令を運べる。
+**claim した task が与えるのは同じ手順であって、同じ scope ではない**。
+その authority が及ぶのは、task が名指しする repository・branch・操作だけである。
+またそれは、user が起動した worker skill が保持している間しか存続しない。
+authority は task の終わりとともに終わる — 自分で作り出さない。
+**自分の release を授権することになる release task を、自分で作らない。**
 
-## When a release happens
+## release が起きるとき
 
-**Release never rides along with ordinary delivery or a worker loop.** No
-routine delivery, review, or worker cycle fires this skill on its own. A
-release happens in exactly two cases: the user invokes this skill, or a
-release task the user issued is claimed and calls it.
+**release が通常の delivery や worker loop に相乗りすることはない**。日常の
+delivery・レビュー・worker cycle が、この skill を単独で発火させることはない。
+release が起きるのはちょうど 2 つの場合だけである。user がこの skill を起動するか、
+user が発行した release task が claim されてこの skill を呼ぶかである。
 
-## 1. Resolve bump level
+## 1. bump 水準を決める
 
-### First-release check (all arguments)
+### 初回 release チェック (全引数共通)
 
-Before resolving any level, check release tags on **origin** — the source of
-truth — with `git ls-remote --tags origin`, and locally with `git tag -l 'v*'`:
+どの水準を決めるより先に、正である **origin** の release tag を確認する。
+origin は `git ls-remote --tags origin`、local は `git tag -l 'v*'` で見る:
 
-- **Origin has `v*` tags** → already released. Resolve the argument below.
-- **Origin has none, but local `v*` tags exist** → an unpushed first release. The
-  target stays `v0.1.0` and §4 is skipped; whether the tag is reusable is decided by
-  the local-tag row of §2's resume table — one rule, the same for every argument.
-- **No `v*` tags on origin or local** and the manifest version (§3) is
-  `0.1.0` → first release. Do **not** bump, whatever the argument. If an
-  explicit `major` / `minor` / `patch` was given, state that the level is
-  ignored because this is the first release. Note the first release, run
-  §2–3 as usual, skip only §4–5, then continue at §6 with tag `v0.1.0`.
-- **No `v*` tags on origin or local** but the manifest version is not
-  `0.1.0` → **abort**, whatever the argument. Recovery: set the manifest
-  version to `0.1.0`. First releases are always `v0.1.0`; anything else is
-  outside bump-tag's guarantee.
+- **origin に `v*` tag がある** → 既に release 済み。下の引数ごとの節で解決する。
+- **origin には無いが local に `v*` tag がある** → push されていない初回 release。
+  target は `v0.1.0` のままで §4 は飛ばす。tag を再利用できるかは §2 の再開表の
+  local tag 行が決める — 規則は 1 つで、どの引数でも同じである。
+- **origin と local のどちらにも `v*` tag が無い**、かつ manifest の version (§3) が
+  `0.1.0` → 初回 release。引数が何であれ bump **しない**。明示的な `major` /
+  `minor` / `patch` が渡されていたら、初回 release なのでその水準を無視すると
+  述べる。初回 release であることを伝え、§2–3 は通常どおり実行し、§4–5 だけを
+  飛ばし、tag `v0.1.0` で §6 から続ける。
+- **origin と local のどちらにも `v*` tag が無い**が manifest の version が `0.1.0` で
+  ない → 引数が何であれ **abort** する。復旧手段: manifest の version を `0.1.0`
+  にする。初回 release は常に `v0.1.0` であり、それ以外は bump-tag の保証の外である。
 
 ### `auto`
 
-If a release task named the level (`auto` / `major` / `minor` / `patch` /
-`first`), take that value as given and resolve it in the matching section
-below. **Never substitute `auto` for a level the task named.** `auto` is the
-default only when neither the user nor the task named a level.
+release task が水準を名指ししていたら (`auto` / `major` / `minor` / `patch` /
+`first`)、その値をそのまま採る。下の対応する節で解決する。**task が名指しした
+水準を `auto` で置き換えない。** `auto` が既定になるのは、user と task のどちらも水準を
+名指ししなかったときだけである。
 
-1. Detect the baseline version and existing tags (see §2–3). First-release and
-   inconsistent-tag cases are handled by the check above — origin tags exist here.
-2. Inspect subjects and relevant diffs in
-   `git log <latest-tag>..HEAD`; do not infer from the type token alone. Choose:
+1. baseline の version と既存の tag を検出する (§2–3 を見よ)。初回 release と
+   tag の不整合の場合は上のチェックが処理済みで、ここでは origin の tag が存在する。
+2. `git log <latest-tag>..HEAD` の subject と関連する diff を調べる。type token
+   だけから推定しない。次から選ぶ:
 
-| Level | When |
+| 水準 | 条件 |
 |---|---|
-| **minor** | Only a critical breaking change: an incompatible API, CLI, config, or data format that forces existing users or data to migrate |
-| **patch** | Everything else — new features, options, commands, corrections, maintenance, tests, docs, performance, refactors |
+| **minor** | 致命的な破壊的変更のときだけ: 既存の user やデータに移行を強制する、非互換な API・CLI・設定・データ形式 |
+| **patch** | それ以外すべて — 新機能・オプション・コマンド・修正・maintenance・テスト・docs・performance・refactor |
 
-`auto` **never chooses major**, at any version. A major bump happens only when
-the user explicitly invokes `bump-tag major` — breakage alone is never grounds
-for it, and 0.x → 1.0.0 likewise happens only on explicit user request.
+`auto` は**どの version でも major を選ばない**。major の bump が起きるのは、
+user が明示的に `bump-tag major` を起動したときだけである。破壊があること自体は
+決して根拠にならない。0.x → 1.0.0 も同じく、user の明示的な要求でだけ起きる。
 
-Commit types are evidence, not authority. A `feat` commit is still a patch —
-adding a capability does not raise the level. Only verified breakage of
-existing users or data reaches minor, whatever the commit was labeled.
+commit type は証拠であって authority ではない。`feat` commit であっても patch の
+ままである — 機能を足すことは水準を上げない。minor に達するのは、既存の user や
+データの破壊が検証されたときだけであり、commit にどんな label が付いていても変わらない。
 
-Show the chosen level and 2–3 lines of rationale (cite commits) before continuing.
+続ける前に、選んだ水準と 2–3 行の根拠 (commit を引用する) を示す。
 
-**Tie-break**: prefer **patch** over minor when unsure. If the evidence of
-breakage is weak, it is a patch.
+**Tie-break**: 迷ったら minor より **patch** を採る。破壊の証拠が弱ければ、
+それは patch である。
 
 ### `major` / `minor` / `patch`
 
-Use that level directly (still run all checks below).
+その水準をそのまま使う (下のチェックはすべて実行する)。
 
 ### `first`
 
-Explicit first release. If origin has any `v*` tag → **abort**: this
-repository has already released; use `auto` / `patch` / `minor` / `major`
-instead. Otherwise follow the first-release check above — local tags included,
-since it defers to the same §2 rule every other argument uses.
+明示的な初回 release。origin に `v*` tag が 1 つでもあれば **abort** する: この
+repository は既に release 済みである。代わりに `auto` / `patch` / `minor` /
+`major` を使う。そうでなければ上の初回 release チェックに従う — local tag の
+場合も含む。どの引数でも使う §2 の同じ規則に委ねるからである。
 
-## 2. Preflight (abort and report on failure)
+## 2. Preflight (失敗したら abort して報告する)
 
-**Verify before you move a local branch or tag.** The order below is deliberate,
-and the guarantee is precise: every check passes before the first command that
-moves a local branch or tag. It is not a promise of zero side effects.
+**local の branch や tag を動かす前に検証する**。下の順序は意図的であり、
+保証は正確である: local の branch や tag を動かす最初のコマンドより前に、
+すべてのチェックが通る。副作用がゼロだという約束ではない。
 
-**Invariants the checks defend.** Every check is a means to one of these; a state
-satisfying all four is safe to release, however it got there:
+**チェックが守る不変条件。** どのチェックもこの 4 つのどれかへの手段である。
+4 つすべてを満たす状態は、どうやってそこに至ったかによらず release して安全である:
 
-- Origin's history is never lost — the branch push must fast-forward
-- The release commit carries only the version files §5 updates
-- The tag points at the intended default-branch commit for the target version
-- Both branch and tag are pushed (tag-only push leaves the branch behind)
+- origin の歴史は決して失われない — branch の push は fast-forward でなければならない
+- release commit は §5 が更新する version file だけを載せる
+- tag は、target version に対して意図した既定ブランチの commit を指す
+- branch と tag の両方が push される (tag だけの push は branch を置き去りにする)
 
-Checks:
+チェック:
 
-- Start by fetching the origin default branch and tags (`git fetch origin --tags`).
-  Fetching is a side effect: it updates remote-tracking refs and `FETCH_HEAD`, but
-  no local branch or tag, so it is safe to run ahead of the checks below
-- Resolve the default branch name from remote HEAD
-  (`git symbolic-ref refs/remotes/origin/HEAD`) — never assume it is `main`
-- `git status --porcelain` may list **only** the version manifests §5 updates
-  (`Cargo.toml`, `Cargo.lock`, `package.json`, `pyproject.toml`, …), staged or not —
-  that is an interrupted release (below). Any other path → **abort**: unrelated work
-  must not ride in the release commit
-- Paths are not enough — `git add` stages whole files. For each listed manifest read
-  both `git diff -- <file>` and `git diff --cached -- <file>`; every changed line must
-  be a version line moving to the target — judge this once §4 fixes it (`Cargo.lock`
-  may also carry its own package entry). Any other changed line → **abort**, naming
-  the file — an unrelated edit sharing a hunk with the version line rides in otherwise
-- Current branch must be the default branch (usually `main`) — **abort** otherwise,
-  and move no ref until this check passes. A merge with no target named would
-  fast-forward whatever branch the caller happened to be on, before the abort fires
-- Only then, if `git rev-list --count HEAD..origin/<default>` is non-zero, local is
-  behind: sync **fast-forward only**, naming the target explicitly
-  (`git merge --ff-only origin/<default>`), and **abort** if that fails
-- `git merge-base --is-ancestor origin/<default> HEAD` must then hold, so the push
-  fast-forwards. Being **ahead is fine** — §6 pushes the branch, so unpushed commits
-  ship with this release. Diverged fails here → **abort**
-- After computing the new version, `git ls-remote --tags origin` must not already have `vX.Y.Z`
+- まず origin の既定ブランチと tag を fetch する (`git fetch origin --tags`)。
+  fetch は副作用である: remote-tracking ref と `FETCH_HEAD` を更新する。
+  ただし local の branch や tag は動かさないので、下のチェックより先に実行して安全である
+- 既定ブランチ名は remote HEAD から解決する
+  (`git symbolic-ref refs/remotes/origin/HEAD`) — `main` だと決め打ちしない
+- `git status --porcelain` に並んでよいのは、§5 が更新する version manifest
+  **だけ**である。対象は `Cargo.toml`, `Cargo.lock`, `package.json`,
+  `pyproject.toml`, … である。staged かどうかは問わない — それは中断された
+  release である (下記)。それ以外の path があれば **abort** する: 無関係な作業を
+  release commit に相乗りさせない
+- path だけでは足りない — `git add` がファイル全体を stage する。並んだ manifest
+  ごとに `git diff -- <file>` と `git diff --cached -- <file>` の両方を読む。変更行は
+  すべて target へ動く version 行でなければならない。この判定は §4 が target を
+  確定してから行う (`Cargo.lock` は自身の package entry も持ちうる)。それ以外の
+  変更行があれば、そのファイルを名指しして **abort** する — さもないと、version 行と
+  hunk を共有する無関係な編集が相乗りする
+- 現在の branch は既定ブランチ (通例 `main`) でなければならない — そうでないなら
+  **abort** し、このチェックが通るまで ref を 1 つも動かさない。target を名指ししない
+  merge は、abort が発火する前に、呼び出し元がたまたま居た branch を fast-forward
+  してしまう
+- その後で初めて、`git rev-list --count HEAD..origin/<default>` が 0 でなければ
+  local は遅れている。target を明示的に名指しして **fast-forward だけで**同期する
+  (`git merge --ff-only origin/<default>`)。失敗したら **abort** する
+- 続いて `git merge-base --is-ancestor origin/<default> HEAD` が成り立たなければ
+  ならない。これで push は fast-forward になる。**進んでいるのは問題ない** — §6 が
+  branch を push するので、未 push の commit はこの release と一緒に出る。分岐して
+  いればここで失敗する → **abort** する
+- 新しい version を計算したあと、`git ls-remote --tags origin` に `vX.Y.Z` が
+  既にあってはならない
 
-### Resuming an interrupted release
+### 中断された release の再開
 
-A previous run may have stopped partway. Once the target is fixed (§4, or §1 on the
-first-release path), keep each artifact below **only if it matches that target**;
-never rebuild a matching one.
-Commits may have landed since the interruption, so **re-resolve the level** (§1)
-rather than trusting the leftover bump; a target that changed is a mismatch.
+前回の実行が途中で止まっていることがある。target が確定したら (§4、初回 release
+経路では §1)、下の各成果物は**その target に一致するときだけ**残す。一致するものを
+作り直さない。
+中断以降に commit が入っていることがあるので、残っている bump を信じずに**水準を
+決め直す** (§1)。target が変わっていれば、それは不一致である。
 
-| Already present | Match → | Mismatch → **abort**, reporting |
+| 既にあるもの | 一致 → | 不一致 → **abort** し、報告する内容 |
 |---|---|---|
-| Modified/staged version manifests | version-only changes (check above) → continue; §5 rewrites the same values | which file carries which version |
-| Release commit `release: vX.Y.Z` at HEAD | passes the release-commit check below → keep it; skip §5 and the commit | the commit's version vs the target, or the extra paths it touches |
-| Local `v*` tags **absent from origin** | exactly one such tag, named `vX.Y.Z` (the target), pointing at the commit §6 would tag — the release commit, or HEAD itself on the first-release path → keep it; skip `git tag` | which local-only tags exist and where the target tag points |
+| 変更済み/staged の version manifest | version 行だけの変更 (上のチェック) → 続行する。§5 が同じ値を書き直す | どのファイルがどの version を持つか |
+| HEAD にある release commit `release: vX.Y.Z` | 下の release commit チェックを通る → 残す。§5 と commit を飛ばす | commit の version と target の対比、または commit が触る余分な path |
+| **origin に無い** local の `v*` tag | そのような tag がちょうど 1 つで、名前が `vX.Y.Z` (target) であり、§6 が tag を打つ commit — release commit、初回 release 経路では HEAD 自身 — を指している → 残す。`git tag` を飛ばす | local にしか無い tag が何か、target の tag がどこを指しているか |
 
-**Local-only tags.** Only those are traces of an interruption: subtract the tags origin
-advertises (`git ls-remote --tags origin 'v*'`, `^{}` stripped) from `git tag -l 'v*'`.
-The fetch above copies every past release into local, so `v1.0.0`, `v1.1.0`, … standing
-beside the target are expected — the last row never judges them.
+**local にしか無い tag。** 中断の痕跡はそれだけである。origin が申告する tag を
+`git tag -l 'v*'` から引く。origin の申告は `git ls-remote --tags origin 'v*'` で
+得て、`^{}` を除く。上の fetch が過去の release をすべて local へ複製する。
+target の横に `v1.0.0`, `v1.1.0`, … が並ぶのは想定どおりであり、最後の行は
+それらを判定しない。
 
-**Manifests at target.** Every root manifest §5 updates that exists at HEAD
-(`git show HEAD:Cargo.toml`, `HEAD:package.json`, …) must carry the target — not merely
-the ones some commit happened to touch. This is the resume paths' shared condition: it
-gates reusing a release commit and, on the first-release path, keeping a tag on HEAD.
+**manifest が target を持つこと。** §5 が更新する root manifest のうち HEAD に
+存在するものは、すべて target を持たなければならない。`git show HEAD:Cargo.toml`,
+`HEAD:package.json`, … で確認する。どれかの commit がたまたま触ったものだけでは
+足りない。これは再開経路に共通の条件である: release commit の再利用と、初回
+release 経路で HEAD の tag を残すことの両方を規定する。
 
-**Release-commit check.** The message is not evidence. Reuse one only if
-`git show --name-only --format= HEAD` lists solely §5's version files *and* the
-manifests-at-target check above passes — else **abort**.
+**release commit チェック。** message は証拠ではない。
+`git show --name-only --format= HEAD` が §5 の version file だけを並べること。
+上の「manifest が target を持つ」チェックが通ること。この 2 つがそろうときだけ再利用し、
+欠ければ **abort** する。
 
-Every abort names what mismatched and the safe resume point (`git tag -d vX.Y.Z`,
-`git reset --soft HEAD~1`) — never adopt a stale bump silently.
+どの abort でも、何が不一致だったかと安全な再開点を名指しする
+(`git tag -d vX.Y.Z`, `git reset --soft HEAD~1`)。古い bump を黙って採用しない。
 
-## 3. Detect the baseline version
+## 3. baseline の version を検出する
 
-§1 fixes the level, §3 the baseline, §4 the target — in that order. The baseline
-never comes from the working tree, so a previous run's bump cannot shift it:
+§1 が水準を、§3 が baseline を、§4 が target を、この順で確定する。baseline は
+作業ツリーからは取らないので、前回の実行の bump がこれを動かすことはない:
 
-- **Origin has `v*` tags** (§1) → the highest of them is the baseline:
+- **origin に `v*` tag がある** (§1) → その最大のものが baseline である:
   `git ls-remote --tags origin 'v*' | sed 's,.*/v,,;s,\^{},,' | sort -V | tail -1`
-- **Origin has none** → first release; §1 already fixed the target at `v0.1.0`,
-  and §4 is skipped
+- **origin に無い** → 初回 release。§1 が既に target を `v0.1.0` に確定しており、
+  §4 は飛ばす
 
-Read the root manifests too (`Cargo.toml` `[package] version`, else `package.json`
-`.version`): §1's first-release check needs that value and §5 rewrites it. It equals
-the baseline on the normal path and the **target** on a resume — the latter is the
-trace of an interrupted release (§2), not an error, since §4 bumps the baseline
-regardless and all three resume stages land on the same target.
+root manifest も読む (`Cargo.toml` の `[package] version`、無ければ
+`package.json` の `.version`)。§1 の初回 release チェックがその値を必要とし、
+§5 がそれを書き換える。通常の経路ではこの値は baseline に等しく、再開時は
+**target** に等しい。後者は中断された release の痕跡 (§2) であってエラーではない。
+§4 はいずれにせよ baseline を bump し、3 つの再開段階はすべて同じ target に
+着地するからである。
 
-## 4. Compute the target version (semver)
+## 4. target version を計算する (semver)
 
-Apply the level to the **baseline** of §3 — never to the manifest version:
+水準は §3 の **baseline** に適用する — manifest の version には適用しない:
 
-| Level | Transform |
+| 水準 | 変換 |
 |---|---|
 | major | `X.y.z` → `(X+1).0.0` |
 | minor | `x.Y.z` → `x.(Y+1).0` |
 | patch | `x.y.Z` → `x.y.(Z+1)` |
 
-Prereleases (`-rc.1`, etc.) are unsupported — do those manually.
+prerelease (`-rc.1` など) はサポートしない — 手作業で行う。
 
-## 5. Update version files
+## 5. version file を更新する
 
-Update **every** root manifest that exists:
+存在する root manifest を**すべて**更新する:
 
-- `Cargo.toml` — then run `cargo check` so `Cargo.lock` follows; **include Cargo.lock** in the commit
-- `package.json` (root only; do not touch nested package.json)
-- `pyproject.toml` / other root manifests if present
+- `Cargo.toml` — 続けて `cargo check` を実行して `Cargo.lock` を追従させる。commit に **Cargo.lock を含める**
+- `package.json` (root だけ。入れ子の package.json は触らない)
+- `pyproject.toml` / その他の root manifest があれば
 
-## 6. Commit, tag, push
+## 6. commit・tag・push
 
 ```bash
 git add <updated files>
@@ -209,23 +217,24 @@ git tag vX.Y.Z
 git push origin <branch> && git push origin vX.Y.Z
 ```
 
-- Message: `release: vX.Y.Z` (Conventional Commits, English)
-- **Skip whatever §2 already found in place** — a matching release commit or local
-  tag is kept as is; `git add` only the version files of §5
-- Push **both** branch and tag (tag-only push leaves main behind). The branch push
-  carries every unpushed commit and must fast-forward — **never force**
+- message: `release: vX.Y.Z` (Conventional Commits、英語)
+- **§2 が既にそろっていると判定したものは飛ばす** — 一致する release commit や
+  local tag はそのまま残す。`git add` は §5 の version file だけを対象にする
+- branch と tag の**両方**を push する (tag だけの push は main を置き去りにする)。
+  branch の push は未 push の commit をすべて運び、fast-forward でなければならない
+  — **force しない**
 
-First-release path (no `v*` tags on origin or local): §4–5 were skipped, so only `git tag` + dual push here. The version is always `v0.1.0` (first-release check, §1).
+初回 release 経路 (origin と local のどちらにも `v*` tag が無い): §4–5 は飛ばしている。ここでは `git tag` と 2 つの push だけを行う。version は常に `v0.1.0` である (初回 release チェック、§1)。
 
-## 7. Confirm CI
+## 7. CI を確認する
 
-After push, verify a tag-triggered workflow started and report the run URL.
+push のあと、tag を契機とする workflow が始まったことを検証し、run の URL を報告する。
 
-- Prefer: `gh run list --limit 3`
-- Else: `curl -sf "https://api.github.com/repos/<owner>/<repo>/actions/runs?per_page=3"`
+- 優先: `gh run list --limit 3`
+- それ以外: `curl -sf "https://api.github.com/repos/<owner>/<repo>/actions/runs?per_page=3"`
 
-If nothing runs within ~60s: warn (or report "no CI" if the repo has no tag-triggered workflow).
+~60s 以内に何も走らなければ警告する (repo に tag を契機とする workflow が無ければ「no CI」と報告する)。
 
-## Failure recovery
+## 失敗からの復旧
 
-If something fails mid-flight, report the exact state (local tag/commit created or not) and recovery steps, e.g. `git tag -d vX.Y.Z` / `git reset --soft HEAD~1` (only with user confirmation — never discard unrelated work).
+途中で何かが失敗したら、正確な状態 (local の tag/commit を作ったかどうか) と復旧手順を報告する。例: `git tag -d vX.Y.Z` / `git reset --soft HEAD~1` (user の確認があるときだけ実行する — 無関係な作業を捨てない)。

@@ -52,19 +52,20 @@ stub を用意して隔離して観測できる範囲 (script・hooks・installe
 
 上の 4 項目は default である。**project 固有のテスト戦略は spike の初期に
 決めて knowledge が持つ** — 何を実行可能コードとして測るか、副作用をどう
-隔離するか (例: MySQL の操作は Docker 上で走らせる)。既存 project では、
+隔離するか。例: MySQL の操作は Docker 上で走らせる。既存 project では、
 その戦略を knowledge の index から読んでから始める。
 
 ## ツール
 
-- **コード検索**: コードの動きを理解するときは Grep/Glob/Read より semble
-  (`mcp__semble__search` / `mcp__semble__find_related`) を優先する。
+- **コード検索**: コードの動きを理解するときは Grep/Glob/Read より semble を
+  優先する。使うのは `mcp__semble__search` / `mcp__semble__find_related`。
 - **Web 取得**: まず WebFetch を使う (軽量・要約済みで、ほとんどのサイトで
-  速く安い)。失敗したとき (403 / ブロック / 空 / JS 必須) だけ Obscura
-  (`~/.local/bin/obscura`, V8 搭載の Rust ヘッドレスブラウザ) に切り替える:
+  速く安い)。失敗したとき (403 / ブロック / 空 / JS 必須) だけ Obscura に切り替える:
   `obscura fetch <url> --eval "..."`、`obscura serve` (CDP)、または obscura MCP。
+  Obscura 本体は `~/.local/bin/obscura` にある V8 搭載の Rust ヘッドレスブラウザ。
   Obscura は AI ブロック・JS 重要ページ向けの「二の矢」であり、既定ではない。
   インストールは `~/projects/miyabisun/dotfiles/bin/install-apps`。
-- **ブラウザ E2E テスト**: Obscura の CDP はリクエスト介入 (`page.route`) と
-  title 報告が無いので、自動 E2E は **Chromium + Playwright** を使う
-  (Obscura はスクレイピングと対話的確認向けで、アサーション駆動の E2E 向けではない)。
+- **ブラウザ E2E テスト**: 自動 E2E は **Chromium + Playwright** を使う。
+  Obscura の CDP にはリクエスト介入 (`page.route`) と title 報告が無いため
+  である。Obscura はスクレイピングと対話的確認向けで、アサーション駆動の
+  E2E 向けではない。

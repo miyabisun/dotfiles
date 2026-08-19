@@ -24,7 +24,7 @@ model: claude-opus-5
 
 # 手順
 
-1. `~/.claude/skills/git/SKILL.md`、`~/.agents/skills/git/SKILL.md` のうち現在のruntimeで利用可能なものを読み、そのメッセージ・ブランチ規則に従う。
+1. `~/.claude/skills/git/SKILL.md`、`~/.agents/skills/git/SKILL.md` のうち現在のruntimeで利用可能なものを読む。そのメッセージ・ブランチ規則に従う。
 2. `git status`、`git diff`、`git log --oneline -10`を読み、入力契約と実diffを照合する。
    formatter合格証のrequested fileとformatter-added fileの和集合が、ステージ許可
    された正確なファイル一覧と一致しなければ停止する。追加pathが元のtask diff外

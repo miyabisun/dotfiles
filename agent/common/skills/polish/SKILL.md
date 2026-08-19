@@ -13,13 +13,14 @@ description: >-
 
 **動いているものを、出てきた不満に沿って叩き直し、成熟へ磨き上げる**。
 新規の体験づくりは `spike` の仕事であり、polish は
-**どの version でも**成熟へ向かう本流 — v1.0.0 は卒業ではなく通過点で、
+**どの version でも**成熟へ向かう本流である。v1.0.0 は卒業ではなく通過点で、
 実利のある品質改善を軽い足取りで積む。
 
 ## 起動条件
 
 user の明示的な `$polish` 起動、同じ依頼文での段階明示、または段階未指定の
-`$deliver` からの自動判断 (dispatcher が選択と根拠を宣言する) が起動根拠。
+`$deliver` からの自動判断が起動根拠。自動判断では dispatcher が選択と根拠を
+宣言する。
 
 ## 作業の分担 (毎回 agent を作成する)
 
@@ -34,13 +35,13 @@ CLI 待ちとログ読み・事実確認を続けてはならない。
   子の結果は親が待ち、親が召喚 prompt へまとめる。
 
 **子 agent の結果待ち**で blocked かつ他に有用な独立作業が無いなら、**現在の
-turn を終了して yield しなければならない** (sleep・wait loop で turn を保持
-しない)。その turn の最終行に必ず `<!-- delivery:waiting -->` を置く。runtime
+turn を終了して yield しなければならない**。sleep・wait loop で turn を保持
+しない。その turn の最終行に必ず `<!-- delivery:waiting -->` を置く。runtime
 hook はこの marker で中間 yield と delivery 完了を区別する。**この marker は
 子 agent の結果待ちにだけ使う** — レビュワー召喚は同期なので待ちにならない。
 yield 直前の user 向け最終出力は
 「子の結果待ちで一旦 turn を終了する。子の完了でこの delivery を再開する」
-の形にし、完了報告と誤認される文言を使わない。
+の形にする。完了報告と誤認される文言を使わない。
 user の追加の「続けて」を**再開条件にしない**。
 契約は commit まで。途中で止まった配達は未完了である。
 
@@ -52,8 +53,8 @@ user が与えた依頼そのもので、scope を足さない。受け取った
 ## 手順
 
 **どの手順よりも先に読む**: 対象 project の知識が knowledge repository に
-あるなら、**index だけを読む**のが既定である — `library/index.md` と、対象
-project の `projects/<name>/index.md`。リンク先は関係するときだけ辿る
+あるなら、**index だけを読む**のが既定である。読むのは `library/index.md` と、
+対象 project の `projects/<name>/index.md`。リンク先は関係するときだけ辿る
 (辿り方は `knowledge-read` skill が持つ)。**その index からこの project の
 テスト戦略を読み、それに従う** — 無ければ GLOBAL.md「テスト」の default に
 従う。polish は戦略を決める側ではなく従う側である。
@@ -76,12 +77,12 @@ project の `projects/<name>/index.md`。リンク先は関係するときだけ
      一つの枠内での粗探しに固定され、第二の設計空間が探索されなくなる。
    - 確認済みの事実に**設計判断を混ぜない** (現状・制約・再現証拠だけ)。
      混ぜるとアンカリングが復活する。
-   - **同じターンで自分の案を起草する。** 同期召喚では `$result` が同じ turn に
-     返るので、順序では独立性が守られない — **召喚を起動する前に自案を会話内で
+   - **同じターンで自分の案を起草する**。同期召喚では `$result` が同じ turn に
+     返るので、順序では独立性が守られない。**召喚を起動する前に自案を会話内で
      確定させ、`$result` はその後に読む**という規律で守る。
    - 求める項目は各1〜数行: 不満の理解 / 最小修正 / 回帰証拠 /
-     UX 退行の懸念・疑問 (schema の `dissatisfaction` / `minimal_plan` /
-     `regression_evidence` / `ux_risks` に対応する)。
+     UX 退行の懸念・疑問。schema の `dissatisfaction` / `minimal_plan` /
+     `regression_evidence` / `ux_risks` に対応する。
    - **reconcile が終わるまでテストと実装を編集しない。**
    すり合わせの詳細は「[方針すり合わせの判定軸](#方針すり合わせの判定軸)」。
 2. **不満を契約にする**: browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)
@@ -89,18 +90,18 @@ project の `projects/<name>/index.md`。リンク先は関係するときだけ
    読み、そこにある UI surface 判定・Project design authority・実装規則を
    適用する。拡張子や「使い勝手」だけでは発火しない。CLI/TUI・terminal 出力
    のみ・Node backend 専用 JavaScript・設定・docs・test-only は対象外。
-   修正が必要だと確認できなければ使わない（迷ったら適用しない）。未解決の
+   修正が必要だと確認できなければ使わない (迷ったら適用しない)。未解決の
    視覚・操作判断や design contract の変更がある場合だけ `designer` を呼び、
    その brief を契約へ含める。
    そのうえで統合した方針を、観測可能な達成条件に変換する
    (最大5行)。user 原文は verbatim で保持する。ledger の JSON 儀式は作らない。
    独立提案の交換は step 1 の1往復だけで、統合案の再承認・二段階照合は行わない。
    規模が大きくても追加号令を求めず、この delivery の内側で続行する。
-3. **基線正規化 (条件付き・最大1回)**: 契約化の直後、delivery 作業に入る前に
-   worktree と protected path (既存の user 差分) を snapshot する。protected
-   snapshot は後段 gate の scope 保護に使う。repo に意味保存契約のある
-   formatter があるとき、影響範囲が分かるならその workspace に限定して
-   check を走らせ、legacy の整形差分だけを検出する。
+3. **基線正規化 (条件付き・最大1回)**: 契約化の直後、delivery 作業を始める前に
+   行う。worktree と protected path (既存の user 差分) を snapshot する。
+   protected snapshot は後段 gate の scope 保護に使う。repo に意味保存契約の
+   ある formatter があるとき、影響範囲が分かるならその workspace に限定して
+   check を走らせる。検出するのは legacy の整形差分だけである。
    差分が無ければこの step は no-op (既定の見た目は従来どおり delivery 1 commit)。
    差分があるときだけ、次を**すべて**満たす場合に限り、専用の
    `style: normalize formatting` commit を**最大1個**先行させてよい。
@@ -113,7 +114,7 @@ project の `projects/<name>/index.md`。リンク先は関係するときだけ
      delivery として可視化して引き継ぐ
    授権は **`$polish` 明示起動 (または同等の polish 段階配達) の内側**に限定する。
    tracked な fingerprint marker ファイルは新設しない。使った tool / version /
-   config / 対象集合は receipt か style commit の説明に残し、真実源は実際の
+   config / 対象集合は receipt か style commit の説明に残す。真実源は実際の
    check 結果とする。専用 runner script がまだ無いときは repo-native の
    formatter コマンドを直接実行する (未実装の script 名を前提にしない)。
 4. **直す**: 最小の変更で不満を解消する。実装の途中で全面的な作り直しが
@@ -253,12 +254,12 @@ review "$repo" \
 
 ### 実装レビュー prompt に書かせる検査項目
 
-- **テストの誠実さ (blocking)**: テストを読み、トートロジー (実装の言い換え、
-  常に真になる assert、実装と同じ計算式での期待値生成) と誤魔化し (期待値の
-  ハードコード合わせ、assert の削除・弱体化、skip での回避、green にするため
-  だけのテスト改変) を検知する。サボりや user に対して不誠実な挙動を見つけたら
-  **厳格に blocking とし、修正させる**。直したバグに回帰テストが付いているかも
-  見る。
+- **テストの誠実さ (blocking)**: テストを読み、トートロジーと誤魔化しを検知
+  する。トートロジーは実装の言い換え、常に真になる assert、実装と同じ計算式
+  での期待値生成。誤魔化しは期待値のハードコード合わせ、assert の削除・弱体化、
+  skip での回避、green にするためだけのテスト改変。サボりや user に対して
+  不誠実な挙動を見つけたら**厳格に blocking とし、修正させる**。直したバグに
+  回帰テストが付いているかも見る。
 - **テストの妥当性 (blocking)**: Markdown を grep するだけのテスト、
   ライブラリの受け入れテスト、トートロジーなテストを新しく作っていないか。
   作っていたら消させる (GLOBAL.md「テスト」)。
@@ -288,7 +289,7 @@ review "$repo" \
 exit code が nonzero、`$result` が空、`$result` が schema に合わない —
 このいずれかが起きた時点で **breaker が開く**。
 
-**breaker が開いたら、その delivery の残りの codex exec 召喚は一切行わない。**
+**breaker が開いたら、その delivery の残りの codex exec 召喚は一切行わない**。
 失敗した召喚と、それ以降に予定されていた召喚を、すべて self 系で処理する:
 
 - **planning** — 自案を A 軸で**もう一巡 self-check する**
@@ -308,8 +309,8 @@ exit code が nonzero、`$result` が空、`$result` が schema に合わない 
   明記する。
 
 receipt には **breaker が開いた時点 (どの召喚か) と理由**を
-`review_exec_failed: <理由>` の形で記録し、以降どの phase を self で処理したかを
-併記して delivery を続行する。
+`review_exec_failed: <理由>` の形で記録する。以降どの phase を self で
+処理したかを併記して delivery を続行する。
 
 これは可用性の fallback であって達成条件の代替ではない。
 
@@ -319,7 +320,7 @@ receipt には **breaker が開いた時点 (どの召喚か) と理由**を
 
 ### A. user の目的との一致 (最優先・blocking)
 
-**照合先は「目的」であって「手段」ではない。** user が挙げた具体的な手段
+**照合先は「目的」であって「手段」ではない**。user が挙げた具体的な手段
 (ファイル名・コマンド・実装方針) は強いヒントだが**正ではない** — 同じ目的を
 より良く果たす手段があれば置き換えてよい。一方、明示された制約・非目標・
 権限境界は手段ではなく前提なので破れない。
@@ -365,8 +366,8 @@ user の目的とずれるなら不採用。
 
 ### `discuss` との境界
 
-方針すり合わせは spike/polish の**毎回の必須手順**で、依頼整合の確認と第二の
-設計空間の探索を行う。`discuss` はそのあとに残った product/UX の選択が実装
+方針すり合わせは spike/polish の**毎回の必須手順**で、依頼整合を確認し、
+第二の設計空間を探索する。`discuss` はそのあとに残った product/UX の選択が実装
 結果を変えるときだけ起動する収束機構である。`discuss` は自案や候補を添えて
 反証を求める形式なので、**blind な独立提案の代替にはならない**。`discuss` は
 レビュワー召喚とは別経路であり、同一争点の重複照会だけを避ける。

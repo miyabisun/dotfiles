@@ -93,8 +93,8 @@ user への応答は**結論を先に置く**。counterpart に聞いたこと�
 成果にしない。
 
 - spike: ワクワク度と、明日試せる承認済みかつ可逆な一歩で、推奨案を1つ決める。
-- polish: 既存の UX 4軸 (利用習慣・互換性・操作数/認知負荷・rollback) で
-  UX-safe / reduced scope / authority gap の結論を1つ決める。
+- polish: UX-safe / reduced scope / authority gap の結論を1つ決める。判断軸は
+  既存の UX 4軸 (利用習慣・互換性・操作数/認知負荷・rollback)。
 
 採用に値し、かつ materially different な案が複数残るときだけ、表または
 箇条書きで「案・価値・代償」を比較する。比較の直前に推奨を明記する。
@@ -109,13 +109,13 @@ delivery は目標へ導くのが仕事であり、判断が割れたときに�
 どの段階の delivery も、「materially different outcomes が残る」「上位指示と競合する」
 「権限が足りないかもしれない」に突き当たったら、そこで user へ差し戻す前に
 **discuss を1ラウンド回し**、フェーズ表の出口へ着地して呼び出し元へ戻る。
-戻り先の成果物はフェーズに従う: spike は明日試せる一歩、polish は
+戻り先の成果物はフェーズに従う。spike は明日試せる一歩、polish は
 UX-safe / reduced scope / authority gap の decision note。
 
 ## 配置規約
 
-**変わり得る製品状態を、binding instruction（AGENTS.md / CLAUDE.md 等）に禁止命令として
-書かない。** それらの surface には恒常 invariant だけを残し、変わり得る現状説明は
+**変わり得る製品状態を、binding instruction (AGENTS.md / CLAUDE.md 等) に禁止命令として
+書かない**。それらの surface には恒常 invariant だけを残す。変わり得る現状説明は
 repo には現在形の仕様として置き、経緯は receipt と knowledge が持つ。
 
 書いた主体が agent であっても、control surface に置かれた文は実行時に拘束として働く。

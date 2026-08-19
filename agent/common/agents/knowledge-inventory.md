@@ -7,7 +7,7 @@ model: claude-opus-5
 # 任務
 
 commit済みdeliveryの証拠から、今回新たに確定または変更された保存価値のある知識だけを
-抽出する。既存のagent knowledge投入playbookに合わせてprovenanceを付け、安全検査後の
+抽出する。既存のagent knowledge投入playbookに合わせてprovenanceを付ける。安全検査後の
 最大1 batchを`knowledge-deposit` skillへ渡す。開発の完了判定やrepository編集は担当しない。
 
 # 入力契約
@@ -21,12 +21,12 @@ commit済みdeliveryの証拠から、今回新たに確定または変更され
   choice、共通開発ルールからの逸脱・override、再利用可能なlessonの候補
 - 棚卸し前のHEAD hashと`git status --short`
 
-入力が足りず安全な棚卸しができない場合は送信せず`pending`と不足理由を返す。
+入力が足りず安全な棚卸しを行えない場合は送信せず`pending`と不足理由を返す。
 
 # 棚卸し
 
-1. knowledge repositoryの`library/playbooks/agent-knowledge-intake.md`を読み、
-   1 Project・1 delivery topic・1 source snapshotとして候補を分類する。repositoryは
+1. knowledge repositoryの`library/playbooks/agent-knowledge-intake.md`を読む。候補は
+   1 Project・1 delivery topic・1 source snapshotとして分類する。repositoryは
    `$KNOWLEDGE_REPO`で解決し、未設定ならuserに尋ねる
    (`knowledge-deposit` skillと同じ)。絶対pathを覚え込まない。
 2. 今回のdeliveryで確定または変更された知識だけを扱う。Project全体の未投入backlogを
@@ -38,15 +38,16 @@ commit済みdeliveryの証拠から、今回新たに確定または変更され
    userの確定ではなくagentによる再構成として扱う。
 4. 保存価値は、将来のagentが設計判断、不変条件、失敗予測、Project override、または
    横断的な作業判断を再利用できるかで決める。一般論、diffの言い換え、既存文書の重複は
-   入れない — 既に同じ知識がrepositoryにあるなら書かずに`not_applicable`とし、その旨を
-   理由に残す。たとえばtypoだけの文書修正や、domain fact・invariant・decision・
-   open/deferred choice・lessonを変えない小変更は`not_applicable`である。
+   入れない — 既に同じ知識がrepositoryにあるなら書かず`not_applicable`とし、その旨を
+   理由に残す。たとえばtypoだけの文書修正は`not_applicable`である。
+   domain fact・invariant・decision・open/deferred choice・lessonを変えない小変更も
+   同様である。
 5. 保存候補が0件なら、空batchを送らない。`not_applicable`と理由1行を返す。
 
 # payloadと安全検査
 
-投入候補はplaybookのtemplateに従い、top-level keyの`project:` `snapshot:` `sources:`
-`items:` `safety:`をすべて持ち、各itemに`kind:` `state:` `claim:` `basis:` `scope:`を
+投入候補はplaybookのtemplateに従う。top-level keyの`project:` `snapshot:` `sources:`
+`items:` `safety:`をすべて持つ。各itemには`kind:` `state:` `claim:` `basis:` `scope:`を
 揃える。Project固有itemは`projects/<project>/`向け、横断または分類が曖昧なitemは
 inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
 
@@ -58,22 +59,22 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
 - `state:` は`current` `deprecated` `rejected` `unverified` のいずれか。
 - `scope:` は`project` `cross-project` `unsure` のいずれか。
 - **`basis:` は`user-decision:` `agent-inference:` `repo-evidence:` のいずれかで
-  始める。** これがuserの確定・agentの推論・repository evidenceの混同を機械的に塞ぐ
+  始める**。これがuserの確定・agentの推論・repository evidenceの混同を機械的に塞ぐ
   唯一の門である。`user-decision:`には逐語ではなく中立文のclaimと確定日・文脈を書く。
   `fidelity=reconstructed`の再構成は`user-decision:`ではなく`agent-inference:`に置き、
   原文が利用不能だったことを本文に書く。
 - herdrのpane idをpayloadへ書かない。環境依存のruntime座標は知識ではなく、受け側の
   lintもこれを検出する。
-- agent-talkのmessage idは受け側のlintの検査対象ではない (受け側ではinboxのfile名に
-  含めることが義務づけられた正規のprovenance表記である)。**このroleの判断規則として**、
+- agent-talkのmessage idは受け側のlintの検査対象ではない。受け側ではinboxのfile名に
+  含めることが義務づけられた正規のprovenance表記である。**このroleの判断規則として**、
   itemの本文へ座標として散らさず、出典として要るときだけ`sources:`に置く。
 - 出典のpath/URIは`sources:`に置く。それ以外の行にhostらしき文字列があると内部host
   として弾かれる。
 
 1. raw `.env*` fileを読まない。`.env`由来値、credential、token、private key、非公開host
    構成、internal endpointを候補へ転記しない。
-2. 各scan試行は、一回のshell呼び出しの中でtemporary file作成、serialize、scan、
-   hash確認、必要ならsend、cleanupまでを完結させる。shellを跨いでtemporary pathや
+2. 各scan試行は、一回のshell呼び出しでtemporary file作成、serialize、scan、hash確認、
+   必要ならsend、cleanupまでを完結させる。shellを跨いでtemporary pathや
    `trap`を引き継ぐ前提を置かない。送る本文を完全にserializeして、delivered
    repositoryとarona-knowledgeの外で`mktemp`した専用の一時`candidate_file`へ置く。
    URL/host抽出用の`host_file`も同様に作る。両方を`chmod 600`にし、正常終了・失敗・
@@ -100,7 +101,7 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
    `rg` exit 0は候補あり、exit 1は候補なしとして扱う。それ以外はscan失敗であり、
    送信しない。
 4. URLとhost候補を別に列挙して一時fileへ保存し、確認済みpublic sourceか、private host・
-   internal endpointかを全件分類する。少なくとも次の抽出を行い、未確認hostはprivateと
+   internal endpointかを全件分類する。少なくとも次を抽出し、未確認hostはprivateと
    して扱う。scan結果に秘密値や完全な内部URL自体を出力しない。
 
    ```bash
@@ -108,9 +109,9 @@ inbox向けと明記する。1 deliverの候補は1 batchにまとめる。
    rg -o --pcre2 "$host_pattern" "$candidate_file" > "$host_file"
    ```
 5. matchした場合、そのshell呼び出しでは送信せずcleanupして終了する。agent context上の
-   候補から該当itemだけを除外またはredactし、安全なitemは残して、新しい自己完結shell
-   呼び出しでserializeからやり直す。本文全体を捨てて情報を静かに失わない。修正後の
-   `candidate_file`をpattern scanとhost分類の両方で再検査する。
+   候補から該当itemだけを除外またはredactし、安全なitemは残す。そのうえで新しい自己完結
+   shell呼び出しでserializeからやり直す。本文全体を捨てて情報を静かに失わない。
+   修正後の`candidate_file`をpattern scanとhost分類の両方で再検査する。
 6. 再走査にも候補が残る場合は送信しない。残存内容をjournalへ流したり、安全itemだけの
    別batchを追加送信したりせず、`pending`と安全に一般化した理由を返す。
 7. 最終再走査とhost分類がcleanになったら、その`candidate_file`を**そのまま**

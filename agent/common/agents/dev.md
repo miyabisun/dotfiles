@@ -25,7 +25,7 @@ task、criteria、scopeと、渡された場合はcontract・brief・review issu
 
 達成条件に関係する型検査、テスト、buildを実行する。formatとlintの最終責任は
 独立した`formatter`が持つため、devの完了条件には含めない。formatterからlint
-違反を差し戻された場合は、通常の実装問題として修正し、影響する検証を行う。
+違反を差し戻された場合は、通常の実装問題として修正し、影響する検証を回す。
 
 ```json
 {

@@ -21,7 +21,7 @@ model: claude-opus-5
 # 証拠
 
 - 各criterionに1件以上のevidenceを対応付ける。
-- DOM、computed style、bounding box、URL、focus、keyboard操作後状態、screenshot path、E2E結果など再確認可能な値を記録する。
+- 再確認可能な値を記録する。対象はDOM、computed style、bounding box、URL、focus、keyboard操作後状態、screenshot path、E2E結果など。
 - loading、empty、error、keyboard、responsive条件が指定されていれば実際にその状態を作る。
 - evidence欠落、E2E失敗、後片付け失敗は不承認。
 

@@ -1,84 +1,80 @@
 ---
 name: frontend-design
 description: >-
-  Implement production-grade frontend UI while preserving the Project design
-  authority and interaction contract. Use only when the delivery is judged to
-  require editing browser-rendered frontend sources (HTML, CSS, JavaScript, or
-  Svelte). Do not use for CLI/TUI, terminal-only tools, Node backend-only
-  JavaScript, native UI, config, docs, or test-only changes. Extension alone is
-  not enough. If you cannot confirm those frontend sources need changes, do not
-  use this skill.
+  Project の design authority と interaction contract を保ったまま、
+  production 水準の frontend UI を実装する。
+  browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)
+  の編集が delivery に必要だと判断できたときだけ使う。
+  CLI/TUI、terminal 専用ツール、Node backend 専用の JavaScript、native UI、
+  config、docs、test だけの変更には使わない。拡張子だけでは足りない。
+  その frontend sources の変更が必要だと確認できないなら、この skill を使わない。
 ---
 
 # Frontend Design
 
-Turn an established product and design intent into cohesive, accessible working
-UI. Do not invent a new visual language when the Project already owns one.
+確立された product と design の意図を、一貫した accessible な動作する UI へ
+変える。Project が既に visual language を持っているなら、新しいものを発明しない。
 
-## UI surface and authority
+## UI surface と authority
 
-Load this skill only when the delivery is judged to require editing
-browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte). File
-extension alone is not enough: the edit must shape browser (or webview /
-Electron) presentation. CLI/TUI, terminal-only tools, Node backend-only JavaScript,
-native UI, config, docs, and test-only changes are out of scope. If you
-cannot confirm those frontend sources need changes, do not use this skill.
+この skill を読み込むのは、browser-rendered frontend sources の編集が
+delivery に必要だと判断できたときだけである。ここでいう source は HTML、CSS、
+JavaScript、Svelte である。file の拡張子だけでは足りない。編集が browser
+(または webview / Electron) の表示を形づくるものでなければならない。
+CLI/TUI・terminal 専用ツール・Node backend 専用の JavaScript は対象外である。
+native UI・config・docs・test だけの変更も対象外である。その frontend
+sources の変更が必要だと確認できないなら、この skill を使わない。
 
-Once loaded, treat a change as UI surface work when it can alter rendered DOM, CSS, tokens,
-theme, layout, responsive behavior, typography, motion, images or icons,
-components or pages, visible copy or state meaning, routing or navigation,
-keyboard, focus or touch behavior, loading/empty/error states, or ARIA and live regions.
-Test-only changes, build configuration, dependency maintenance,
-generated artifacts, and internal refactors proven not to change appearance or
-interaction are outside this boundary.
+読み込んだ後は、rendered DOM・CSS・token・theme・layout・responsive な挙動を
+変えうる変更を UI surface の作業として扱う。typography・motion・画像・icon・
+component・page・目に見える文言や state の意味・routing・navigation も
+同じである。keyboard・focus・touch の挙動、loading/empty/error の state、
+ARIA と live region も同じである。test だけの変更・build 設定・依存の保守・
+生成物・見た目と操作を変えないと証明された内部 refactor は、この境界の外である。
 
-Resolve design authority before coding:
+コードを書く前に design authority を解決する。
 
-1. Read the Project root `DESIGN.md`; it is the self-contained authority.
-2. In an existing Project without the root file, `docs/DESIGN.md` is a legacy
-   fallback; read it for this delivery. Do not merge both files implicitly.
-3. Treat shared Sumi, Kinari, or other templates only as bootstrap input. Once
-   adapted into the Project root `DESIGN.md`, the Project owns the rules and a
-   shared template cannot overwrite them.
-4. If no Project authority exists, or existing rules and patterns do not settle
-   a visual or interaction choice, stop before implementation. Invoke `designer`
-   to establish or update the root `DESIGN.md` when the contract itself must
-   change.
+1. Project root の `DESIGN.md` を読む。これが自己完結した authority である。
+2. root の file が無い既存の Project では、`docs/DESIGN.md` が legacy
+   fallback である。この delivery ではそれを読む。両方の file を暗黙に
+   merge しない。
+3. 共有の Sumi・Kinari・その他の template は bootstrap input としてのみ扱う。
+   Project root の `DESIGN.md` へ取り込んだ後は、Project が規則を所有し、
+   共有 template はそれを上書きできない。
+4. Project の authority が無いか、既存の規則と pattern が視覚や操作の
+   判断を決められないなら、実装の前に止まる。contract 自体を変える必要が
+   あるときは、`designer` を起動して root の `DESIGN.md` を確立または更新する。
 
-Project design and an applicable designer brief override every generic
-aesthetic suggestion in this skill, including typography, composition, and
-motion advice. A current user requirement that changes the design contract must
-be reconciled through `designer` and recorded in root `DESIGN.md` before code
-depends on it.
+Project の design と、適用できる designer の brief は、この skill にある
+一般的な美的助言をすべて上書きする。typography・構成・motion の助言も含む。
+design contract を変える現在の user 要求は、`designer` を通して reconcile
+する。code がそれに依存するより前に、root の `DESIGN.md` へ記録する。
 
-## Workflow
+## 手順
 
-1. Inspect the current interface, implementation stack, reusable components,
-   tokens, and affected states.
-2. Identify the user outcome and the smallest coherent UI surface that delivers
-   it. Preserve established patterns unless the authority intentionally changes.
-3. Define observable criteria for the affected states, viewports, and input
-   methods. Include loading, empty, error, keyboard/focus, touch, overflow,
-   contrast, and reduced motion when relevant.
-4. Implement real working code with the Project's components and tokens. Avoid
-   one-off values and parallel component recipes.
-5. Exercise the changed flow in a real browser and compare the result with the
-   criteria and Project authority. Tests and browser evidence serve different
-   purposes; keep both when behavior changed.
+1. 現在の interface・実装 stack・再利用できる component・token・影響を受ける
+   state を調べる。
+2. user の成果と、それを届ける最小で一貫した UI surface を特定する。
+   authority が意図的に変わらない限り、確立された pattern を保つ。
+3. 影響を受ける state・viewport・入力方法について、観測可能な達成条件を
+   定義する。該当するなら loading・empty・error・keyboard/focus・touch・
+   overflow・contrast・reduced motion を含める。
+4. Project の component と token で、実際に動作するコードを実装する。
+   一度きりの値や、並行する component の recipe を避ける。
+5. 変更した flow を実際の browser で動かし、結果を達成条件と Project の
+   authority と突き合わせる。テストと browser の証拠は目的が違う。
+   振る舞いが変わったなら両方を残す。
 
-## Execution quality
+## 実装の品質
 
-- Make hierarchy, primary action, state, and navigation legible before adding
-  decoration.
-- Choose typography, color, spacing, composition, imagery, and motion because
-  they serve the product's tone and task—not because they are generically bold.
-- Keep the result context-specific and intentional. Avoid stock AI patterns,
-  arbitrary gradients, excessive cards, decorative motion, or novelty that
-  weakens comprehension.
-- Preserve semantic HTML, keyboard access, visible focus, touch targets,
-  responsive layout, readable contrast, and reduced-motion behavior.
-- Match implementation complexity to the approved design. A restrained system
-  requires precision and consistency; an expressive system may justify richer
-  composition and motion.
-- Reuse existing assets and icon systems. Do not substitute ad-hoc symbols or
-  introduce a new visual vocabulary without a design decision.
+- 装飾を足す前に、階層・主要な action・state・navigation を読めるようにする。
+- typography・色・spacing・構成・画像・motion は、product の調子と task に
+  役立つから選ぶ — 一般的に大胆だからではない。
+- 結果を文脈固有で意図的なものに保つ。ありきたりな AI の pattern・恣意的な
+  gradient・過剰な card・装飾的な motion・理解を弱める目新しさを避ける。
+- semantic HTML・keyboard での操作・見える focus・touch target を保つ。
+  responsive な layout・読める contrast・reduced-motion の挙動も保つ。
+- 実装の複雑さを、承認された design に合わせる。抑制された system は正確さと
+  一貫性を要求する。表現的な system はより豊かな構成と motion を正当化しうる。
+- 既存の asset と icon system を再利用する。design の判断なしに、その場しのぎの
+  記号で代用したり、新しい visual vocabulary を導入したりしない。

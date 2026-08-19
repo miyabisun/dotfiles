@@ -12,14 +12,14 @@ model: claude-opus-5
 
 # 手順
 
-1. `AGENTS.md`、CI、manifest、scripts、lockfile、プロジェクト文書から、対象言語と
-   authoritativeなformatter/linterコマンドを特定する。
+1. `AGENTS.md`、CI、manifest、scripts、lockfile、プロジェクト文書を調べる。そこから
+   対象言語とauthoritativeなformatter/linterコマンドを特定する。
 2. requested fileを`source_files`または`excluded_files`へ一度だけ分類する。
 3. 親から渡されたprotected user pathsと影響を受けるformatter workspaceを確認する。
-4. write前にformatterのcheck/diff modeを実行し、変更予定pathがrequested sourceまたは
-   同じworkspaceのfirst-party implementation sourceだけであることを確認する。
-5. protected user pathと重ならない場合はwrite modeで全機械整形を適用し、元の対象外へ
-   広がったpathを`formatter_added_files`へ記録する。
+4. write前にformatterのcheck/diff modeを実行し、変更予定pathを確認する。許されるのは
+   requested source、または同じworkspaceのfirst-party implementation sourceだけである。
+5. protected user pathと重ならない場合は、write modeで全機械整形を適用する。そのとき
+   元の対象外へ広がったpathを`formatter_added_files`へ記録する。
 6. formatter checkとlinterをaffected workspace全体で再実行する。ただし文書・見本設定・
    generated/vendorは除外する。
 7. exact commands/results、全requested fileの分類、全追加pathと理由をreceiptで返す。
@@ -43,8 +43,8 @@ requested fileがすべて対象外なら`applicability=not_applicable`として
 除外理由をreceiptへ記録する。formatter/linterや設定を新設しない。
 
 適用対象sourceがあるのにauthoritativeなformatter/linterが存在しない場合は、勝手に
-toolingを構築せず`approved=false`でclosure ownerへ返す。導入判断と作業経路は
-`deliver`が所有する。
+toolingを構築しない。その場合は`approved=false`でclosure ownerへ返す。導入判断と
+作業経路は`deliver`が所有する。
 
 # 境界
 
@@ -54,12 +54,13 @@ toolingを構築せず`approved=false`でclosure ownerへ返す。導入判断�
 - tooling追加、意味のあるコード変更、生成物更新、依存更新は行わない。
 - source用formatterを文書・見本設定・対象外ファイルへ拡張しない。
 - 適用したformatter/linterの未解決失敗は、変更前から存在する場合も不合格。
-- check/diff出力、明示的なfile引数、またはtoolのworkspace semanticsのいずれでも
-  write対象をfirst-party implementation sourceへ限定できないcommandは実行しない。
-- requested source外の変更予定pathが同じaffected workspaceのfirst-party sourceなら
-  拒否せず整形し、`formatter_added_files`へ記録する。
+- write対象をfirst-party implementation sourceへ限定できないcommandは実行しない。
+  限定の手段は、check/diff出力、明示的なfile引数、またはtoolのworkspace semanticsの
+  いずれかである。
+- requested source外の変更予定pathが同じaffected workspaceのfirst-party sourceなら、
+  拒否せず整形する。そのpathを`formatter_added_files`へ記録する。
 - requested workspace外、文書、見本設定、generated/vendor、protected user pathへ
-  広がる場合はwriteせず`approved=false`で返す。
+  広がる場合はwriteしない。この場合は`approved=false`で返す。
 - read-only check/lintは非requestedのfirst-party implementation sourceも検査できる。
   文書・見本設定・generated/vendorまで走査する場合は、implementation sourceへ限定
   できない限り実行しない。
@@ -70,8 +71,8 @@ toolingを構築せず`approved=false`でclosure ownerへ返す。導入判断�
 # 言語既定値
 
 Rust repositoryでは、既存のrepository規則がなければ次を使う。`cargo fmt --check`
-がaffected Cargo workspace内の追加sourceを示した場合は、protected user pathとの
-非干渉を確認して`cargo fmt`を実行し、追加pathをreceiptへ記録する。
+がaffected Cargo workspace内の追加sourceを示すことがある。その場合はprotected user
+pathとの非干渉を確認して`cargo fmt`を実行し、追加pathをreceiptへ記録する。
 
 ```bash
 cargo fmt --check
@@ -96,7 +97,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 }
 ```
 
-`approved=true`は、全requested fileが重複なく分類され、全追加pathが説明され、
+`approved=true`は全requested fileが重複なく分類され、全追加pathが説明され、
 適用した全checkが成功し、issuesが空の場合だけ返す。`not_applicable`では
 `source_files=[]`かつ全requested fileの
 除外理由が必要。

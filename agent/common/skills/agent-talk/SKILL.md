@@ -1,13 +1,13 @@
 ---
 name: agent-talk
 description: >-
-  Talk to another interactive agent session with Claude Code's built-in
-  cross-session tools (ListAgents / SendMessage).
-  Use for consultations, questions, information sharing, notifications, and
-  user-directed handoffs, whenever a "<cross-session-message>" arrives, and
-  whenever a legacy "[agent-talk]" doorbell arrives in the prompt.
-  Routing stays on the built-in channel; the retired broker survives to drain
-  that doorbell and to write back to a human's letter.
+  Claude Code 組み込みの cross-session tool (ListAgents / SendMessage) で、
+  別の対話的な agent session と話す。
+  相談・質問・情報共有・通知・user の指示による引き継ぎに使い、
+  "<cross-session-message>" が届いたとき、および prompt に旧来の
+  "[agent-talk]" 呼び鈴が届いたときにも使う。
+  経路は組み込み channel のままである。退役した broker は、その呼び鈴を
+  捌くことと、人間の手紙へ書き戻すことのために残っている。
 ---
 
 # Agent Talk
@@ -17,9 +17,9 @@ skill 名は旧 broker (`agent-talkd`) 時代の名残である。今の経路�
 
 herdr の pane はすべて Claude Code harness で動く。相手の model
 (GPT-5.6 sol / luna を含む) は経路に関係しない — 同じ harness である以上、
-宛先の書き方も送り方も受け取り方も同じである。
+宛先の書き方・送り方・受け取り方は同じである。
 
-## Interface
+## インターフェース
 
 | tool | 用途 |
 | --- | --- |
@@ -38,14 +38,14 @@ herdr の pane はすべて Claude Code harness で動く。相手の model
 
 ## 宛先の特定
 
-組み込みの session 名は `<directory名>-<suffix>` (例: `dotfiles-99`) で、
+組み込みの session 名は `<directory名>-<suffix>` である (例: `dotfiles-99`)。
 herdr の pane 名 (`chat` / `work` / `luna`) とは**一致しない**。
 
 1. cwd の basename で候補を絞る。
 2. 残った候補を `started` 時刻と `state` で絞る。
-3. それでも一意にならないなら、**推測で送らない** — 依頼も handoff も
-   共有も通知も同じである。唯一の例外は身元確認の1通 (依頼内容も秘密も
-   含めず、pane 名を尋ねるだけ) で、宛先が確定してから本文を送る。
+3. それでも一意にならないなら、**推測で送らない** — 依頼・handoff・共有・通知の
+   どれでも同じである。唯一の例外は身元確認の1通 (依頼内容も秘密も含めず、
+   pane 名を尋ねるだけ) で、宛先が確定してから本文を送る。
    確認で決まらないなら、候補を user に見せて選んでもらう。
 
 ## 送信
@@ -97,5 +97,5 @@ herdr の pane 名 (`chat` / `work` / `luna`) とは**一致しない**。
 ## 届かない相手
 
 組み込み channel は Claude Code の session にしか届かない。他 runtime の agent
-pane に用があるときは、手段を自作せず user へ返す (human の手紙への返信は
-「退役経路からの着信」の例外で扱い、ここには当たらない)。
+pane に用があるときは、手段を自作せず user へ返す。human の手紙への返信は
+「退役経路からの着信」の例外で扱い、ここには当たらない。

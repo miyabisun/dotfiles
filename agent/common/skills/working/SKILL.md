@@ -16,9 +16,9 @@ user が管理画面のボタンを押すと、task-server が **インスタン
 一撃で終わらず、複数の state を経由する — working はその一巡ぶんだけを担う
 **薄い worker** である。
 
-判断も実装も、この skill はほとんど持たない。持っているのは
+判断・実装のどちらも、この skill はほとんど持たない。持っているのは
 「どの task を取るか」「どこで作業するか」「どの skill へ渡すか」
-「結果をどの state へ戻すか」の 4 つだけで、中身の品質は渡した先の契約
+「結果をどの state へ戻すか」の 4 つだけである。中身の品質は渡した先の契約
 (`$deliver` = `spike` / `polish`、`merge`、`bump-tag`) が保証する。
 
 ## 起動条件
@@ -49,12 +49,12 @@ task の取得・状態遷移は **task-server が提供する MCP tool** を通
    **instant task (merge / release など system が発行したもの) は通常 task より
    優先して claim する**。同種が複数あるなら 1 件だけ選ぶ。
    ここで取れなければ以降の手順は全て行わない。
-2. **claim する前に副作用を起こさない。** 一覧を見る段階では、worktree も
-   branch も作らず、**`git fetch` を含めて git 操作を一切せず**、ファイルも
-   書かない。`git fetch` は remote-tracking ref と `FETCH_HEAD` を書き換える
-   副作用であって、例外ではない。claim できて初めて作業を始める。
+2. **claim する前に副作用を起こさない**。一覧を見る段階では、worktree も branch も
+   作らず、**`git fetch` を含めて git 操作を一切せず**、ファイルも書かない。
+   `git fetch` は remote-tracking ref と `FETCH_HEAD` を書き換える副作用であって、
+   例外ではない。claim できて初めて作業を始める。
 3. **task と現在地を照合する**: claim 後、task が名指しする repository・branch・
-   操作を、実際の作業対象と突き合わせる。**食い違ったら実行しない** —
+   操作を、実際の作業対象と突き合わせる。**食い違ったら実行しない**。その場合は
    worktree を作る前に、task を適切な state (再割り当て待ち・user 判断待ち等)
    へ戻し、食い違いの内容を報告して終える。ここを飛ばすと、名指しされていない
    repository へ push する事故が起きる。
@@ -79,7 +79,7 @@ task の取得・状態遷移は **task-server が提供する MCP tool** を通
      task を **user の実行待ち**に相当する state へ戻し、
      dispatch が失敗した理由と user 自身の起動が要る旨を報告して終える。
 6. **成功した feature branch にだけ push する**: `$deliver` が
-   local commit まで到達した (= delivery が成功した) ときだけ、
+   local commit まで到達したときが delivery の成功である。そのときだけ、
    その feature branch へ push する。
    - **force push はしない。**
    - **共有ブランチへは push しない。** 既定ブランチへ載せるのは `merge` の
