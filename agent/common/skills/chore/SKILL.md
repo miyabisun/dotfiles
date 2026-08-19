@@ -40,7 +40,13 @@ description: >-
 3. **blocking が無ければ commit して終了**: message は `git` skill の規則
    (英語 Conventional Commits・1 行のみ)。
    **blocking が残っている間は commit しない**。blocking を直したら
-   再レビューを最大1回。それでも収束しなければ `deliver` へ持ち替える
+   再レビューを最大1回。それでも収束しなければ `deliver` へ持ち替える。
+   `blocking` は**全件が対象**である。修正の子には全件を渡し、1 件ずつの結果
+   (直した / 直せない + 理由) を返させる。部分修正での完了宣言は受け取らず、
+   再レビューの前に、全件が diff で解消されたか、理由付きで残っているかを
+   突き合わせる。**枠が尽きても `changes_required` を pass 扱いにしない**。
+   未解消の blocking は残件として receipt と報告に明記し、そのうえで commit の
+   可否を判断する
 
 ## fallback
 
