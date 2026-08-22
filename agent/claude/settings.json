@@ -75,6 +75,17 @@
         ]
       },
       {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/meiseki-lint-markdown.sh\"",
+            "timeout": 60,
+            "statusMessage": "Markdown の日本語 lint (meiseki)"
+          }
+        ]
+      },
+      {
         "matcher": "WebFetch",
         "hooks": [
           {
