@@ -67,6 +67,12 @@ task の取得・状態遷移は **task-server が提供する MCP tool** を通
    spike / polish の契約・TDD・レビューはそのまま働く — working がそれを
    薄めたり省いたりしない。**task 本文は verbatim で渡す**
    (要約・言い換えをしない)。`$deliver` は **local commit まで**を担う。
+   - **pipeline 所有を明示的に宣言して渡す**。宣言文は
+     「この delivery は pipeline 経路であり、独立実装レビューは control plane
+     の review 工程が所有する」とする。
+     段階 skill はこれを**推測しない**。宣言が欠落したときは安全側へ倒れ、
+     段階 skill が local でレビューする。control plane の review と重なって
+     重複レビューになるが、レビューが 0 個になるよりよい。
    dispatch 先が分岐する task は次へ渡す:
    - **merge task** → `merge` skill
    - **release task** → `bump-tag` skill。task が水準
