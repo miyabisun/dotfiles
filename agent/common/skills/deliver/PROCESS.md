@@ -30,7 +30,7 @@
 | P9 | 検証 (テスト・隣接 check・formatter/linter・UI 実測) | 段階 skill | 同左 | 実行不能な check は理由を receipt へ |
 | P10 | commit 前 mechanical gate | 段階 skill | 同左 | nonzero なら止まる。経路によらず必須。`polish` は手順 6 の gate、`spike` は手順 3 の green と手順 5 の formatter/linter が当たる |
 | P11 | **独立実装レビュー** | **段階 skill (codex exec 召喚)** | **control plane の review 工程** | 所有者は経路ごとに一意 |
-| P12 | **blocking の修正と再レビューの巡回** | **段階 skill (pass まで)** | **control plane (`request_changes` → `ready` → 再 delivery)** | 巡回数に上限は無い |
+| P12 | **blocking の修正と再レビュー** | **段階 skill (再検証召喚 1 回まで)** | **control plane (`request_changes` → `ready` → 再 delivery)** | 直接経路は実装レビュー 1 回 + 再検証 1 回で打ち止め。再検証が `changes_required` なら commit せず未完了。pipeline 経路の巡回数に上限は無い |
 | P13 | commit | 段階 skill | 同左 | local 所有はレビューを通してから commit する。pipeline 所有では commit が review の subject になる |
 | P14 | push | — (行わない) | `working` | feature branch にだけ push |
 | P15 | 完了の報告 (report) | — (行わない) | `working` | report が review 発行を連れてくる |
@@ -39,9 +39,9 @@
 | P18 | release | `bump-tag` (user 起動) | `bump-tag` (`working` が dispatch) | 水準の決定は `bump-tag` だけが担う |
 | P19 | receipt の報告 | 段階 skill | 段階 skill と `working` | どちらの経路でレビューしたかを残す |
 
-太字にした 2 工程 (P11 独立実装レビュー / P12 blocking の巡回) が、この分割の
-要点である。他の工程は両経路で所有者が同じか、経路の外側 (`working`) にあるが、
-この 2 工程だけは**経路によって所有者が入れ替わる**。
+太字にした 2 工程 (P11 独立実装レビュー / P12 blocking の修正と再レビュー) が、
+この分割の要点である。他の工程は両経路で所有者が同じか、経路の外側
+(`working`) にあるが、この 2 工程だけは**経路によって所有者が入れ替わる**。
 
 delivery の外側にある knowledge の棚卸しは工程表に載せない。段階 skill は
 棚卸しを工程として持たず、`spike` の預け入れだけが P6 の内側にある。
@@ -52,8 +52,9 @@ delivery の外側にある knowledge の棚卸しは工程表に載せない。
 P14〜P16 が挟まり、レビューが commit の後ろへ回る。
 
 - **直接経路**: P1 → … → P10 に続けて
-  - P11 (独立実装レビュー) → P12 (巡回) → P13 (commit)
+  - P11 (独立実装レビュー) → P12 (再検証 1 回まで) → P13 (commit)
   - P19 (receipt)
+  - 再検証が `changes_required` なら P13 へ進まず、未完了として user へ上げる。
   - 契約は P13 で終わる。P17 merge と P18 release は user が別途起動する。
 - **pipeline 経路**: P1 → … → P10 に続けて
   - P13 (commit) → P14 (push) → P15 (report)

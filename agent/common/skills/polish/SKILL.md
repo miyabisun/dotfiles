@@ -41,8 +41,8 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
 
 1. **方針を独立にすり合わせる (実装前・1往復)**: 実装は、この skill を発火した
    pane の runtime が担う。skill の効果は発火 pane に留まるので、実装を他の
-   runtime へ投げ直すことはできない (担当の選択は構造上存在せず、既定担当も
-   指名待ちも無い)。これは**投げる側の制約であって、受け取る側の制約ではない**。
+   runtime へ投げ直すことはできない (担当の選択は構造上存在せず、既定担当と
+   指名待ちが無い)。これは**投げる側の制約であって、受け取る側の制約ではない**。
    **担当は、その assignment を現に保持している者である。** user の依頼が
    中継されて届いたなら、それは user が言ったことなので、
    **user に同じことを言い直させない** — そのまま着手する。
@@ -63,14 +63,18 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    - 求める項目は各1〜数行: 不満の理解 / 最小修正 / 回帰証拠 /
      UX 退行の懸念・疑問。schema の `dissatisfaction` / `minimal_plan` /
      `regression_evidence` / `ux_risks` に対応する。
+   - `minimal_plan` には、機構と user 要件の対応表・削れる機構・外側の
+     合成で守る案も求める
+     (「[最小性](../deliver/CONTRACT.md#最小性-blocking)」)。
    - **reconcile が終わるまでテストと実装を編集しない。**
    すり合わせの詳細は
    「[方針すり合わせの判定軸](../deliver/CONTRACT.md#方針すり合わせの判定軸)」。
-2. **不満を契約にする**: browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)
-   の修正が必要だと判断できたときだけ、先に `frontend-design` skill を完全に
-   読み、そこにある UI surface 判定・Project design authority・実装規則を
-   適用する。拡張子や「使い勝手」だけでは発火しない。CLI/TUI・terminal 出力
-   のみ・Node backend 専用 JavaScript・設定・docs・test-only は対象外。
+2. **不満を契約にする**: frontend sources の修正が必要だと判断できたときだけ、
+   先に `frontend-design` skill を完全に読む。対象は browser-rendered frontend
+   sources (HTML, CSS, JavaScript, or Svelte) である。そこにある UI surface
+   判定・Project design authority・実装規則を適用する。拡張子や「使い勝手」
+   だけでは発火しない。CLI/TUI・terminal 出力のみ・Node backend 専用
+   JavaScript・設定・docs・test-only は対象外。
    修正が必要だと確認できなければ使わない (迷ったら適用しない)。未解決の
    視覚・操作判断や design contract の変更がある場合だけ `designer` を呼び、
    その brief を契約へ含める。
@@ -131,9 +135,11 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
      手順 7 へ進む。
    - **宣言が無ければ local 所有である** (推測しない)。実装レビュー召喚を
      起動し、user 原文 (verbatim)・diff・達成条件・実行済みの検証結果を渡す。
-     `blocking` で source を直したら **gate を再実行してから**再検証召喚を
-     起動し、**`verdict` が `pass` になるまで巡回する**。それ以外は記録して進む。
-   召喚の種類・所有者・巡回・検査項目・fallback は
+     `blocking` で source を直したときだけ、**gate を再実行してから**再検証
+     召喚を起動する。**召喚は実装レビュー 1 回 + 再検証 1 回まで**で、再検証が
+     `changes_required` なら、指摘を修正したうえで commit しない。未完了と
+     して user へ上げる。それ以外は記録して進む。
+   召喚の種類・所有者・回数・検査項目・fallback は
    「[レビュワー召喚 (codex exec)](../deliver/CONTRACT.md#レビュワー召喚-codex-exec)」。
 7. **コミットする**: 1 invocation = **0または1個の prerequisite formatting
    commit + ちょうど1個の delivery commit**。既定 (基線 no-op) は delivery 1
@@ -146,12 +152,16 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    **独立実装レビューをどちらの経路で行ったか (local / pipeline)**、
    **召喚回数と各召喚の schema 判定**
    (planning は採否、実装レビューは `verdict` と `blocking` の件数。
-   local 所有なら巡回した回数も残す)、
+   local 所有なら再検証召喚の有無と、その `verdict` も残す)、
    **未解消の blocking の残件**、
    **fallback の有無と `review_exec_failed` の理由**、
    **user の目的とのズレの有無と是正内容**、原文中の目的と手段を
    どう切り分けたか、**手段を置き換えた場合はその内容と理由**、採用した手段と
    採否理由。
+   **最小性の証跡**は最終的な計画についてだけ短く残す: 機構の一覧と user 要件
+   への対応付け、削った機構、外側の合成を選んだか内側に持ったか (内側なら
+   理由)、親が範囲外として follow-up へ落とした指摘とその理由。検討の過程は
+   書かない。
 
 ## 続行
 
