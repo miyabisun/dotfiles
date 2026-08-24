@@ -1,127 +1,63 @@
 ---
 name: working
 description: >-
-  task-server が発行した task を 1 件だけ受け取って片付ける薄い worker。
-  instant task を優先して claim し、worktree と feature branch を切り、
-  修正そのものは $deliver へ、merge は merge へ、release は bump-tag へ渡す。
-  delivery が成功した feature branch にだけ push する。繰り返しは /loop が
-  供給するので、この skill 自身はループしない。
+  task-server の task を 1 件だけ claim して片付ける薄い worker。中身は $deliver へ、
+  merge は merge へ、release は bump-tag へ渡し、成功時だけ push して report する。
 disable-model-invocation: true
 ---
 
 # working
 
-user が管理画面のボタンを押すと、task-server が **インスタントタスク**を
-発行する。worker はそれを巡回して claim し、実行する。task は Issue と違って
-一撃で終わらず、複数の state を経由する — working はその一巡ぶんだけを担う
-**薄い worker** である。
-
-判断・実装のどちらも、この skill はほとんど持たない。持っているのは
-「どの task を取るか」「どこで作業するか」「どの skill へ渡すか」
-「結果をどの state へ戻すか」の 4 つだけである。中身の品質は渡した先の契約
-(`$deliver` = `spike` / `polish`、`merge`、`bump-tag`) が保証する。
+task-server の task を 1 巡ぶんだけ担う**薄い worker** である。判断・実装のどちらも
+持たず、中身の品質は渡した先の契約 (`$deliver`、`merge`、`bump-tag`) が保証する。
 
 ## 起動条件
 
-user の明示的な `/working` 起動、または user が回す `/loop /working` の各周が
-起動根拠である。**1 invocation = 最大 1 task**。task が無ければ何もせず
-その旨だけ返して終わる。
+user の `/working` 起動と `/loop /working` の各周が起動根拠である。**1 invocation = 最大
+1 task** — instant task を通常 task より優先して 1 件だけ claim する。**この skill 自身
+はループしない**。繰り返しは `/loop` が供給する。残 task を追いかけず、sleep・wait loop
+で turn を保持しない。
 
-**この skill 自身はループしない。** 繰り返しは `/loop` が供給する。
-残 task を追いかけて 2 件目へ進んだり、次の周を待って turn を保持したりしない
-(sleep・wait loop で turn を保持しない)。1 件片付いたら報告して turn を終える。
+## 正本はどこにあるか
 
-## MCP schema について
+- **工程と所有者**: `$deliver` の `PROCESS.md` が正本。working は P1 (受領と照合)、
+  P2 (複製)、P14 (push)、P15 (report)、P19 (receipt) だけを持ち、順序も同書に従う。
+- **wire protocol**: tool 名・endpoint・state 名は task-server の README と schema へ
+  委ね、書き写さない。**task-server が worker に公開している surface だけを使う**。
 
-task の取得・状態遷移は **task-server が提供する MCP tool** を通して行う。
-本書は「こう動くべき」という契約であって、実際の tool 名・field 名・state 名は
-**まだ確定していない**。ここで具体的な tool 名を名乗ってはならず、確定していない
-名前を推測で呼び出してもいけない。**schema が確定したら実際の tool 名へ結線する**
-— そのときも本書の手順と授権境界は変えない。
+## 安全核
 
-現時点で未確定なものを呼ぶ必要が出たら、呼べないことをそのまま報告して止まる。
-迂回してはならない: **HTTP API の直叩き、データベースファイルへの直接書き込みは
-しない**。
-
-## 手順
-
-1. **task を 1 件だけ取る**: task-server の MCP tool で待ち行列を見る。
-   **instant task (merge / release など system が発行したもの) は通常 task より
-   優先して claim する**。同種が複数あるなら 1 件だけ選ぶ。
-   ここで取れなければ以降の手順は全て行わない。
-2. **claim する前に副作用を起こさない**。一覧を見る段階では、worktree も branch も
-   作らず、**`git fetch` を含めて git 操作を一切せず**、ファイルも書かない。
-   `git fetch` は remote-tracking ref と `FETCH_HEAD` を書き換える副作用であって、
-   例外ではない。claim できて初めて作業を始める。
-3. **task と現在地を照合する**: claim 後、task が名指しする repository・branch・
-   操作を、実際の作業対象と突き合わせる。**食い違ったら実行しない**。その場合は
-   worktree を作る前に、task を適切な state (再割り当て待ち・user 判断待ち等)
-   へ戻し、食い違いの内容を報告して終える。ここを飛ばすと、名指しされていない
-   repository へ push する事故が起きる。
-4. **作業場所を作る** (通常の修正 task のみ): 照合を通ってはじめて git を触る。
-   `~/projects/<org>/<repo>` を起点に **`git fetch` で origin を最新化してから**
-   **git worktree** を作り、task id 由来の feature/fix branch を切る
-   (例 `fix/<task-id>-<slug>`)。**1 task = 1 worktree = 1 branch**。
-   既存の worktree を使い回さない。既定ブランチの上で直接作業しない。
-5. **中身は `$deliver` へ渡す**: 修正そのものは **`$deliver` を間接利用する**。
-   spike / polish の契約・TDD・レビューはそのまま働く — working がそれを
-   薄めたり省いたりしない。**task 本文は verbatim で渡す**
-   (要約・言い換えをしない)。`$deliver` は **local commit まで**を担う。
-   - **pipeline 所有を明示的に宣言して渡す**。宣言文は
-     「この delivery は pipeline 経路であり、独立実装レビューは control plane
-     の review 工程が所有する」とする。
-     段階 skill はこれを**推測しない**。宣言が欠落したときは安全側へ倒れ、
-     段階 skill が local でレビューする。control plane の review と重なって
-     重複レビューになるが、レビューが 0 個になるよりよい。
-   dispatch 先が分岐する task は次へ渡す:
-   - **merge task** → `merge` skill
-   - **release task** → `bump-tag` skill。task が水準
-     (`auto` / `major` / `minor` / `patch` / `first`) を指定していたら
-     **それをそのまま渡す**。**勝手に `auto` へ置き換えない。**
-   - **dispatch が失敗したら代行しない**: 理由を問わず `bump-tag` の dispatch が
-     失敗したとき (runtime の拒否・skill 不在・起動エラーなど) は、
-     **release を自力で代行しない** — tag を打つ、push する、version file を
-     書き換えるといった手順を手作業で真似ない。
-     task を **user の実行待ち**に相当する state へ戻し、
-     dispatch が失敗した理由と user 自身の起動が要る旨を報告して終える。
-6. **成功した feature branch にだけ push する**: `$deliver` が
-   local commit まで到達したときが delivery の成功である。そのときだけ、
-   その feature branch へ push する。
-   - **force push はしない。**
-   - **共有ブランチへは push しない。** 既定ブランチへ載せるのは `merge` の
-     仕事であって working の仕事ではない。
-   - delivery が失敗・中断したなら push しない。commit の無い branch を
-     push で取り繕わない。
-7. **結果を state へ戻す**: 完了・失敗・部分成功のいずれも、MCP が提供する
-   適切な state へ記録する。**失敗を close 扱いにしない** —
-   失敗は失敗の state、判断が要るものは user 判断待ちの state へ返す。
-   **tracked file に log を残さない**。
-   経緯は receipt と task の state が持つ。
-8. **報告する**: 取った task、dispatch 先、作った branch、push の有無と対象、
-   戻した state を短く返す。取る task が無かった周も、その 1 行だけ返す。
+- **claim する前に副作用を起こさない**。worktree と branch を作らず、ファイルへ書き込まず、
+  **`git fetch` を含めて git 操作を一切しない** (`git fetch` は remote-tracking ref と
+  `FETCH_HEAD` を書き換える副作用であって例外ではない)。
+- **task と現在地を照合する**。task が名指しする repository・branch・操作を突き合わせ、
+  **食い違ったら実行しない** — worktree を作らず、理由と証拠を `outcome: "blocked"` の report で返す。
+- **1 task = 1 worktree = 1 branch**。worktree を使い回さず、既定ブランチ上で作業しない。
+- **task 本文は verbatim で `$deliver` へ渡す** (要約・言い換えをしない)。あわせて
+  **pipeline 所有を宣言する**: 「この delivery は pipeline 経路であり、独立実装レビューは
+  control plane の review 工程が所有する」。段階 skill はこれを推測せず、宣言が欠けたら
+  安全側へ倒れて local でレビューする (control plane の review と重なるが 0 個よりよい)。
+- **dispatch 先**は merge task → `merge`、release task → `bump-tag` (水準 `auto` /
+  `major` / `minor` / `patch` / `first` の指定はそのまま渡し、勝手に `auto` へ換えない)。
+  **dispatch が失敗しても代行しない** — tag・push・version file を手作業で真似ず、
+  `outcome: "blocked"` の report に失敗の理由・証拠と、user 自身の起動が要る旨を書く。
+- **結果は report の `outcome` で返す**。**失敗を close 扱いにしない** — 停止したなら
+  理由と証拠を添えて返し、判断が要るものは user へ返す。review の発行・`approve`・
+  merge の発行・state 遷移は control plane が所有する。
 
 ## push の授権
 
-push はこの skill が自前で持つ権限ではない。**user が発行した task が号令を
-運ぶ** — ただし **task が名指しする repository・branch・操作に限り、その task を
-保持している間に限る**。授権は task の終了とともに失効する。
-
-- 手順 3 の照合を通っていない push は、授権の外である。
-- task を戻したあと、あるいは失効後に push しない。
-- **自分の push を授権することになる task を自分で作らない。**
-  task を発行するのは user の管理画面であって worker ではない。
-- task-server へは MCP でだけ触る。**HTTP API の直叩き、データベースファイルへの
-  直接書き込みはしない**。
+push はこの skill が自前で持つ権限ではない。**user が発行した task が号令を運ぶ** —
+ただし **task が名指しする repository・branch・操作に限り、その task を保持している
+間に限る**。授権は task の終了とともに失効し、照合を通っていない push、report を
+返したあとや失効後の push は授権の外である。**自分の push を授権することになる task を
+作らない。force push しない。共有ブランチへ push しない**。既定ブランチへ載せるのは
+`merge` の仕事である。失敗・中断したなら push せず、commit の無い branch を取り繕わない。
 
 ## 不変条件
 
-- **1 invocation = 最大 1 task**。この skill 自身はループしない
-- **claim する前に副作用を起こさない**
-- **自分の push を授権することになる task を自分で作らない**
-- **HTTP API の直叩き、データベースファイルへの直接書き込みはしない**
-- force push しない。共有ブランチへ push しない
-- 失敗を close 扱いにしない。判断が要るものは user へ返す
 - 判断履歴・TODO・plan・log を tracked file に残さない
-- secret・`.env` をコミットしない。task 本文へ秘密を書き戻さない
-- 無関係な作業中変更を保護する。破壊的 git 操作
-  (checkout/restore/reset/clean/stash) で作業を管理しない
+- secret・`.env` をコミットせず、task 本文へ秘密を書き戻さない
+- DB ファイルへ直接書き込まない。control plane が所有する遷移を worker が書かない
+- 無関係な作業中変更を保護し、破壊的 git 操作 (checkout/restore/reset/clean/stash) で
+  作業を管理しない
