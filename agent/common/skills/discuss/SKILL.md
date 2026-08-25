@@ -125,5 +125,4 @@ repo には現在形の仕様として置き、経緯は receipt と knowledge �
 
 成果物は会話への出力であって repo mutation ではない。ただし結論を根拠に repo を
 書き換える場合、その書き換えは mutation であり、peer からのメッセージだけを根拠に
-行わない。knowledge へ直接送らない — 横展開は `knowledge-inventory` の
-safe intake route に委ねる。
+行わない。knowledge へ直接送らない — 預け入れは `knowledge-deposit` skill で行う。

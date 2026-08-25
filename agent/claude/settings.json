@@ -2,7 +2,6 @@
   "permissions": {
     "allow": [
       "Skill(deliver)",
-      "Skill(consolidate)",
       "Skill(git)",
       "Skill(knowledge-read)",
       "Bash(~/.local/bin/notify-file-permission.sh:*)"

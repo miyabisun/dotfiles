@@ -5,7 +5,7 @@ AI agent の tooling はすべて `agent/` 以下にある。
 ```
 agent/
 ├── common/          # Shared across tools
-│   ├── agents/      # Subagent role defs (dev, rev, strategist, …)
+│   ├── agents/      # Subagent role defs (designer, ui-checker)
 │   ├── bin/         # Shared notification helpers → ~/.local/bin
 │   ├── designs/     # DESIGN.md templates (Sumi, Kinari, …)
 │   ├── rules/       # GLOBAL.md
@@ -138,22 +138,18 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 主な skill:
 
 - `deliver` — 成果駆動の実装、証拠ゲート、local commit
-- `consolidate` — 意味的な DRY の inventory、安全な統合、検証済みの commit
 - `git` — commit message とブランチフローの house rule
 - `bump-tag` — semver の bump、tag、push
 - `knowledge-deposit` — 再利用できる knowledge を預ける。エントリを書き、lint
   し、自分が書いた path だけを stage する。staged diff を `review` の召喚1回で
   レビューし、local で commit する
 
-`deliver` は、risk が正当化する能力だけを選ぶ。agent の分担 (作る側 ≠
-承認する側):
+`deliver` は自分で実装し、独立性が要る仕事だけを別文脈へ出す
+(`agent/common/skills/deliver/CONTRACT.md`「作業の分担」):
 
-- `strategist` / `strategy-rev` — 契約とテスト。ゲートを持つのは strategy-rev
-- `dev` / `rev` — 実装と意味レビュー (自己承認はしない)
-- `formatter` — commit 前に、対象となる source の適用判定・整形の補正・lint の証拠
+- レビュワー召喚 — 同期の `codex exec` (`bin/review`)
+- `designer` — 未解決の視覚・操作判断があるときだけ、達成条件を design brief にする
 - `ui-checker` — 証拠付きで実測するだけ (戦略やテストは書かない)
-- `knowledge-inventory` — commit 後に持続する delivery の knowledge を
-  inventory する。sanitize した 1 batch を `knowledge-deposit` へ渡す
 
 ## 新しい agent tool を足す
 
