@@ -1,16 +1,17 @@
 # delivery の工程表
 
 この文書は、1 delivery が通る**工程と、その工程の所有者の唯一の正本**である。
-段階 skill (`spike` / `polish`) と `working` は、ここに書かれた所有者を
-上書きしない。skill 本文と食い違ったときは、この表が正である。
+段階 skill (`spike` / `polish`) は、ここに書かれた所有者を上書きしない。skill 本文と食い違ったときは、この表が正である。
 
 ## 経路は 2 つ
 
 - **直接経路**: user が `$deliver` / `$spike` / `$polish` を明示起動する。
   task-server の task を伴わない。commit までで契約が終わる。
-- **pipeline 経路**: `working` が task-server から task を claim し、その
-  delivery として `$deliver` を起動する。commit の後に push → report →
-  review → approve → merge が続く。
+- **pipeline 経路**: `task-worker` (`~/projects/sunny-side/task-worker`、無人
+  daemon) が task-server から task を claim し、専用 worktree で coding agent を
+  起動する。commit の後に report → review → approve → merge が続く。
+  task-worker は skill を名指ししない — 起動された session が GLOBAL.md の
+  場面表から `$deliver` へ入る。
 
 ## 工程一覧
 
@@ -19,8 +20,8 @@
 
 | ID | 工程 | 直接経路 | pipeline 経路 | 備考 |
 |---|---|---|---|---|
-| P1 | task の受領と現在地の照合 | — (user の依頼文がそのまま契約) | `working` | 食い違ったら着手しない |
-| P2 | 作業場所の複製 (worktree・feature branch) | — (現在の作業場所のまま) | `working` | 1 task = 1 worktree = 1 branch |
+| P1 | task の受領と現在地の照合 | — (user の依頼文がそのまま契約) | `task-worker` | 食い違ったら着手しない |
+| P2 | 作業場所の複製 (worktree・feature branch) | — (現在の作業場所のまま) | `task-worker` | 1 task = 1 worktree = 1 branch |
 | P3 | 段階の判定 (spike / polish) | `deliver` | `deliver` | 迷ったら polish |
 | P4 | knowledge の読み込み (index・テスト戦略) | 段階 skill (`knowledge-read` の手順) | 同左 | index から入り、関係するリンクだけ辿る |
 | P5 | 方針すり合わせ (planning 召喚 1 回) | 段階 skill | 同左 | 両経路で据え置く |
@@ -32,16 +33,16 @@
 | P11 | **独立実装レビュー** | **段階 skill (codex exec 召喚)** | **control plane の review 工程** | 所有者は経路ごとに一意 |
 | P12 | **blocking の修正と再レビュー** | **段階 skill (再検証召喚 1 回まで)** | **control plane (`request_changes` → `ready` → 再 delivery)** | 直接経路は実装レビュー 1 回 + 再検証 1 回で打ち止め。再検証が `changes_required` なら commit せず未完了。pipeline 経路の巡回数に上限は無い |
 | P13 | commit | 段階 skill | 同左 | local 所有はレビューを通してから commit する。pipeline 所有では commit が review の subject になる |
-| P14 | push | — (行わない) | `working` | feature branch にだけ push |
-| P15 | 完了の報告 (report) | — (行わない) | `working` | report が review 発行を連れてくる |
+| P14 | push | — (行わない) | — (行わない) | task-worker は push せず、commit できた成果の `commit_sha` を report する |
+| P15 | 完了の報告 (report) | — (行わない) | `task-worker` | report が review 発行を連れてくる |
 | P16 | approve | — (行わない) | control plane (`approved` への昇格と `instant:merge` の発行は同一 tx) | 未レビューの commit を approve しない |
-| P17 | merge | `merge` skill (user 起動) | merge worker (`instant:merge` task) | 既定ブランチへの統合 |
-| P18 | release | `bump-tag` (user 起動) | `bump-tag` (`working` が dispatch) | 水準の決定は `bump-tag` だけが担う |
-| P19 | receipt の報告 | 段階 skill | 段階 skill と `working` | どちらの経路でレビューしたかを残す |
+| P17 | merge | `merge` skill (user 起動) | `task-worker` (`instant:merge` task) | 既定ブランチへの統合。task-worker の `instant:merge` 実行は未実装 (task-worker README「v0.1.0 でできないこと」) |
+| P18 | release | `bump-tag` (user 起動) | 人間の API (`api_release`) | release は task ではない。水準の決定は user だけが担う |
+| P19 | receipt の報告 | 段階 skill | 段階 skill | どちらの経路でレビューしたかを残す |
 
 太字にした 2 工程 (P11 独立実装レビュー / P12 blocking の修正と再レビュー) が、
 この分割の要点である。他の工程は両経路で所有者が同じか、経路の外側
-(`working`) にあるが、この 2 工程だけは**経路によって所有者が入れ替わる**。
+(`task-worker`) にあるが、この 2 工程だけは**経路によって所有者が入れ替わる**。
 
 delivery の外側にある knowledge の棚卸しは工程表に載せない。段階 skill は
 棚卸しを工程として持たず、`spike` の預け入れだけが P6 の内側にある。
@@ -49,7 +50,7 @@ delivery の外側にある knowledge の棚卸しは工程表に載せない。
 ### 経路別の実行順
 
 表の並びは直接経路の実行順である。pipeline 経路は P13 commit のあとに
-P14〜P16 が挟まり、レビューが commit の後ろへ回る。
+report が挟まり、レビューと approve が commit の後ろへ回る。
 
 - **直接経路**: P1 → … → P10 に続けて
   - P11 (独立実装レビュー) → P12 (再検証 1 回まで) → P13 (commit)
@@ -57,11 +58,13 @@ P14〜P16 が挟まり、レビューが commit の後ろへ回る。
   - 再検証が `changes_required` なら P13 へ進まず、未完了として user へ上げる。
   - 契約は P13 で終わる。P17 merge と P18 release は user が別途起動する。
 - **pipeline 経路**: P1 → … → P10 に続けて
-  - P13 (commit) → P14 (push) → P15 (report)
+  - P13 (commit) → P19 (receipt — 段階 skill の session はここで終わる)
+  - P15 (report — task-worker が `commit_sha` を送る)
   - P11 (review) → P12 (再巡回) → P16 (approve) → P17 (merge)
-  - P19 (receipt)
   - P12 の再巡回は、`request_changes` が対象を `ready` へ戻し、
     P8〜P15 をもう一巡する形になる。
+  - review task を claim して `/worker/review-report` で答える worker は
+    まだ無い (task-worker は未対応)。発行はされるが誰も拾わない段階である。
 
 ## レビュー工程の所有者
 
@@ -69,8 +72,13 @@ P14〜P16 が挟まり、レビューが commit の後ろへ回る。
 二重に持たない。0 個にもしない。
 
 - **既定は local** — 段階 skill が `codex exec` を召喚して所有する。
-- **pipeline 所有になるのは**、`working` が claim した task の delivery として
-  `$deliver` を起動し、**その旨を明示的に宣言したときだけ**である。
+- **pipeline 所有になるのは**、task-worker が claim した task の delivery で、
+  起動 prompt が**次の宣言を運んでいるときだけ**である:
+  「この delivery は pipeline 経路であり、独立実装レビューは control plane の
+  review 工程が所有する」。宣言を prompt 前置きで運ぶのは task-worker の
+  profile 設定の仕事で、現時点では未実装 (follow-up 起票済み) — したがって
+  今日の pipeline delivery は local レビューへ倒れ、control plane の review と
+  重なる。0 個よりよい。
 - 段階 skill は pipeline の有無を**推測しない**。宣言が無ければ local へ倒す。
   branch 名・worktree の形・cwd から推測してはならない。推測を許すと、宣言の
   欠落や誤読でレビューが丸ごと省かれる。

@@ -193,7 +193,8 @@ review "$repo" \
 [PROCESS.md の「レビュー工程の所有者」](PROCESS.md#レビュー工程の所有者)が持つ。
 
 - **既定は local** — この skill が `codex exec` を召喚して所有する。
-- **pipeline 所有は、`working` が明示的に宣言したときだけ**である。
+- **pipeline 所有は、起動 prompt が明示的に宣言したときだけ**である
+  (文面は PROCESS.md)。
 - 宣言が無ければ local へ倒す。**推測しない** — branch 名・worktree の形・cwd
   から pipeline 経路だと判断してはならない。
 - pipeline 所有のとき、**実装レビュー召喚と再検証召喚は 0 回**になる。

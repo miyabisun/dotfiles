@@ -30,10 +30,10 @@ description: >-
 3. `$deliver` 自体に commit 手順は無い。選択した段階スキル (`spike` /
    `polish`) の documented workflow に commit が含まれるとき、その
    commit 授権を継承する。
-4. `$deliver` は user の直接起動のほかに、user が起動した `working` skill が
-   claim した修正 task からも呼ばれる。どちらの経路でも `$deliver` 自身と
+4. `$deliver` は user の直接起動のほかに、task-worker が claim した task の
+   session からも呼ばれる (pipeline 経路)。どちらの経路でも `$deliver` 自身と
    それが選ぶ `spike` / `polish` は push しない。
-   **push を所有するのは呼び出し元の `working` である**。
-   `working` が **pipeline 所有を宣言して起動したとき**は、独立実装レビューを
+   起動 prompt が **pipeline 所有を宣言しているとき**は、独立実装レビューを
    control plane の review 工程が所有する。段階 skill は実装レビュー召喚を
-   行わない。**宣言が無ければ local へ倒す** (推測しない)。
+   行わない。**宣言が無ければ local へ倒す** (推測しない)。宣言の文面と
+   所有者は [PROCESS.md](PROCESS.md#レビュー工程の所有者) が持つ。
