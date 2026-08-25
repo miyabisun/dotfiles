@@ -2,8 +2,8 @@
 name: chore
 description: >-
   合計およそ 50 行以内に収まる見込みのファイル修正のための、小さな変更の
-  配達ハーネス。編集は子 agent を召喚して行い、同期の codex exec レビューを
-  1回走らせ、blocking な issue が残っていないときだけ commit する。
+  配達ハーネス。自分で編集し、同期の codex exec レビューを 1回走らせ、
+  blocking な issue が残っていないときだけ commit する。
   変更がそれより大きいときは deliver へ持ち替える。
 ---
 
@@ -26,9 +26,8 @@ description: >-
 **着手前に読む**: knowledge の index (`library/index.md` と対象 project の
 `projects/<name>/index.md`) **だけ**を読む。リンク先は辿らない。
 
-1. **子 agent に修正を割り当てる**: 変更内容・対象ファイル・検証コマンドを
-   指示する。親は同一文脈でファイルを編集しない。子は codex exec を実行
-   しない
+1. **修正する**: 自分で編集し、検証コマンドを実行する。agent は作らない
+   (deliver/CONTRACT.md「作業の分担」と同じ理由)
 2. **codex exec で独立レビュー1回**: staged diff と変更目的を渡す。起動形は
    spike / polish と同じ。
    `review "$repo" --schema "$schema" --result "$result" < "$prompt"` を使う。
@@ -40,11 +39,13 @@ description: >-
 3. **blocking が無ければ commit して終了**: message は `git` skill の規則
    (英語 Conventional Commits・1 行のみ)。
    **blocking が残っている間は commit しない**。blocking を直したら
-   再レビューを最大1回。それでも収束しなければ `deliver` へ持ち替える。
-   `blocking` は**全件が対象**である。修正の子には全件を渡し、1 件ずつの結果
-   (直した / 直せない + 理由) を返させる。部分修正での完了宣言は受け取らず、
-   再レビューの前に、全件が diff で解消されたか、理由付きで残っているかを
-   突き合わせる。**枠が尽きても `changes_required` を pass 扱いにしない**。
+   再検証を最大1回。それでも収束しなければ `deliver` へ持ち替える。
+   `blocking` は**全件が対象**である。全件に 1 件ずつの結果 (直した /
+   直せない + 理由) を付け、再検証の前に、全件が diff で解消されたか、
+   理由付きで残っているかを突き合わせる。再検証に渡すものと schema は
+   deliver/CONTRACT.md「召喚は3種」の再検証召喚と同じ (checklist・差分
+   diff・テスト file の diff・gate の再実行結果の 4 つだけ。粗探しをさせない)。
+   **枠が尽きても `changes_required` を pass 扱いにしない**。
    未解消の blocking は残件として receipt と報告に明記し、そのうえで commit の
    可否を判断する
 

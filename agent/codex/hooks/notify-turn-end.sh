@@ -16,27 +16,12 @@ if [[ -L "${SELF_PATH}" ]]; then
     SELF_PATH="$(readlink "${SELF_PATH}")"
 fi
 SELF_DIR="$(cd -- "$(dirname -- "${SELF_PATH}")" && pwd -P)"
-WAIT_CHECKER="${SELF_DIR}/../../common/bin/is-delivery-wait.sh"
 
 # Suppress completion announcements from every subagent kind, including the
 # automatic approval reviewer. If identification fails, preserve the parent's
 # notification rather than silently dropping it.
 if [[ -n "${THREAD_ID}" ]] \
     && bash "${SELF_DIR}/is-subagent.sh" "${THREAD_ID}"; then
-    exit 0
-fi
-
-# Codex provides the completed assistant text directly. A delivery-wait marker
-# is an intentional intermediate yield, not workspace completion. Missing jq,
-# malformed payloads, and missing helpers all fail open to the normal notice.
-LAST_ASSISTANT=""
-if command -v jq >/dev/null 2>&1 && [[ -n "${PAYLOAD}" ]]; then
-    LAST_ASSISTANT="$(jq -r '
-        if type == "object" then ."last-assistant-message" // "" else "" end
-    ' <<<"${PAYLOAD}" 2>/dev/null || true)"
-fi
-if [[ -n "${LAST_ASSISTANT}" ]] \
-    && printf '%s' "${LAST_ASSISTANT}" | bash "${WAIT_CHECKER}"; then
     exit 0
 fi
 

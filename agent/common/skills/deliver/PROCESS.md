@@ -26,7 +26,7 @@
 | P5 | 方針すり合わせ (planning 召喚 1 回) | 段階 skill | 同左 | 両経路で据え置く |
 | P6 | 契約化 (達成条件・テスト戦略の決定) | 段階 skill | 同左 | 達成条件は最大3項目 (spike) / 最大5行 (polish)。`spike` は手順 2 で決めたテスト戦略を `knowledge-deposit` で預ける (棚卸しは省くが、この預け入れだけは例外) |
 | P7 | 基線正規化 (formatting commit) | `polish` のみ・条件付き最大 1 個 | 同左 | 差分が無ければ no-op |
-| P8 | 実装 | 段階 skill (子 agent) | 同左 | 親は同一文脈で実装を続けない |
+| P8 | 実装 | 段階 skill | 同左 | 発火 pane が自分で行う。別文脈は独立性が要るときだけ (CONTRACT.md「作業の分担」) |
 | P9 | 検証 (テスト・隣接 check・formatter/linter・UI 実測) | 段階 skill | 同左 | 実行不能な check は理由を receipt へ |
 | P10 | commit 前 mechanical gate | 段階 skill | 同左 | nonzero なら止まる。経路によらず必須。`polish` は手順 6 の gate、`spike` は手順 3 の green と手順 5 の formatter/linter が当たる |
 | P11 | **独立実装レビュー** | **段階 skill (codex exec 召喚)** | **control plane の review 工程** | 所有者は経路ごとに一意 |
