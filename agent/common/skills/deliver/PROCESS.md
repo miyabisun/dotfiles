@@ -7,9 +7,10 @@
 
 - **直接経路**: user が `$deliver` / `$spike` / `$polish` を明示起動する。
   task-server の task を伴わない。commit までで契約が終わる。
-- **pipeline 経路**: `task-worker` (`~/projects/sunny-side/task-worker`、無人
-  daemon) が task-server から task を claim し、専用 worktree で coding agent を
-  起動する。commit の後に report → review → approve → merge が続く。
+- **pipeline 経路**: 無人 daemon の `task-worker` が task-server から task を
+  claim する。実体は `~/projects/sunny-side/task-worker` にある。claim したら
+  専用 worktree で coding agent を起動する。commit の後に
+  report → review → approve → merge が続く。
   task-worker は skill を名指ししない — 起動された session が GLOBAL.md の
   場面表から `$deliver` へ入る。
 
@@ -31,7 +32,7 @@
 | P9 | 検証 (テスト・隣接 check・formatter/linter・UI 実測) | 段階 skill | 同左 | 実行不能な check は理由を receipt へ |
 | P10 | commit 前 mechanical gate | 段階 skill | 同左 | nonzero なら止まる。経路によらず必須。`polish` は手順 6 の gate、`spike` は手順 3 の green と手順 5 の formatter/linter が当たる |
 | P11 | **独立実装レビュー** | **段階 skill (codex exec 召喚)** | **control plane の review 工程** | 所有者は経路ごとに一意 |
-| P12 | **blocking の修正と再レビュー** | **段階 skill (再検証召喚 1 回まで)** | **control plane (`request_changes` → `ready` → 再 delivery)** | 直接経路は実装レビュー 1 回 + 再検証 1 回で打ち止め。再検証が `changes_required` なら commit せず未完了。pipeline 経路の巡回数に上限は無い |
+| P12 | **blocking の修正と再レビューの巡回** | **段階 skill (pass まで)** | **control plane (`request_changes` → `ready` → 再 delivery)** | 巡回数に上限は無い |
 | P13 | commit | 段階 skill | 同左 | local 所有はレビューを通してから commit する。pipeline 所有では commit が review の subject になる |
 | P14 | push | — (行わない) | — (行わない) | task-worker は push せず、commit できた成果の `commit_sha` を report する |
 | P15 | 完了の報告 (report) | — (行わない) | `task-worker` | report が review 発行を連れてくる |
@@ -40,9 +41,9 @@
 | P18 | release | `bump-tag` (user 起動) | 人間の API (`api_release`) | release は task ではない。水準の決定は user だけが担う |
 | P19 | receipt の報告 | 段階 skill | 段階 skill | どちらの経路でレビューしたかを残す |
 
-太字にした 2 工程 (P11 独立実装レビュー / P12 blocking の修正と再レビュー) が、
-この分割の要点である。他の工程は両経路で所有者が同じか、経路の外側
-(`task-worker`) にあるが、この 2 工程だけは**経路によって所有者が入れ替わる**。
+太字にした 2 工程 (P11 独立実装レビュー / P12 blocking の巡回) が、この分割の
+要点である。他の工程は両経路で所有者が同じか、経路の外側 (`task-worker`) に
+あるが、この 2 工程だけは**経路によって所有者が入れ替わる**。
 
 delivery の外側にある knowledge の棚卸しは工程表に載せない。段階 skill は
 棚卸しを工程として持たず、`spike` の預け入れだけが P6 の内側にある。
@@ -53,9 +54,8 @@ delivery の外側にある knowledge の棚卸しは工程表に載せない。
 report が挟まり、レビューと approve が commit の後ろへ回る。
 
 - **直接経路**: P1 → … → P10 に続けて
-  - P11 (独立実装レビュー) → P12 (再検証 1 回まで) → P13 (commit)
+  - P11 (独立実装レビュー) → P12 (巡回) → P13 (commit)
   - P19 (receipt)
-  - 再検証が `changes_required` なら P13 へ進まず、未完了として user へ上げる。
   - 契約は P13 で終わる。P17 merge と P18 release は user が別途起動する。
 - **pipeline 経路**: P1 → … → P10 に続けて
   - P13 (commit) → P19 (receipt — 段階 skill の session はここで終わる)
@@ -63,7 +63,7 @@ report が挟まり、レビューと approve が commit の後ろへ回る。
   - P11 (review) → P12 (再巡回) → P16 (approve) → P17 (merge)
   - P12 の再巡回は、`request_changes` が対象を `ready` へ戻し、
     P8〜P15 をもう一巡する形になる。
-  - review task を claim して `/worker/review-report` で答える worker は
+  - review task を claim して `/worker/review-report` で答える worker が
     まだ無い (task-worker は未対応)。発行はされるが誰も拾わない段階である。
 
 ## レビュー工程の所有者
@@ -73,10 +73,10 @@ report が挟まり、レビューと approve が commit の後ろへ回る。
 
 - **既定は local** — 段階 skill が `codex exec` を召喚して所有する。
 - **pipeline 所有になるのは**、task-worker が claim した task の delivery で、
-  起動 prompt が**次の宣言を運んでいるときだけ**である:
+  起動 prompt が**次の宣言を運んでいるときだけ**である。宣言文はこれである:
   「この delivery は pipeline 経路であり、独立実装レビューは control plane の
   review 工程が所有する」。宣言を prompt 前置きで運ぶのは task-worker の
-  profile 設定の仕事で、現時点では未実装 (follow-up 起票済み) — したがって
+  profile 設定の仕事である。現時点では未実装 (follow-up 起票済み)。したがって
   今日の pipeline delivery は local レビューへ倒れ、control plane の review と
   重なる。0 個よりよい。
 - 段階 skill は pipeline の有無を**推測しない**。宣言が無ければ local へ倒す。

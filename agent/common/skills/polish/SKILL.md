@@ -134,11 +134,9 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
      手順 7 へ進む。
    - **宣言が無ければ local 所有である** (推測しない)。実装レビュー召喚を
      起動し、user 原文 (verbatim)・diff・達成条件・実行済みの検証結果を渡す。
-     `blocking` で source を直したときだけ、**gate を再実行してから**再検証
-     召喚を起動する。**召喚は実装レビュー 1 回 + 再検証 1 回まで**で、再検証が
-     `changes_required` なら、指摘を修正したうえで commit しない。未完了と
-     して user へ上げる。それ以外は記録して進む。
-   召喚の種類・所有者・回数・検査項目・fallback は
+     `blocking` で source を直したら **gate を再実行してから**再検証召喚を
+     起動し、**`verdict` が `pass` になるまで巡回する**。それ以外は記録して進む。
+   召喚の種類・所有者・巡回・検査項目・fallback は
    「[レビュワー召喚 (codex exec)](../deliver/CONTRACT.md#レビュワー召喚-codex-exec)」。
 7. **コミットする**: 1 invocation = **0または1個の prerequisite formatting
    commit + ちょうど1個の delivery commit**。既定 (基線 no-op) は delivery 1
@@ -151,7 +149,7 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    **独立実装レビューをどちらの経路で行ったか (local / pipeline)**、
    **召喚回数と各召喚の schema 判定**
    (planning は採否、実装レビューは `verdict` と `blocking` の件数。
-   local 所有なら再検証召喚の有無と、その `verdict` も残す)、
+   local 所有なら巡回した回数も残す)、
    **未解消の blocking の残件**、
    **fallback の有無と `review_exec_failed` の理由**、
    **user の目的とのズレの有無と是正内容**、原文中の目的と手段を
