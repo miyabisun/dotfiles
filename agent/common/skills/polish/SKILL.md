@@ -143,8 +143,9 @@ user の明示的な `$polish` 起動、同じ依頼文での段階明示、ま�
    個のみ。message は `git` skill の規則に従う (1 行のみ、経緯は knowledge
    へ)。style commit と delivery を混ぜない。
    知識棚卸しは行わない。
-8. **報告する**: 解消した不満と証拠、残る不満、追加した回帰テスト、review の
-   結果、style commit の有無を短く返す。
+8. **報告する**: 順序は CONTRACT.md「[報告の順序 (P19)](../deliver/CONTRACT.md#報告の順序-p19)」
+   (森 → 決めてほしいこと → 木)。解消した不満と証拠、残る不満、追加した回帰
+   テスト、review の結果、style commit の有無を短く返す。
    方針すり合わせとレビューについては次を残す:
    **独立実装レビューをどちらの経路で行ったか (local / pipeline)**、
    **召喚回数と各召喚の schema 判定**

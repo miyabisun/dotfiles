@@ -174,7 +174,8 @@ user の明示的な `$spike` 起動、同じ依頼文での段階明示、ま�
    commit は、起動時の user 依頼文が明示的に許可した場合のみとする。許可された
    場合は、その原文を receipt に引用し、件数と各 scope を報告する。message は
    `git` skill の規則に従う (1 行のみ、経緯は knowledge へ)。
-8. **報告する**: 何が動くか、テスト結果、動作証拠、残した TODO と
+8. **報告する**: 順序は CONTRACT.md「[報告の順序 (P19)](../deliver/CONTRACT.md#報告の順序-p19)」
+   (森 → 決めてほしいこと → 木)。何が動くか、テスト結果、動作証拠、残した TODO と
    non-blocking の質問リスト、次に polish すべき点を短く返す。
    **v0.1.0 readiness の確認も完了条件に含む**: 新規プロジェクトの該当
    manifest (Cargo.toml 等) は version が 0.1.0 であること、MIT LICENSE と
