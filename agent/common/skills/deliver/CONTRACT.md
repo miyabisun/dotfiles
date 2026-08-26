@@ -91,6 +91,10 @@ review "$repo" \
    が対応する user 要件の文。この計画から削れる機構はどれか。懸念を外側の合成
    で守る案があるなら、その案。
 
+   `ux_risks` には**「user にしか決められない決断を列挙し、無ければ『無し』と
+   書く」**ことを求める。schema に key は足さない。この列挙が
+   「[停止の規範](#停止の規範)」の停止点になる。
+
 2. **実装レビュー召喚 (1回)**: user 原文 (verbatim)・diff・達成条件・実行済みの
    検証結果を渡す。output schema:
 
@@ -114,24 +118,26 @@ review "$repo" \
          }
        },
        "non_blocking": { "type": "array", "items": { "type": "string" } },
-       "test_integrity": { "type": "string" },
+       "evidence_integrity": { "type": "string" },
        "scope_check": { "type": "string" },
        "formatter_linter_check": { "type": "string" }
      },
-     "required": ["verdict", "blocking", "non_blocking", "test_integrity", "scope_check", "formatter_linter_check"],
+     "required": ["verdict", "blocking", "non_blocking", "evidence_integrity", "scope_check", "formatter_linter_check"],
      "additionalProperties": false
    }
    ```
 
-3. **再検証召喚 (最大1回)**: `blocking` を実際に修正したときだけ、1回だけ
-   召喚する。修正していないなら召喚しない。
+3. **再検証召喚 (1 巡あたり 1 回)**: `blocking` を実際に修正したときだけ、
+   その巡で 1 回召喚する。修正していないなら召喚しない。巡回そのものに上限は
+   無い (「[local 所有時の巡回](#local-所有時の巡回)」)。
    **再検証は粗探しではない。** レビュワーは文脈を引き継がないので、
    実装レビューと同じ問いを投げれば新しい指摘が延々と出る。再検証の問いは
    2 つだけ — **checklist の各項目は本当に直ったか**、**直すためにズルを
    していないか**。渡すのは次の 4 つに限る。全 diff と user 原文は渡さない。
-   - **checklist**: 実装レビューの `blocking` 全件に、項目ごとの申告
-     (直した / 直せない + 理由) を添えたもの
-   - **差分 diff**: 実装レビューに渡した diff から現在までの増分
+   - **checklist**: 前巡が返した `blocking` 全件に、項目ごとの申告
+     (直した / 直せない + 理由) を添えたもの。初巡は実装レビューの `blocking`、
+     2 巡目以降は前巡で `resolved: false` だった `items` が前巡にあたる
+   - **差分 diff**: 前巡のレビューに渡した diff から現在までの増分
    - **テスト file の diff**: 差分 diff のうちテストに当たる部分 (同じでもよい)
    - **gate の再実行結果**
 
@@ -155,7 +161,7 @@ review "$repo" \
            "additionalProperties": false
          }
        },
-       "test_integrity": {
+       "evidence_integrity": {
          "type": "object",
          "properties": {
            "verdict": { "type": "string", "enum": ["clean", "cheating"] },
@@ -166,7 +172,7 @@ review "$repo" \
        },
        "notes": { "type": "array", "items": { "type": "string" } }
      },
-     "required": ["verdict", "items", "test_integrity", "notes"],
+     "required": ["verdict", "items", "evidence_integrity", "notes"],
      "additionalProperties": false
    }
    ```
@@ -175,11 +181,12 @@ review "$repo" \
    **差分 diff で修正済みと確認できたとき**、または**元の指摘が誤りだと
    検証できたとき**だけ。「直せない + 理由」の申告は理由がどれほど妥当でも
    `resolved: false` — 未解消の blocking を理由付きで残したまま commit
-   しない不変条件は、ここで迂回させない。`test_integrity` の検査
-   項目は「[テストの誠実さ](#実装レビュー-prompt-に書かせる検査項目)」を
-   そのまま使う (assert の削除・弱体化、skip 回避、期待値合わせ、green に
-   するためだけのテスト改変)。**`verdict` は、全 `items` が `resolved` かつ
-   `test_integrity` が `clean` のときだけ `pass`** と prompt に定義する。
+   しない不変条件は、ここで迂回させない。`evidence_integrity` の検査
+   項目は「[証拠の誠実さ](#実装レビュー-prompt-に書かせる検査項目)」を
+   そのまま使う (未実測の結果を成果として書く、assert の削除・弱体化、
+   skip 回避、期待値合わせ、green にするためだけのテスト改変)。
+   **`verdict` は、全 `items` が `resolved` かつ `evidence_integrity` が
+   `clean` のときだけ `pass`** と prompt に定義する。
    checklist 外の観察は `notes` に書かせ、**`verdict` に効かせない**。
    `notes` は follow-up として receipt に落とす。差分 diff の外で修正が
    壊したものは、レビュワーではなく gate (テスト・lint の再実行) が拾う。
@@ -255,12 +262,19 @@ diff、達成条件、本契約の
 
 ### 実装レビュー prompt に書かせる検査項目
 
-- **テストの誠実さ (blocking)**: テストを読み、トートロジーと誤魔化しを検知
-  する。トートロジーは実装の言い換え、常に真になる assert、実装と同じ計算式
-  での期待値生成。誤魔化しは期待値のハードコード合わせ、assert の削除・弱体化、
-  skip での回避、green にするためだけのテスト改変。サボりや user に対して
-  不誠実な挙動を見つけたら**厳格に blocking とし、修正させる**。直したバグに
-  回帰テストが付いているかも見る。
+- **証拠の誠実さ (blocking)**: テストと receipt を読み、トートロジーと
+  誤魔化しを検知する。トートロジーは実装の言い換え、常に真になる assert、
+  実装と同じ計算式での期待値生成。誤魔化しは期待値のハードコード合わせ、
+  assert の削除・弱体化、skip での回避、green にするためだけのテスト改変。
+  **実測していない結果を成果として書くことも同じ誤魔化しである** — 走らせて
+  いない check の green 報告、retry や read-back で救った操作を初回から成功
+  したように書き換えること、達成条件の一部だけ満たして完了と書くこと
+  (黙った scope 縮小)、実行しなかった check を receipt から黙って落とすこと。
+  サボりや user に対して不誠実な挙動を見つけたら**厳格に blocking とし、
+  修正させる**。直したバグに回帰テストが付いているかも見る。
+  **受け取る receipt では、検証結果はコマンドと出力を verbatim で書かせる。**
+  要約や「green でした」は証拠ではない。prompt には
+  **「verbatim の出力が無い check は未実行として扱え」**と定型で書く。
 - **テストの妥当性 (blocking)**: Markdown を grep するだけのテスト、
   ライブラリの受け入れテスト、トートロジーなテストを新しく作っていないか。
   作っていたら消させる (GLOBAL.md「テスト」)。
@@ -275,6 +289,12 @@ diff、達成条件、本契約の
   いないかを確認する。
 - **scope 確認 (blocking)**: commit 対象が今回の変更だけで、無関係な作業中変更を
   巻き込んでいないか。
+
+**真実の門はレビューではなく P10 mechanical gate である。** テスト・lint・build を
+実際に走らせるのは実装者である。`codex exec` の sandbox は `read-only` なので、
+レビュワーには再実行できない。レビューが見るのは**その記録の整合**であり、
+verbatim の出力と diff が食い違わないかを判定する。pipeline 経路では control
+plane の review が同じ役割を担う。
 
 ### blind 規律 (同期版)
 
@@ -305,7 +325,7 @@ diff、達成条件、本契約の
   (ズレ検出だけは省略しない)。
 - **実装レビュー** — 上の検査項目を自分の diff に適用する
   (self diff-review)。
-- **再検証** — checklist の各項目と差分 diff を突き合わせ、テストの誠実さ
+- **再検証** — checklist の各項目と差分 diff を突き合わせ、証拠の誠実さ
   だけを見る。ここでも粗探しはしない。
 
 つまりこれは召喚1回ぶんの代替ではなく、**1 delivery につき1度きりの不可逆な
@@ -407,6 +427,39 @@ planning `$result` が示した経路は採用・部分採用・不採用を決�
 結果を変えるときだけ起動する収束機構である。`discuss` は自案や候補を添えて
 反証を求める形式なので、**blind な独立提案の代替にはならない**。`discuss` は
 レビュワー召喚とは別経路であり、同一争点の重複照会だけを避ける。
+
+## 停止の規範
+
+**契約は commit まで**であり、blocked は終端ではない。決断待ちの一時停止である。
+決断が要らないものは進める。
+
+**user へ上げてよいのは、user にしか決められない決断があるときだけ**である。
+当たるのは 4 つ — 権限、scope の変更、product outcome の変更、規約同士の矛盾。
+技術的な理由での停止は**同一の blocking が 2 巡連続で解消しないとき**だけである
+(「[local 所有時の巡回](#local-所有時の巡回)」)。
+
+**契約内で自分が決められることを user に聞くのは、停止理由にならない。**
+上げるときは、決めてほしい決断を 1 つ名指しする。ブロッカーと、完了済みの部分と、
+その決断を並べて返す。
+
+停止理由は planning で洗い出す。planning 召喚の `ux_risks` には
+**「user にしか決められない決断を列挙し、無ければ『無し』と書く」**ことを
+prompt の散文で求める。
+**`$result` の決断リストが空なら、この delivery に正当な停止点は無い。**
+
+実装中に新しく停止してよいのは、**planning 時点で知り得なかった実測事実が、
+確認済みの前提を覆し、かつ新たな決断を要求するとき**だけである。
+要件のどの文にも対応しない懸念は、機構を足す理由にならない。
+止まる理由にもならない (「[最小性](#最小性-blocking)」と同じ物差し)。
+receipt に follow-up を 1 行書いて進む。
+
+口実を封じる 2 つ:
+
+- **「規約同士の矛盾」**を理由にしてよいのは、矛盾する 2 条文を `path:line` で
+  両方引用し、どちらを採っても目的が変わることを 1 行で示せるときだけである。
+  引用できないならそれは解釈であり、自分で決めて進む。
+- **「権限」**は、既に授権があるなら停止理由にならない。task が号令を運んでいる
+  場合と、user が起動した skill の内側がこれに当たる。
 
 ## 不変条件 (全段階共通)
 

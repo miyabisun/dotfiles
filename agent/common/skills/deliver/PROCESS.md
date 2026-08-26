@@ -31,7 +31,7 @@
 | P8 | 実装 | 段階 skill | 同左 | 発火 pane が自分で行う。別文脈は独立性が要るときだけ (CONTRACT.md「作業の分担」) |
 | P9 | 検証 (テスト・隣接 check・formatter/linter・UI 実測) | 段階 skill | 同左 | 実行不能な check は理由を receipt へ |
 | P10 | commit 前 mechanical gate | 段階 skill | 同左 | nonzero なら止まる。経路によらず必須。`polish` は手順 6 の gate、`spike` は手順 3 の green と手順 5 の formatter/linter が当たる |
-| P11 | **独立実装レビュー** | **段階 skill (codex exec 召喚)** | **control plane の review 工程** | 所有者は経路ごとに一意 |
+| P11 | **独立実装レビュー** | **段階 skill (codex exec 召喚)** | **control plane の review 工程 (別 worker)** | 所有者は経路ごとに一意。真実の門は P10 で、レビューはその記録の整合を見る。pipeline 経路でも control plane の review が同じ役割を担う |
 | P12 | **blocking の修正と再レビューの巡回** | **段階 skill (pass まで)** | **control plane (`request_changes` → `ready` → 再 delivery)** | 巡回数に上限は無い |
 | P13 | commit | 段階 skill | 同左 | local 所有はレビューを通してから commit する。pipeline 所有では commit が review の subject になる |
 | P14 | push | — (行わない) | — (行わない) | task-worker は push せず、commit できた成果の `commit_sha` を report する |
