@@ -87,7 +87,6 @@ managed_links="
 .claude/hooks agent/claude/hooks
 .claude/CLAUDE.md agent/claude/CLAUDE.md
 .claude/GLOBAL.md agent/common/rules/GLOBAL.md
-.claude/settings.json agent/claude/settings.json
 .config/herdr/config.toml config/herdr/config.toml
 .local/bin/herdr-swap config/herdr/bin/herdr-swap
 .codex/hooks.json agent/codex/hooks.json
@@ -128,6 +127,59 @@ while read -r link_rel target_rel; do
     exit 1
   fi
 done <<<"$managed_links"
+
+# machine-local config は symlink ではなく独立した複製で置かれる。
+# harness (Claude Code / Codex / Grok) が live file へ書き戻す状態を dotfiles の
+# worktree へ漏らさないための境界であり、dotfiles への反映は config-merge が担う。
+local_copies="
+.claude/settings.json agent/claude/settings.json
+.codex/config.toml agent/codex/config.toml
+.grok/config.toml agent/grok/config.toml
+"
+while read -r copy_rel source_rel; do
+  [[ -n "$copy_rel" ]] || continue
+  copy_path="$home1/$copy_rel"
+  if [[ -L "$copy_path" ]]; then
+    echo "$copy_rel must be an independent copy, not a symlink" >&2
+    exit 1
+  fi
+  test -f "$copy_path"
+  cmp -s "$copy_path" "$repo_copy/$source_rel" \
+    || { echo "$copy_rel must start as a copy of $source_rel" >&2; exit 1; }
+done <<<"$local_copies"
+
+# live file への machine-local な書き込みは、install を再実行しても上書きされない。
+printf '%s\n' '{ "model": "machine-local" }' >"$home1/.claude/settings.json"
+local_settings_sha="$(sha256_file "$home1/.claude/settings.json")"
+run_install "$home1" >"$test_root/run-localkeep.out"
+if [[ "$(sha256_file "$home1/.claude/settings.json")" != "$local_settings_sha" ]]; then
+  echo 'install must not overwrite machine-local .claude/settings.json' >&2
+  exit 1
+fi
+
+# legacy の dotfiles symlink は、内容を保ったまま独立した複製へ移行される。
+home_legacy="$test_root/home-legacy"
+seed_rc "$home_legacy"
+mkdir -p "$home_legacy/.claude"
+ln -s "$repo_copy/agent/claude/settings.json" "$home_legacy/.claude/settings.json"
+run_install "$home_legacy" >"$test_root/run-legacy.out"
+if [[ -L "$home_legacy/.claude/settings.json" ]]; then
+  echo 'legacy .claude/settings.json symlink must be migrated to a copy' >&2
+  exit 1
+fi
+cmp -s "$home_legacy/.claude/settings.json" \
+  "$repo_copy/agent/claude/settings.json" \
+  || { echo 'migration must preserve the live settings contents' >&2; exit 1; }
+# 移行後は source から独立している (source を触っても live は動かない)。
+printf '%s\n' '{ "model": "source-moved" }' >>"$repo_copy/agent/claude/settings.json"
+if cmp -s "$home_legacy/.claude/settings.json" \
+  "$repo_copy/agent/claude/settings.json"; then
+  echo 'migrated copy must be independent of the dotfiles source' >&2
+  exit 1
+fi
+git -C "$repo_copy" checkout -- agent/claude/settings.json 2>/dev/null \
+  || printf '%s' "$(head -n -1 "$repo_copy/agent/claude/settings.json")" \
+    >"$repo_copy/agent/claude/settings.json"
 
 # 実体が repo に無い .deepl.json の link 項目は撤去済みであること。
 if [[ -e "$home1/.config/.deepl.json" || -L "$home1/.config/.deepl.json" ]]; then

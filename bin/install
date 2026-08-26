@@ -11,6 +11,24 @@ function link () {
   fi
 }
 
+# machine-local config: the live file is an independent copy, never a symlink
+# into the repo. The harness writes runtime state (model, session) back into it,
+# and that state is not dotfiles' to carry — `config-merge` syncs the portable
+# intent instead. Seed from the template when missing, migrate the legacy
+# dotfiles symlink once (preserving its contents), and never overwrite an
+# existing file.
+function local_config () {
+  local live="$1" source="$2" tmp
+  if [ -L "$live" ] && [ "$(readlink "$live")" = "$source" ]; then
+    tmp="${live}.tmp.$$"
+    cp -L "$live" "$tmp"
+    unlink "$live"
+    mv "$tmp" "$live"
+  elif [ ! -e "$live" ] && [ ! -L "$live" ]; then
+    cp "$source" "$live"
+  fi
+}
+
 link ".editorconfig"
 
 
@@ -30,7 +48,7 @@ link "agent/claude/hooks" "$HOME/.claude"
 link "agent/claude/CLAUDE.md" "$HOME/.claude"
 # CLAUDE.md imports the shared rules via @~/.claude/GLOBAL.md
 link "agent/common/rules/GLOBAL.md" "$HOME/.claude"
-link "agent/claude/settings.json" "$HOME/.claude"
+local_config "$HOME/.claude/settings.json" "$(pwd)/agent/claude/settings.json"
 
 # herdr: ~/.config/herdr はランタイム実ディレクトリ (sock/log/session) のため
 # dir ごとではなく config.toml だけをファイル単位で張る
@@ -41,19 +59,7 @@ mkdir -p "$HOME/.local/bin"
 link "config/herdr/bin/herdr-swap" "$HOME/.local/bin"
 
 mkdir -p "$HOME/.codex"
-codex_config="$HOME/.codex/config.toml"
-codex_config_source="$(pwd)/agent/codex/config.toml"
-
-# Migrate the legacy dotfiles symlink once, preserving its current contents as
-# machine-local state. New installations receive an independent initial copy.
-if [ -L "$codex_config" ] && [ "$(readlink "$codex_config")" = "$codex_config_source" ]; then
-  codex_config_tmp="${codex_config}.tmp.$$"
-  cp -L "$codex_config" "$codex_config_tmp"
-  unlink "$codex_config"
-  mv "$codex_config_tmp" "$codex_config"
-elif [ ! -e "$codex_config" ] && [ ! -L "$codex_config" ]; then
-  cp "$codex_config_source" "$codex_config"
-fi
+local_config "$HOME/.codex/config.toml" "$(pwd)/agent/codex/config.toml"
 
 link "agent/codex/hooks.json" "$HOME/.codex"
 # hooks.json は ~/.codex/hooks/ の安定リンク経由で script を参照する
@@ -66,16 +72,7 @@ agent/common/bin/install-agent-runtime || exit 1
 # repo). Seed from the portable template when missing; never overwrite an
 # existing file. Hooks/skills/agents/rules are pure symlinks.
 mkdir -p "$HOME/.grok"
-grok_config="$HOME/.grok/config.toml"
-grok_config_source="$(pwd)/agent/grok/config.toml"
-if [ -L "$grok_config" ] && [ "$(readlink "$grok_config")" = "$grok_config_source" ]; then
-  grok_config_tmp="${grok_config}.tmp.$$"
-  cp -L "$grok_config" "$grok_config_tmp"
-  unlink "$grok_config"
-  mv "$grok_config_tmp" "$grok_config"
-elif [ ! -e "$grok_config" ] && [ ! -L "$grok_config" ]; then
-  cp "$grok_config_source" "$grok_config"
-fi
+local_config "$HOME/.grok/config.toml" "$(pwd)/agent/grok/config.toml"
 link "agent/grok/hooks" "$HOME/.grok"
 link "agent/common/skills" "$HOME/.grok"
 link "agent/common/agents" "$HOME/.grok"
