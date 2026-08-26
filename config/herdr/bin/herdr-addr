@@ -1,0 +1,188 @@
+#!/bin/bash
+# herdr の label から「送れる宛先」までを 1 コマンドで引く。
+#
+#   herdr-addr <workspace>        その workspace の agent を全件
+#   herdr-addr <workspace>/<tab>  その tab の agent 1 体
+#   herdr-addr <tab>              呼び出し元と同じ workspace の tab
+#
+# 出力は header 無しの TSV。1 行 1 agent:
+#
+#   label  pane  runtime  state  pid  uds  cwd
+#
+# uds は Claude Code の cross-session socket (`/tmp/cc-socks/<pid>.sock`) で、
+# SendMessage の `to` にそのまま渡せる。無い agent は `-`。
+#
+# 推測はしない。label が曖昧・不在、tab に agent が複数、単体指定なのに socket が
+# 無い — どれも nonzero で止める。誤送信は黙って返る宛先から生まれる。
+#
+# 打ち切りはここに持たない。要るなら外側で `with-timeout 10 herdr-addr ...`。
+set -euo pipefail
+
+die() {
+    echo "herdr-addr: $1" >&2
+    exit 2
+}
+
+[[ $# -eq 1 ]] || die 'usage: herdr-addr <workspace>|<workspace>/<tab>|<tab>'
+label="$1"
+[[ -n "$label" ]] || die 'empty label'
+[[ "$label" != */*/* ]] || die "invalid label: $label"
+
+command -v -- herdr >/dev/null 2>&1 || die 'herdr not found'
+command -v -- perl >/dev/null 2>&1 || die 'perl not found'
+
+# Claude Code は自分の socket の場所を env で教える。その directory が
+# ほかの session の socket も並ぶ場所である。
+sock_dir="/tmp/cc-socks"
+if [[ -n "${CLAUDE_CODE_MESSAGING_SOCKET:-}" ]]; then
+    sock_dir="$(dirname -- "$CLAUDE_CODE_MESSAGING_SOCKET")"
+fi
+
+snapshot="$(herdr api snapshot)" || die 'herdr api snapshot failed'
+
+# snapshot と label から候補行を出す。曖昧・不在はここで nonzero にして、
+# 理由を stderr へ書く。1 行 = pane \t label \t runtime \t state \t cwd。
+rows="$(
+    printf '%s' "$snapshot" | perl -MJSON::PP -e '
+use strict; use warnings;
+my ($label, $self_ws) = @ARGV;
+my $snap = eval { decode_json(do { local $/; <STDIN> })->{result}{snapshot} }
+    or die "herdr-addr: could not read the herdr snapshot\n";
+
+my %ws_label = map { $_->{workspace_id} => $_->{label} } @{ $snap->{workspaces} || [] };
+my %tab_label = map { $_->{tab_id} => $_->{label} } @{ $snap->{tabs} || [] };
+my %ws_by_label;
+push @{ $ws_by_label{ $ws_label{$_} } }, $_ for grep { defined $ws_label{$_} } keys %ws_label;
+
+# agent の付いていない pane は宛先になりえないので最初から外す。
+my @agents = @{ $snap->{agents} || [] };
+
+sub in_ws { my $w = shift; grep { ($_->{workspace_id} // "") eq $w } @agents }
+sub in_tab {
+    my ($w, $t) = @_;
+    grep { ($_->{workspace_id} // "") eq $w && ($tab_label{ $_->{tab_id} // "" } // "") eq $t } @agents;
+}
+
+my ($scope, $tab) = $label =~ m{^([^/]+)/(.+)$} ? ($1, $2) : (undef, undef);
+my @hit;
+my $single;
+
+if (defined $scope) {
+    my $ids = $ws_by_label{$scope}
+        or die "herdr-addr: no workspace labelled '\''$scope'\'' (have: "
+            . join(", ", sort keys %ws_by_label) . ")\n";
+    @$ids == 1 or die "herdr-addr: workspace label '\''$scope'\'' is ambiguous: @$ids\n";
+    @hit = in_tab($ids->[0], $tab);
+    @hit or die "herdr-addr: no agent in '\''$label'\''\n";
+    $single = 1;
+} else {
+    # 曖昧かどうかは label が在るかで決める。ぶら下がる agent の有無で決めると、
+    # agent が起きたり落ちたりするたびに同じ label の意味が黙って入れ替わる。
+    my $is_ws = exists $ws_by_label{$label};
+    my $is_tab = defined $self_ws && length $self_ws
+        && grep { ($_->{workspace_id} // "") eq $self_ws && ($_->{label} // "") eq $label }
+           @{ $snap->{tabs} || [] };
+    if ($is_ws && $is_tab) {
+        die "herdr-addr: '\''$label'\'' is ambiguous - it names a workspace and a tab "
+            . "in this workspace; qualify it as <workspace>/<tab>\n";
+    } elsif ($is_ws) {
+        my $ids = $ws_by_label{$label};
+        @$ids == 1
+            or die "herdr-addr: workspace label '\''$label'\'' is ambiguous: @$ids\n";
+        @hit = in_ws($ids->[0]);
+        @hit or die "herdr-addr: no agent in workspace '\''$label'\''\n";
+    } elsif ($is_tab) {
+        @hit = in_tab($self_ws, $label);
+        @hit or die "herdr-addr: no agent in '\''$label'\''\n";
+        $single = 1;
+    } elsif (!defined $self_ws || !length $self_ws) {
+        die "herdr-addr: '\''$label'\'' is not a workspace, and HERDR_WORKSPACE_ID is "
+            . "unset so it cannot be read as a tab; qualify it as <workspace>/<tab> "
+            . "(workspaces: " . join(", ", sort keys %ws_by_label) . ")\n";
+    } else {
+        die "herdr-addr: nothing labelled '\''$label'\'' (workspaces: "
+            . join(", ", sort keys %ws_by_label) . ")\n";
+    }
+}
+
+if ($single && @hit > 1) {
+    die "herdr-addr: '\''$label'\'' has several agents: "
+        . join(", ", sort map { $_->{pane_id} } @hit)
+        . "; there is no single target\n";
+}
+
+# 内側の受け渡しは US (\x1f) 区切りにする。tab は shell の IFS では空白扱いで、
+# 連続すると 1 個に畳まれる — runtime や state が空の agent で列がずれる。
+for my $a (sort { $a->{pane_id} cmp $b->{pane_id} } @hit) {
+    print join("\x1f",
+        ($ws_label{ $a->{workspace_id} } // "?") . "/" . ($tab_label{ $a->{tab_id} } // "?"),
+        $a->{pane_id} // "",
+        $a->{agent} // "",
+        $a->{agent_status} // "",
+        $a->{cwd} // ""), "\n";
+}
+print "\@\@single\@\@\n" if $single;
+' "$label" "${HERDR_WORKSPACE_ID:-}"
+)" || exit 1
+
+single=""
+if [[ "$rows" == *'@@single@@' ]]; then
+    single=1
+    rows="${rows%'@@single@@'}"
+    rows="${rows%$'\n'}"
+fi
+
+[[ -n "$rows" ]] || die "no agent resolved for '$label'"
+
+emitted=0
+while IFS=$'\x1f' read -r row_label pane runtime state cwd; do
+    [[ -n "$pane" ]] || continue
+    # loop の stdin は行を送る側が握っている。herdr にそれを食わせない。
+    info="$(herdr pane process-info --pane "$pane" </dev/null)" \
+        || die "herdr pane process-info failed for $pane"
+
+    # 1 行目が foreground process group、以降が pane の前面プロセスの pid。
+    # process substitution だと perl の失敗を観測できないので command
+    # substitution で受け、読めなかったら止める。
+    proc="$(printf '%s' "$info" | perl -MJSON::PP -e '
+use strict; use warnings;
+my $i = eval { decode_json(do { local $/; <STDIN> })->{result}{process_info} }
+    or die "herdr-addr: could not read the process info for this pane\n";
+print(($i->{foreground_process_group_id} // ""), "\n");
+print "$_->{pid}\n" for grep { defined $_->{pid} } @{ $i->{foreground_processes} || [] };
+')" || die "could not read process info for $pane"
+
+    # pane には無関係なプロセスが並び、claude の `name` は version 文字列である。
+    # 名前で選ばず、cross-session socket が実在する pid だけを宛先とみなす。
+    pid=""
+    uds="-"
+    group_pid=""
+    first=1
+    while read -r candidate; do
+        if [[ -n "$first" ]]; then
+            group_pid="$candidate"
+            first=""
+            continue
+        fi
+        [[ -n "$candidate" ]] || continue
+        if [[ -S "$sock_dir/$candidate.sock" ]]; then
+            [[ -z "$pid" ]] || die "$pane has several messaging sockets: $pid and $candidate"
+            pid="$candidate"
+            uds="$sock_dir/$candidate.sock"
+        fi
+    done <<<"$proc"
+
+    if [[ -z "$pid" ]]; then
+        # socket が無い pid は宛先にならない。それでも pane の素性は残す。
+        pid="${group_pid:--}"
+        if [[ -n "$single" ]]; then
+            die "'$row_label' ($pane, $runtime, pid $pid) has no messaging socket in $sock_dir"
+        fi
+    fi
+
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$row_label" "$pane" "$runtime" "$state" "$pid" "$uds" "$cwd"
+    emitted=$((emitted + 1))
+done <<<"$rows"
+
+[[ "$emitted" -gt 0 ]] || die "no agent resolved for '$label'"

@@ -57,6 +57,8 @@ link "config/herdr/config.toml" "$HOME/.config/herdr"
 # keys.command から呼ぶ並び替え helper (PATH 経由)
 mkdir -p "$HOME/.local/bin"
 link "config/herdr/bin/herdr-swap" "$HOME/.local/bin"
+# label から agent の pane / pid / cross-session socket を引く (agent-talk が使う)
+link "config/herdr/bin/herdr-addr" "$HOME/.local/bin"
 
 mkdir -p "$HOME/.codex"
 local_config "$HOME/.codex/config.toml" "$(pwd)/agent/codex/config.toml"
