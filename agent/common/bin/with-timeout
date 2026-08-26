@@ -1,0 +1,64 @@
+#!/bin/bash
+# 実行を秒数で打ち切って走らせる。
+#
+#   with-timeout <sec> <command> [args...]
+#
+# GNU coreutils の timeout(1) があればそれに委譲する。macOS には標準で
+# 入っていないので、Homebrew の gtimeout、どちらも無ければ macOS・Linux とも
+# 標準の perl へ落ちる。OS の差をここだけで吸収し、呼び出し側は分岐を持たない。
+#
+# 時間切れは timeout(1) の慣習どおり exit 124。ほかは子の exit code、signal で
+# 死んだなら 128+signal を返す。stdin / stdout / stderr は素通しする。
+set -euo pipefail
+
+die() {
+    echo "with-timeout: $1" >&2
+    exit 2
+}
+
+[[ $# -ge 2 ]] || die 'usage: with-timeout <sec> <command> [args...]'
+sec="$1"
+shift
+[[ "$sec" =~ ^[1-9][0-9]*$ ]] || die "invalid seconds: $sec"
+
+for candidate in timeout gtimeout; do
+    if command -v -- "$candidate" >/dev/null 2>&1; then
+        exec "$candidate" "$sec" "$@"
+    fi
+done
+
+command -v -- perl >/dev/null 2>&1 \
+    || die 'need timeout(1), gtimeout(1) or perl to bound the run'
+
+# 子を fork して alarm で TERM する。waitpid は alarm に割り込まれる (EINTR)
+# ので、子を回収できるまで呼び直す。
+#
+# 子は専用のプロセスグループへ入れ、時間切れではグループごと TERM する
+# (timeout(1) の既定と同じ)。直接の子だけを kill すると、子が起動した孫が
+# 出力 FD を握ったまま居座り、呼び出し側から見て打ち切れない。
+# setpgrp は親子の双方から呼ぶ — どちらが先に走っても取りこぼさない。
+exec perl -e '
+use strict; use warnings; use Errno qw(EINTR);
+my $sec = shift @ARGV;
+my $pid = fork;
+defined $pid or die "with-timeout: fork failed: $!\n";
+unless ($pid) {
+    setpgrp(0, 0);
+    exec { $ARGV[0] } @ARGV
+        or do { print STDERR "with-timeout: exec failed: $ARGV[0]: $!\n"; exit 127 };
+}
+setpgrp($pid, $pid);
+my $timed_out = 0;
+$SIG{ALRM} = sub {
+    $timed_out = 1;
+    kill("TERM", -$pid) or kill("TERM", $pid);
+};
+alarm $sec;
+my $reaped;
+1 while (($reaped = waitpid($pid, 0)) < 0 && $! == EINTR);
+alarm 0;
+my $status = $?;
+exit 124 if $timed_out;
+exit($status >> 8) if ($status & 127) == 0;
+exit(128 + ($status & 127));
+' "$sec" "$@"

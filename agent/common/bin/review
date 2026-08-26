@@ -8,8 +8,11 @@
 #
 # prompt は標準入力で受け取り、codex の stdin (`-` 形式) へそのまま流す。
 # stdout には何も出さない (codex 自身のログは stderr へ回す)。判定材料は
-# --result の JSON と exit code だけ。exit code は timeout の 124 を含めて
+# --result の JSON と exit code だけ。exit code は時間切れの 124 を含めて
 # 無加工で透過する。実行ファイルは REVIEW_CODEX で差し替えられる。
+#
+# 打ち切りは with-timeout に任せる。timeout(1) が macOS に標準で無いことの
+# 吸収はそちらが単独で所有する。
 set -euo pipefail
 
 usage() {
@@ -83,7 +86,14 @@ command -v -- "$codex" >/dev/null 2>&1 || {
     exit 127
 }
 
-exec timeout "$timeout_sec" "$codex" exec \
+# with-timeout は install が review の隣へ配る。PATH ではなく隣を見る。
+runner="$(dirname -- "${BASH_SOURCE[0]}")/with-timeout"
+[[ -x "$runner" ]] || {
+    echo "review: with-timeout not found: $runner" >&2
+    exit 127
+}
+
+exec "$runner" "$timeout_sec" "$codex" exec \
     --strict-config \
     --ignore-user-config \
     --ephemeral \
