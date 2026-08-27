@@ -2,8 +2,8 @@
 name: knowledge-deposit
 description: >-
   再利用できる知識を knowledge repository へ預ける。エントリを直接書き、
-  lint し、自分が書いた path だけを stage し、独立レビュー1回に通ったら
-  commit する。delivery が、共有 knowledge に属する持続的なドメイン事実・
+  lint し、自分が書いた path だけを stage し、独立レビューが pass になる
+  まで巡回してから commit する。delivery が、共有 knowledge に属する持続的なドメイン事実・
   決定・却下した選択肢・未解決の疑問・教訓を生んだとき、knowledge の
   intake pane が動いていないとき、または user が発見を記録・deposit・file
   するよう、あるいは knowledge へ引き渡すよう求めたときに使う。
@@ -41,10 +41,15 @@ prompt="$tmp/prompt.md"; staged="$tmp/staged.diff"
 # この file を見る (別々に取ると、hash した diff と review した diff がずれる)
 snapshot() { git diff --cached --binary --no-ext-diff > "$1"; }
 
-# 1. 既存の staged 変更が無いこと。見つからないのが正常なので if で受ける
+# 1. 既存の staged 変更が無いこと。例外は巡回の再実行で、staged の path 集合が
+#    自分の $paths と完全一致するときだけ続行してよい (他 session の変更を
+#    巻き込まない、の機械的な言い換え)。見つからないのが正常なので if で受ける
 #    (grep の exit 1 をそのまま中断にしない)
 if git status --porcelain | grep '^[^ ?]'; then
-  echo 'stop: 他 session が stage 中' >&2; exit 1
+  diff <(git diff --cached --name-only | sort) \
+       <(printf '%s\n' "${paths[@]}" | sort) ||
+    { echo 'stop: 他 session が stage 中' >&2; exit 1; }
+  echo 'note: 巡回の再実行 — staged は自分の paths と一致'
 fi
 
 # 2. lint。finding があればここで止まる (直して block を頭から流し直す)
@@ -102,13 +107,13 @@ JSON
   echo '```'
 } > "$prompt"
 
-# 5. 独立レビュー1回。exit code が 0 でなければ set -e がここで止める
+# 5. 独立レビュー。exit code が 0 でなければ set -e がここで止める
 review "$KNOWLEDGE_REPO" --schema "$schema" --result "$result" < "$prompt"
 
 # 6. 合格判定: result が非空で、verdict が厳密に pass であること
 test -s "$result"
 [ "$(jq -r '.verdict' "$result")" = pass ] ||
-  { echo 'stop: verdict が pass ではない'; cat "$result"; exit 1; } >&2
+  { echo 'changes_required: blocking を直して「巡回」へ'; cat "$result"; exit 1; } >&2
 
 # review 中に別 session が index を動かしていれば、レビューが通した diff と
 # これから commit する diff は別物になる。同じ取り方で取り直して照合する
@@ -147,7 +152,8 @@ receipt に残す。**余分な path は他 session の変更**なので、巻�
   検査する。作業ツリーだけ直しても違反入りの index は通らないので、直したら
   stage し直す
 - **review の verdict が pass でなければ commit しない**。review が起動できない、
-  timeout、空の result、schema 不一致も pass ではない。同じ召喚を retry しない
+  timeout、空の result、schema 不一致も pass ではない。**同じ diff で同じ召喚を
+  retry しない** — 修正後の再検証は retry ではなく巡回である (下の「巡回」)
 - **push・tag・release・deploy はしない**。local commit まで。その先は user の
   明示的な号令を待つ
 - lint の secret 検査は既知形式のトークンしか見ない (汎用の `password:` 風
@@ -163,9 +169,31 @@ receipt に残す。**余分な path は他 session の変更**なので、巻�
   reviewer が持つ。この skill は経路であって、知識の正しさの権威ではない
 - レビューの prompt・schema・result を tracked file にしない
 
+## 巡回
+
+`changes_required` は終端ではない。
+[deliver/CONTRACT.md「local 所有時の巡回」](../deliver/CONTRACT.md#local-所有時の巡回)
+と同じ形で **pass まで巡回する**:
+
+1. 止まった時点で、前巡の `blocking` 全件を receipt に写す (一時領域は
+   次の実行まで残らない前提で扱う)
+2. `blocking` を**全件**作業ツリーで直し、stage し直す (hook は index を見る)
+3. **bash block を頭から再実行する。** shell 変数と一時 file は実行を
+   跨がない。取り直しの実体はこの再実行である。snapshot・`$fingerprint`・
+   prompt が新しくなり、手順 1 は `$paths` と完全一致する staged を許す
+4. 再実行の prompt には、手順 1 で写した checklist (前巡の blocking +
+   1 件ずつの結果) を末尾に足す。問いと schema・checklist の規則は
+   [CONTRACT の再検証召喚](../deliver/CONTRACT.md#召喚は3種) に従う
+   (この skill では「テスト file の diff」は N/A、「gate の再実行結果」は
+   lint の再実行結果を指す)。粗探しをさせない
+5. `pass` なら block がそのまま照合と commit まで進む
+6. 収束条件は**同一 blocking が 2 巡連続で解消しない**ときだけ。そのときは
+   commit せず止まる。receipt には残件と、「作業ツリーに修正版が残っており、
+   次の起動で投入できる」の定型を必ず書く
+
 ## 失敗の扱い
 
-lint の finding を直せないとき、review が changes_required のときは、commit せず
+lint の finding を直せないとき、巡回が収束条件で止まったときは、commit せず
 理由を receipt に残して次へ進む。**投入できないことを理由に project repository へ
 退避しない** — 投入できないことは、repository を記憶媒体にしてよい理由にならない。
 知識を tracked file として置き直すのも、要約を code comment に埋めるのも同じ違反
