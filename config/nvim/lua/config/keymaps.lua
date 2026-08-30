@@ -38,8 +38,17 @@ map("n", "z<C-l>", function() require("smart-splits").swap_buf_right() end, { de
 map("n", "zv", "<C-w>v", { desc = "Split window vertically" })
 map("n", "zs", "<C-w>s", { desc = "Split window horizontally" })
 
--- zt: Theme picker
-map("n", "zt", "<cmd>Theme<cr>", { desc = "Pick colorscheme" })
+-- zt: Add current line to quickfix as a TODO, in a 5-line bottom window.
+-- Theme picker moved off this key (still available as :Theme).
+map("n", "zt", function()
+  vim.fn.setqflist({ {
+    filename = vim.api.nvim_buf_get_name(0),
+    lnum = vim.api.nvim_win_get_cursor(0)[1],
+    text = "TODO " .. vim.api.nvim_get_current_line(),
+  } }, "a")
+  vim.cmd("botright copen 5")
+  vim.cmd("wincmd p")
+end, { desc = "Add line to quickfix (TODO)" })
 
 -- Diagnostics
 map("n", "gl", vim.diagnostic.open_float, { desc = "Show line diagnostics" })
