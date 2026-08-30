@@ -50,5 +50,26 @@ map("n", "zt", function()
   vim.cmd("wincmd p")
 end, { desc = "Add line to quickfix (TODO)" })
 
+-- Quickfix window: dd removes the item under the cursor and rebuilds the list
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "qf",
+  callback = function(ev)
+    vim.keymap.set("n", "dd", function()
+      -- filetype=qf is shared by quickfix and location-list windows
+      local is_loclist = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].loclist == 1
+      local row = vim.api.nvim_win_get_cursor(0)[1]
+      local items = is_loclist and vim.fn.getloclist(0) or vim.fn.getqflist()
+      if #items == 0 then return end
+      table.remove(items, row)
+      if is_loclist then
+        vim.fn.setloclist(0, items, "r")
+      else
+        vim.fn.setqflist(items, "r")
+      end
+      vim.api.nvim_win_set_cursor(0, { math.min(row, math.max(#items, 1)), 0 })
+    end, { buffer = ev.buf, desc = "Remove quickfix/loclist item" })
+  end,
+})
+
 -- Diagnostics
 map("n", "gl", vim.diagnostic.open_float, { desc = "Show line diagnostics" })
