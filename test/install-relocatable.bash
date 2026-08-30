@@ -6,7 +6,10 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-test_root="$(mktemp -d)"
+# macOS の mktemp -d は /var/folders/... という symlink 越しの path を返す。
+# install も exports.sh も自己位置を `pwd -P` で解決するため、比較する側を
+# 物理 path に揃えないと、同じ場所を指しながら文字列だけが食い違う。
+test_root="$(cd -- "$(mktemp -d)" && pwd -P)"
 trap 'rm -rf "$test_root"' EXIT
 
 guard="test/install-relocatable.bash"
@@ -171,15 +174,16 @@ cmp -s "$home_legacy/.claude/settings.json" \
   "$repo_copy/agent/claude/settings.json" \
   || { echo 'migration must preserve the live settings contents' >&2; exit 1; }
 # 移行後は source から独立している (source を触っても live は動かない)。
-printf '%s\n' '{ "model": "source-moved" }' >>"$repo_copy/agent/claude/settings.json"
-if cmp -s "$home_legacy/.claude/settings.json" \
-  "$repo_copy/agent/claude/settings.json"; then
+# copy には .git が無いので、戻すのは checkout ではなく取っておいた控えである
+# (`head -n -1` は GNU 拡張で、BSD head は負の行数を受け付けない)。
+settings_src="$repo_copy/agent/claude/settings.json"
+cp "$settings_src" "$test_root/settings.json.orig"
+printf '%s\n' '{ "model": "source-moved" }' >>"$settings_src"
+if cmp -s "$home_legacy/.claude/settings.json" "$settings_src"; then
   echo 'migrated copy must be independent of the dotfiles source' >&2
   exit 1
 fi
-git -C "$repo_copy" checkout -- agent/claude/settings.json 2>/dev/null \
-  || printf '%s' "$(head -n -1 "$repo_copy/agent/claude/settings.json")" \
-    >"$repo_copy/agent/claude/settings.json"
+cp "$test_root/settings.json.orig" "$settings_src"
 
 # 実体が repo に無い .deepl.json の link 項目は撤去済みであること。
 if [[ -e "$home1/.config/.deepl.json" || -L "$home1/.config/.deepl.json" ]]; then
