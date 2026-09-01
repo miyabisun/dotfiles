@@ -10,13 +10,61 @@ usage() {
 Usage: bw-ssh-key <command> [args]
 
 Commands:
+  generate <name>          ed25519 鍵を一時領域で生成して Bitwarden へ直接保存し、
+                           公開鍵だけを stdout に出す (~/.ssh には何も書かない)
   save [name] [filename]   ~/.ssh/<filename> の鍵ペアを保存 (default: default id_rsa)
   load [name] [filename]   鍵ペアを ~/.ssh/<filename>(.pub) に復元
   cat [name]               鍵ペアを stdout に出す (1行目: 公開鍵, 以降: 秘密鍵)
+  public <name>            公開鍵だけを stdout に出す
+  private <name>           秘密鍵だけを stdout に出す
   list                     保存済みの鍵名を一覧する
   remove <name>            保存した鍵を削除する
 EOF
     exit 1
+}
+
+cmd_generate() {
+    local name="${1:-}"
+    [ -z "$name" ] && usage
+    require_deps ssh-keygen
+    # 同名 item は上書きしない。鍵の置き換えは明示的な remove を挟ませる。
+    # 一覧の取得失敗は fail-open にせず、そのまま set -e で止める
+    local existing
+    existing=$(list_item_names "$FOLDER")
+    if grep -xF -- "$name" > /dev/null <<< "$existing"; then
+        echo "Error: item '$name' already exists. Run 'bw-ssh-key remove $name' first." >&2
+        exit 1
+    fi
+    # 一時領域: Linux は tmpfs の XDG_RUNTIME_DIR、macOS は TMPDIR、最後は /tmp。
+    # trap で成功・失敗どちらでも鍵の実体を残さない
+    # mktemp -p は GNU 固有なので、BSD/macOS でも通る位置引数 template を使う。
+    # trap の body へ path を補間しない (引用符入り path で壊れる) — 評価時に
+    # global を参照させる
+    BW_SSH_KEY_TMP=$(mktemp -d "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/bw-ssh-key.XXXXXX")
+    trap 'rm -rf -- "$BW_SSH_KEY_TMP"' EXIT
+    local tmp="$BW_SSH_KEY_TMP"
+    ssh-keygen -t ed25519 -N "" -C "$name" -f "$tmp/key" -q
+    { head -n 1 "$tmp/key.pub"; echo; cat "$tmp/key"; } \
+        | rbw_add_item "$FOLDER" "$name"
+    # 公開鍵だけを出す (GitHub / authorized_keys への登録用)
+    head -n 1 "$tmp/key.pub"
+}
+
+cmd_public() {
+    local name="${1:-}" public
+    [ -z "$name" ] && usage
+    public=$(get_item_raw "$FOLDER" "$name" | jq -r '.data.password // empty')
+    if [ -z "$public" ]; then
+        echo "Error: item '$name' has no public key." >&2
+        exit 1
+    fi
+    printf '%s\n' "$public"
+}
+
+cmd_private() {
+    local name="${1:-}"
+    [ -z "$name" ] && usage
+    get_item_notes "$FOLDER" "$name"
 }
 
 cmd_save() {
@@ -78,7 +126,7 @@ cmd_remove() {
 }
 
 case "${1:-}" in
-    save|load|cat|list|remove)
+    generate|save|load|cat|public|private|list|remove)
         cmd="$1"; shift
         require_unlocked
         "cmd_$cmd" "$@"
