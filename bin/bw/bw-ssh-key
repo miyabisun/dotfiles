@@ -12,9 +12,9 @@ Usage: bw-ssh-key <command> [args]
 Commands:
   generate <name>          ed25519 鍵を一時領域で生成して Bitwarden へ直接保存し、
                            公開鍵だけを stdout に出す (~/.ssh には何も書かない)
-  save [name] [filename]   ~/.ssh/<filename> の鍵ペアを保存 (default: default id_rsa)
-  load [name] [filename]   鍵ペアを ~/.ssh/<filename>(.pub) に復元
-  cat [name]               鍵ペアを stdout に出す (1行目: 公開鍵, 以降: 秘密鍵)
+  save <name> [filename]   ~/.ssh/<filename> の鍵ペアを保存 (filename 省略時: id_rsa)
+  load <name> [filename]   鍵ペアを ~/.ssh/<filename>(.pub) に復元 (同上)
+  cat <name>               鍵ペアを stdout に出す (1行目: 公開鍵, 以降: 秘密鍵)
   public <name>            公開鍵だけを stdout に出す
   private <name>           秘密鍵だけを stdout に出す
   list                     保存済みの鍵名を一覧する
@@ -68,7 +68,8 @@ cmd_private() {
 }
 
 cmd_save() {
-    local name="${1:-default}" filename="${2:-id_rsa}"
+    local name="${1:-}" filename="${2:-id_rsa}"
+    [ -z "$name" ] && usage
     local private_path="$HOME/.ssh/$filename" public_path="$HOME/.ssh/$filename.pub"
     for f in "$private_path" "$public_path"; do
         if [ ! -f "$f" ]; then
@@ -83,7 +84,8 @@ cmd_save() {
 }
 
 cmd_load() {
-    local name="${1:-default}" filename="${2:-id_rsa}"
+    local name="${1:-}" filename="${2:-id_rsa}"
+    [ -z "$name" ] && usage
     local private_path="$HOME/.ssh/$filename" public_path="$HOME/.ssh/$filename.pub"
     local item private public
     item=$(get_item_raw "$FOLDER" "$name")
@@ -106,7 +108,8 @@ cmd_load() {
 }
 
 cmd_cat() {
-    local name="${1:-default}" item
+    local name="${1:-}" item
+    [ -z "$name" ] && usage
     item=$(get_item_raw "$FOLDER" "$name")
     jq -r '.data.password // empty' <<< "$item"
     echo

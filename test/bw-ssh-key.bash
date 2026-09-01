@@ -147,4 +147,18 @@ esac
 [ ! -e "$(dirname "$quote_key")" ] || fail 'temp dir survived under quoted path'
 [ ! -e "$(dirname "$keyfile")" ] || fail 'temp dir survived successful generate'
 
+# 9. no implicit default name: save/load/cat without a name refuse with usage
+for sub in save load cat; do
+  if "$bw_ssh_key" "$sub" > /dev/null 2>&1; then
+    fail "$sub without a name succeeded (implicit 'default' name survived)"
+  fi
+done
+
+# 10. filename keeps its default: save with only a name proceeds to the
+# ~/.ssh/id_rsa existence check instead of rejecting with usage
+if "$bw_ssh_key" save only-name > "$test_root/save-name.out" 2>&1; then
+  fail 'save with a bare name succeeded without key files'
+fi
+grep -q 'id_rsa' "$test_root/save-name.out" || fail 'save did not fall back to id_rsa'
+
 echo 'bw-ssh-key contract: ok'
