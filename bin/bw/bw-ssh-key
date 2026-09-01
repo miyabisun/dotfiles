@@ -14,7 +14,6 @@ Commands:
                            公開鍵だけを stdout に出す (~/.ssh には何も書かない)
   save <name> [filename]   ~/.ssh/<filename> の鍵ペアを保存 (filename 省略時: id_rsa)
   load <name> [filename]   鍵ペアを ~/.ssh/<filename>(.pub) に復元 (同上)
-  cat <name>               鍵ペアを stdout に出す (1行目: 公開鍵, 以降: 秘密鍵)
   public <name>            公開鍵だけを stdout に出す
   private <name>           秘密鍵だけを stdout に出す
   list                     保存済みの鍵名を一覧する
@@ -107,15 +106,6 @@ cmd_load() {
     fi
 }
 
-cmd_cat() {
-    local name="${1:-}" item
-    [ -z "$name" ] && usage
-    item=$(get_item_raw "$FOLDER" "$name")
-    jq -r '.data.password // empty' <<< "$item"
-    echo
-    jq -r '.notes // empty' <<< "$item"
-}
-
 cmd_list() {
     list_item_names "$FOLDER"
 }
@@ -129,7 +119,7 @@ cmd_remove() {
 }
 
 case "${1:-}" in
-    generate|save|load|cat|public|private|list|remove)
+    generate|save|load|public|private|list|remove)
         cmd="$1"; shift
         require_unlocked
         "cmd_$cmd" "$@"
