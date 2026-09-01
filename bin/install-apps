@@ -57,7 +57,7 @@ install_agent_clis() {
 # Install the latest public GitHub release and verify its published checksum.
 # ---------------------------------------------------------------------------
 install_mux() (
-  latest_url="https://github.com/miyabisun/mux/releases/latest"
+  latest_url="https://github.com/miyabi-sunny-side/mux-cli/releases/latest"
   target="$HOME/.local/bin/mux"
 
   if [ -e "$target" ] || [ -L "$target" ]; then
@@ -94,12 +94,16 @@ install_mux() (
       ;;
   esac
 
-  redirect_url="$(curl --proto '=https' --tlsv1.2 -fsS \
-    -o /dev/null -w '%{redirect_url}' "$latest_url")"
-  latest_version="${redirect_url##*/}"
-  if ! printf '%s\n' "$latest_version" \
-    | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-    echo "==> Cannot determine latest mux version from $redirect_url" >&2
+  # repository 改名の redirect を何段挟んでも最終 URL (…/releases/tag/vX.Y.Z)
+  # から tag と repository 基点を導出する
+  effective_url="$(curl --proto '=https' --tlsv1.2 -fsSL \
+    -o /dev/null -w '%{url_effective}' "$latest_url")"
+  repo_base="${effective_url%/releases/tag/*}"
+  latest_version="${effective_url#*/releases/tag/}"
+  if [ "$repo_base" = "$effective_url" ] \
+    || ! printf '%s\n' "$latest_version" \
+      | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "==> Cannot determine latest mux version from $effective_url" >&2
     return 1
   fi
 
@@ -112,7 +116,7 @@ install_mux() (
     [ -z "$target_tmp" ] || rm -f "$target_tmp"
   }
   trap cleanup EXIT
-  release_url="https://github.com/miyabisun/mux/releases/download/${latest_version}"
+  release_url="$repo_base/releases/download/${latest_version}"
 
   echo "==> Installing mux ${latest_version}..."
   curl --proto '=https' --tlsv1.2 -fsSL \
@@ -218,12 +222,14 @@ install_pen() (
       ;;
   esac
 
-  redirect_url="$(curl --proto '=https' --tlsv1.2 -fsS \
-    -o /dev/null -w '%{redirect_url}' "$latest_url")"
-  latest_version="${redirect_url##*/}"
-  if ! printf '%s\n' "$latest_version" \
-    | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-    echo "==> Cannot determine latest pen version from $redirect_url" >&2
+  effective_url="$(curl --proto '=https' --tlsv1.2 -fsSL \
+    -o /dev/null -w '%{url_effective}' "$latest_url")"
+  repo_base="${effective_url%/releases/tag/*}"
+  latest_version="${effective_url#*/releases/tag/}"
+  if [ "$repo_base" = "$effective_url" ] \
+    || ! printf '%s\n' "$latest_version" \
+      | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "==> Cannot determine latest pen version from $effective_url" >&2
     return 1
   fi
 
@@ -242,7 +248,7 @@ install_pen() (
     [ -z "$target_tmp" ] || rm -f "$target_tmp"
   }
   trap cleanup EXIT
-  release_url="https://github.com/miyabi-sunny-side/pen-cli/releases/download/${latest_version}"
+  release_url="$repo_base/releases/download/${latest_version}"
 
   echo "==> Installing pen ${latest_version}..."
   curl --proto '=https' --tlsv1.2 -fsSL \
@@ -454,10 +460,24 @@ install_meiseki() (
 
 # ---------------------------------------------------------------------------
 
-install_agent_clis
-install_mux
-install_pen
-install_delta
-install_rbw
-install_obscura
-install_meiseki
+# 子プロセス起動用の入口。step を 1 つ実行して終わる (下の runner が使う)
+if [ "${1:-}" = "--run-step" ]; then
+  "$2"
+  exit 0
+fi
+
+# 各 installer は子プロセスで隔離実行する。理由は 2 つ:
+# 1 つの失敗が残り全部を巻き添えにしない (失敗は集計して最後に非0で返す)。
+# `fn || …` の条件文脈は関数内の set -e を無効にするが、子プロセスなら
+# installer 内部の fail-fast がそのまま生きる。
+failed=""
+for step in install_agent_clis install_mux install_pen install_delta \
+  install_rbw install_obscura install_meiseki; do
+  if ! bash "$0" --run-step "$step"; then
+    failed="$failed $step"
+  fi
+done
+if [ -n "$failed" ]; then
+  echo "==> Failed:$failed" >&2
+  exit 1
+fi

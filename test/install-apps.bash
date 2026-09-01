@@ -66,8 +66,13 @@ set -euo pipefail
 url=""
 output=""
 write_out=""
+follow_redirects=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    -fsSL | -L)
+      follow_redirects=1
+      shift
+      ;;
     -o)
       output="$2"
       shift 2
@@ -92,14 +97,17 @@ printf '%s\n' "$url" >>"$INSTALL_APPS_TEST_LOG"
 case "$url" in
   https://chatgpt.com/codex/install.sh) command_name=codex ;;
   https://x.ai/cli/install.sh) command_name=grok ;;
-  https://github.com/miyabisun/mux/releases/latest)
-    test "$write_out" = '%{redirect_url}'
-    printf '%s%s' 'https://github.com/miyabisun/mux/releases/tag/' \
+  https://github.com/miyabi-sunny-side/mux-cli/releases/latest)
+    test "$write_out" = '%{url_effective}'
+    test -n "$follow_redirects"
+    # 改名を模す: 要求した repo と別の基点へ着地させ、以降の download が
+    # この基点から導出されることを検証する
+    printf '%s%s' 'https://github.com/miyabi-sunny-side/mux-cli-renamed/releases/tag/' \
       "${INSTALL_APPS_TEST_MUX_LATEST_TAG:-v0.1.1}"
     exit 0
     ;;
-  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-linux-x86_64.tar.gz|\
-  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-macos-aarch64.tar.gz)
+  https://github.com/miyabi-sunny-side/mux-cli-renamed/releases/download/v0.1.1/mux-linux-x86_64.tar.gz|\
+  https://github.com/miyabi-sunny-side/mux-cli-renamed/releases/download/v0.1.1/mux-macos-aarch64.tar.gz)
     archive_root="${output}.root"
     mkdir -p "$archive_root"
     cat >"$archive_root/mux" <<'MUX'
@@ -130,15 +138,16 @@ MUX
     exit 0
     ;;
   https://github.com/miyabi-sunny-side/pen-cli/releases/latest)
-    test "$write_out" = '%{redirect_url}'
-    printf '%s%s' 'https://github.com/miyabi-sunny-side/pen-cli/releases/tag/' \
+    test "$write_out" = '%{url_effective}'
+    test -n "$follow_redirects"
+    printf '%s%s' 'https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/tag/' \
       "${INSTALL_APPS_TEST_PEN_LATEST_TAG:-v0.1.0}"
     exit 0
     ;;
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-linux-x86_64.tar.gz|\
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-macos-aarch64.tar.gz|\
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.2/pen-linux-x86_64.tar.gz|\
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.2/pen-macos-aarch64.tar.gz)
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-linux-x86_64.tar.gz|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-macos-aarch64.tar.gz|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-linux-x86_64.tar.gz|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-macos-aarch64.tar.gz)
     archive_root="${output}.root"
     mkdir -p "$archive_root"
     if [ -n "${INSTALL_APPS_TEST_PEN_LEGACY_ARCHIVE:-}" ]; then
@@ -162,10 +171,10 @@ PEN
     rm -rf "$archive_root"
     exit 0
     ;;
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-linux-x86_64.tar.gz.sha256|\
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.0/pen-macos-aarch64.tar.gz.sha256|\
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.2/pen-linux-x86_64.tar.gz.sha256|\
-  https://github.com/miyabi-sunny-side/pen-cli/releases/download/v0.1.2/pen-macos-aarch64.tar.gz.sha256)
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-macos-aarch64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-macos-aarch64.tar.gz.sha256)
     archive_path="${output%.sha256}"
     archive_name="$(basename "$archive_path")"
     if [ -n "${INSTALL_APPS_TEST_BAD_PEN_CHECKSUM:-}" ]; then
@@ -176,8 +185,8 @@ PEN
     printf '%s  %s\n' "$digest" "$archive_name" >"$output"
     exit 0
     ;;
-  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-linux-x86_64.tar.gz.sha256|\
-  https://github.com/miyabisun/mux/releases/download/v0.1.1/mux-macos-aarch64.tar.gz.sha256)
+  https://github.com/miyabi-sunny-side/mux-cli-renamed/releases/download/v0.1.1/mux-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/mux-cli-renamed/releases/download/v0.1.1/mux-macos-aarch64.tar.gz.sha256)
     archive_path="${output%.sha256}"
     archive_name="$(basename "$archive_path")"
     if [ -n "${INSTALL_APPS_TEST_BAD_MUX_CHECKSUM:-}" ]; then
@@ -248,7 +257,7 @@ PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
 test "$(grep -Fc 'https://cursor.com/install' "$log")" -eq 0
 test "$(grep -Fc 'https://chatgpt.com/codex/install.sh' "$log")" -eq 1
 test "$(grep -Fc 'https://x.ai/cli/install.sh' "$log")" -eq 1
-test "$(grep -Fc 'https://github.com/miyabisun/mux/releases/latest' "$log")" -eq 1
+test "$(grep -Fc 'https://github.com/miyabi-sunny-side/mux-cli/releases/latest' "$log")" -eq 1
 test "$(grep -Fc 'mux-linux-x86_64.tar.gz' "$log")" -eq 2
 grep -F "Codex CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Grok CLI already installed" "$test_root/second-run.out" >/dev/null
@@ -359,7 +368,7 @@ fi
 test "$mux_update_failure_before" = \
   "$(sha256_file "$mux_update_failure_home/.local/bin/mux")"
 test ! -e "$test_root/mux-update-failure-curl.log" \
-  || test "$(grep -Fc 'github.com/miyabisun/mux' \
+  || test "$(grep -Fc 'github.com/miyabi-sunny-side/mux-cli' \
     "$test_root/mux-update-failure-curl.log" || true)" -eq 0
 test -z "$(find "$mux_update_failure_tmp" -mindepth 1 -print -quit)"
 
@@ -385,7 +394,7 @@ fi
 grep -F "Refusing to replace unrecognized mux target" "$test_root/unknown-mux.out" >/dev/null
 test "$unknown_mux_before" = "$(sha256_file "$unknown_mux_home/.local/bin/mux")"
 test ! -e "$test_root/unknown-mux-curl.log" \
-  || test "$(grep -Fc 'github.com/miyabisun/mux' \
+  || test "$(grep -Fc 'github.com/miyabi-sunny-side/mux-cli' \
     "$test_root/unknown-mux-curl.log" || true)" -eq 0
 test -z "$(find "$unknown_mux_tmp" -mindepth 1 -print -quit)"
 
@@ -423,9 +432,32 @@ if PATH="$fake_bin:$invalid_mux_tag_home/.local/bin:/usr/bin:/bin" \
 fi
 
 grep -F "Cannot determine latest mux version" "$test_root/invalid-mux-tag.out" >/dev/null
+grep -F "==> Failed: install_mux" "$test_root/invalid-mux-tag.out" >/dev/null
 test ! -e "$invalid_mux_tag_home/.local/bin/mux"
-test "$(grep -Fc '/releases/download/' "$test_root/invalid-mux-tag-curl.log" || true)" -eq 0
+test "$(grep -Fc 'mux-cli-renamed/releases/download/' "$test_root/invalid-mux-tag-curl.log" || true)" -eq 0
+# 失敗した installer の後続は巻き添えにならない
+test -x "$invalid_mux_tag_home/.local/bin/pen"
 test -z "$(find "$invalid_mux_tag_tmp" -mindepth 1 -print -quit)"
+
+slash_mux_tag_home="$test_root/slash-mux-tag-home"
+slash_mux_tag_tmp="$test_root/slash-mux-tag-tmp"
+prepare_mux_case "$slash_mux_tag_home" "$slash_mux_tag_tmp"
+if PATH="$fake_bin:$slash_mux_tag_home/.local/bin:/usr/bin:/bin" \
+  HOME="$slash_mux_tag_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/slash-mux-tag-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/slash-mux-tag-curl-args.log" \
+  INSTALL_APPS_TEST_MUX_LATEST_TAG=prefix/v9.9.9 \
+  INSTALL_APPS_TEST_PEN_LATEST_TAG=prefix/v9.9.9 \
+  TMPDIR="$slash_mux_tag_tmp" \
+  bash "$repo_root/bin/install-apps" >"$test_root/slash-mux-tag.out" 2>&1; then
+  echo "install-apps should reject slash-containing release tags" >&2
+  exit 1
+fi
+grep -F "Cannot determine latest mux version" "$test_root/slash-mux-tag.out" >/dev/null
+grep -F "Cannot determine latest pen version" "$test_root/slash-mux-tag.out" >/dev/null
+test ! -e "$slash_mux_tag_home/.local/bin/mux"
+test ! -e "$slash_mux_tag_home/.local/bin/pen"
+test "$(grep -Fc '/releases/download/' "$test_root/slash-mux-tag-curl.log" || true)" -eq 0
 
 bad_mux_checksum_home="$test_root/bad-mux-checksum-home"
 bad_mux_checksum_tmp="$test_root/bad-mux-checksum-tmp"
