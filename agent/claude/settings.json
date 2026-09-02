@@ -4,7 +4,8 @@
       "Skill(deliver)",
       "Skill(git)",
       "Skill(knowledge-read)",
-      "Bash(~/.local/bin/notify-file-permission.sh:*)"
+      "Bash(~/.local/bin/notify-file-permission.sh:*)",
+      "Bash(ssh sandbox *)"
     ],
     "deny": [
       "Bash(bw:*)",
