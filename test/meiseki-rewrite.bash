@@ -20,10 +20,10 @@ fnm_bin="$fake_home/.local/share/fnm/aliases/default/bin"
 plugin_dir="$fake_home/.local/share/meiseki"
 key_file="$fake_home/.cli-proxy-api/client.key"
 mkdir -p "$fnm_bin" "$plugin_dir/.claude-plugin" \
-  "$plugin_dir/skills/meiseki/references" "$fake_home/.cli-proxy-api"
+  "$plugin_dir/.agents/skills/meiseki/references" "$fake_home/.cli-proxy-api"
 printf '%s\n' '{"name":"meiseki"}' >"$plugin_dir/.claude-plugin/plugin.json"
-printf '%s\n' '# meiseki skill' >"$plugin_dir/skills/meiseki/SKILL.md"
-printf '%s\n' '{}' >"$plugin_dir/skills/meiseki/references/textlint.config.json"
+printf '%s\n' '# meiseki skill' >"$plugin_dir/.agents/skills/meiseki/SKILL.md"
+printf '%s\n' '{}' >"$plugin_dir/.agents/skills/meiseki/references/textlint.config.json"
 printf '%s\n' 'proxy-key-value' >"$key_file"
 
 stub="$test_root/claude-stub"

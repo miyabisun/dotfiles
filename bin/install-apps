@@ -448,7 +448,7 @@ install_meiseki() (
   echo "==> Installing meiseki..."
   git clone --depth 1 "$repo_url" "$tmpdir/meiseki"
   if [ ! -f "$tmpdir/meiseki/.claude-plugin/plugin.json" ] \
-    || [ ! -f "$tmpdir/meiseki/skills/meiseki/SKILL.md" ]; then
+    || [ ! -f "$tmpdir/meiseki/.agents/skills/meiseki/SKILL.md" ]; then
     echo "==> Cloned meiseki does not look like the meiseki plugin" >&2
     return 1
   fi

@@ -10,7 +10,7 @@
 # shellcheck disable=SC2034,SC2154
 
 meiseki_home="$HOME/.local/share/meiseki"
-skill_dir="$meiseki_home/skills/meiseki"
+skill_dir="$meiseki_home/.agents/skills/meiseki"
 key_file="$HOME/.cli-proxy-api/client.key"
 base_url="http://127.0.0.1:8317"
 
@@ -27,6 +27,7 @@ build_textlint_cmd() { # <config> <target>
         npx --min-release-age=7 --yes
         --package textlint@14.8.4
         --package textlint-rule-preset-ja-technical-writing@10.0.2
+        --package textlint-rule-preset-ai-writing@1.1.0
         --package textlint-rule-prh@6.1.0
         textlint -c "$1" -f json "$2"
     )

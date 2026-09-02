@@ -679,11 +679,11 @@ shift 2
 test "${1:-}" = "https://github.com/bamboo-nova/meiseki.git"
 dest="$2"
 
-mkdir -p "$dest/.claude-plugin" "$dest/skills/meiseki/references" \
+mkdir -p "$dest/.claude-plugin" "$dest/.agents/skills/meiseki/references" \
   "$dest/hooks" "$dest/scripts" "$dest/examples"
 printf '%s\n' '{"name":"meiseki"}' >"$dest/.claude-plugin/plugin.json"
-printf '%s\n' '# meiseki skill' >"$dest/skills/meiseki/SKILL.md"
-printf '%s\n' '{}' >"$dest/skills/meiseki/references/textlint.config.json"
+printf '%s\n' '# meiseki skill' >"$dest/.agents/skills/meiseki/SKILL.md"
+printf '%s\n' '{}' >"$dest/.agents/skills/meiseki/references/textlint.config.json"
 printf '%s\n' license >"$dest/LICENSE"
 printf '%s\n' '# meiseki' >"$dest/README.md"
 printf '%s\n' '{"name":"meiseki"}' >"$dest/package.json"
@@ -704,8 +704,8 @@ PATH="$meiseki_stub_bin:$fake_bin:$meiseki_home/.local/bin:/usr/bin:/bin" \
 
 grep -F "meiseki installed ($meiseki_dest)" "$test_root/meiseki-1.out" >/dev/null
 for meiseki_member in .claude-plugin/plugin.json \
-  skills/meiseki/SKILL.md \
-  skills/meiseki/references/textlint.config.json \
+  .agents/skills/meiseki/SKILL.md \
+  .agents/skills/meiseki/references/textlint.config.json \
   LICENSE README.md package.json package-lock.json \
   hooks/meiseki-hook.mjs scripts/lint.mjs examples/before.md; do
   if [ ! -f "$meiseki_dest/$meiseki_member" ]; then
@@ -726,7 +726,7 @@ PATH="$meiseki_stub_bin:$fake_bin:$meiseki_home/.local/bin:/usr/bin:/bin" \
 
 grep -F "meiseki already installed ($meiseki_dest)" "$test_root/meiseki-2.out" >/dev/null
 test "$(grep -Fxc clone "$meiseki_git_log")" -eq 1
-test -f "$meiseki_dest/skills/meiseki/SKILL.md"
+test -f "$meiseki_dest/.agents/skills/meiseki/SKILL.md"
 test -z "$(find "$meiseki_tmp" -mindepth 1 -print -quit)"
 
 echo "install-apps Linux/macOS agent CLI test: pass"

@@ -14,7 +14,7 @@ trap 'rm -rf "$test_root"' EXIT
 
 fake_home="$test_root/home"
 fnm_bin="$fake_home/.local/share/fnm/aliases/default/bin"
-skill_dir="$fake_home/.local/share/meiseki/skills/meiseki"
+skill_dir="$fake_home/.local/share/meiseki/.agents/skills/meiseki"
 config_file="$skill_dir/references/textlint.config.json"
 # claude / client key / plugin manifest はあえて置かない。決定論層がそれらを
 # 要求しないことを、無い状態で通ることで測る。
@@ -101,6 +101,16 @@ cmp "$body_file" "$npx_input" \
   || fail 'lint did not pass the body through to textlint verbatim'
 [[ "$(sha256sum "$input_file" | awk '{ print $1 }')" == "$body_sha" ]] \
   || fail 'meiseki-lint must not edit the input file in place'
+
+# textlint は upstream package.json の lint script と同じ 4 rule package で呼ばれる
+# (1 つでも解決できないと textlint は config 全体を捨てて "No rules found" になる)
+for pkg in textlint@14.8.4 \
+  textlint-rule-preset-ja-technical-writing@10.0.2 \
+  textlint-rule-preset-ai-writing@1.1.0 \
+  textlint-rule-prh@6.1.0; do
+  grep -Fxq -- "$pkg" "$npx_args" || fail "missing textlint package: $pkg"
+done
+grep -Eq '&&|>|<|mktemp' "$npx_args" && fail 'npx argv must stay a single command'
 
 # textlint は meiseki の config と JSON formatter で呼ばれる
 grep -Fxq -- '-f' "$npx_args" || fail 'missing -f flag for textlint'
