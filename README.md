@@ -82,7 +82,7 @@ Each command is grouped by domain and takes a subcommand; run it with no argumen
 |---|---|---|
 | `bw-secret` | CLI | `save <name> <value>` / `load` / `list` / `remove <name>` |
 | `bw-ssh-key` | SSH Keys | `generate <name>` / `save <name> [filename]` / `load <name> [filename]` / `public <name>` / `private <name>` / `list` / `remove <name>` |
-| `bw-ssh-config` | SSH Config | `save [name]` / `load` / `list` / `remove <name>` |
+| `bw-ssh-config` | SSH Config | `save [name]` / `load <name>` / `load-all` / `cat <name>` / `list` / `remove <name>` |
 | `bw-age` | Age Keys | `create [name]` / `save [name] [file]` / `identity [name]` / `recipient [name]` / `list` / `remove <name>` |
 | `bw-env` | Env Files | `save <name> [file]` / `load <name> [file]` / `diff <name> [file]` / `get <name> <var>` / `keys <name>` / `list` / `remove <name>` |
 

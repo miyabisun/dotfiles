@@ -12,7 +12,8 @@ Usage: bw-ssh-config <command> [args]
 
 Commands:
   save [name]    ~/.ssh/conf.d/<name>.conf を保存 (name 省略時は fzf で選択)
-  load           全 config を ~/.ssh/conf.d/ に復元する
+  load <name>    保存した config を ~/.ssh/conf.d/<name>.conf に復元する
+  load-all       全 config を ~/.ssh/conf.d/ に復元する
   cat <name>     保存した config を stdout に出す
   list           保存済みの config 名を一覧する
   remove <name>  保存した config を削除する
@@ -37,14 +38,30 @@ cmd_save() {
     echo "Saved '$name' to '$FOLDER' folder."
 }
 
-cmd_load() {
-    local name config_file
+# 1 件を ~/.ssh/conf.d/<name>.conf に復元する (取得に失敗したら既存ファイルを残す)
+restore_config() { # <name>
+    local config_file="$CONF_DIR/$1.conf" tmp
     mkdir -p "$CONF_DIR"
+    tmp=$(mktemp "$CONF_DIR/.$1.XXXXXX")
+    if ! get_item_notes "$FOLDER" "$1" | base64 -d > "$tmp"; then
+        rm -f "$tmp"
+        exit 1
+    fi
+    chmod 600 "$tmp"
+    mv "$tmp" "$config_file"
+    echo "Restored $config_file"
+}
+
+cmd_load() {
+    local name="${1:-}"
+    [ -z "$name" ] && usage
+    restore_config "$name"
+}
+
+cmd_load_all() {
+    local name
     list_item_names "$FOLDER" | while read -r name; do
-        config_file="$CONF_DIR/${name}.conf"
-        get_item_notes "$FOLDER" "$name" | base64 -d > "$config_file"
-        chmod 600 "$config_file"
-        echo "Restored $config_file"
+        restore_config "$name"
     done
     echo "Done."
 }
@@ -68,8 +85,12 @@ cmd_remove() {
 }
 
 case "${1:-}" in
-    save|load|cat|list|remove)
-        cmd="$1"; shift
+    load)
+        # name の検査は vault の unlock より前に行う
+        [ -n "${2:-}" ] || usage
+        ;&
+    save|load-all|cat|list|remove)
+        cmd="${1//-/_}"; shift
         require_unlocked
         "cmd_$cmd" "$@"
         ;;
