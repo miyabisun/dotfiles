@@ -47,6 +47,13 @@ herdr の label (`settings/chat`) とは**一致しない**。label から宛先
     herdr-addr <workspace>/<tab>  その tab の agent 1 体
     herdr-addr <tab>              自分と同じ workspace の tab
 
+`herdr-addr` は dotfiles の `bin/install` が `~/.local/bin` へ link する。
+`command -v herdr-addr` で見つからなければ、まず `~/.local/bin/herdr-addr`
+をフルパスで叩く (PATH に `~/.local/bin` が無いだけの場合)。それも無ければ
+link が張られていないので `~/projects/miyabisun/dotfiles/bin/install` を
+実行して (自セッションで拒否されたら user に案内して) から続ける。
+無いまま身元確認を繰り返して宛先を探さない。
+
 出力は header 無しの TSV で、1 行 1 agent:
 
     label  pane  runtime  state  pid  uds  cwd
