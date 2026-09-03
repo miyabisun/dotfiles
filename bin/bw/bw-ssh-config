@@ -84,12 +84,11 @@ cmd_remove() {
     echo "Removed '$name'."
 }
 
+# load の name 検査は vault の unlock より前に行う
+[ "${1:-}" = load ] && [ -z "${2:-}" ] && usage
+
 case "${1:-}" in
-    load)
-        # name の検査は vault の unlock より前に行う
-        [ -n "${2:-}" ] || usage
-        ;&
-    save|load-all|cat|list|remove)
+    save|load|load-all|cat|list|remove)
         cmd="${1//-/_}"; shift
         require_unlocked
         "cmd_$cmd" "$@"
