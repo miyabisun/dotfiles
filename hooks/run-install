@@ -1,0 +1,21 @@
+#!/bin/sh
+# git hook (post-commit / post-merge): 主 checkout が動いたら bin/install を回す。
+#
+# sandbox は sync-checkouts timer が ff のたびに ./bin/install を呼ぶが、母艦は
+# この checkout 上で commit するので、commit / merge 自体を引き金にする。
+# 配線は bin/install が core.hooksPath=hooks を repo-local に設定する。
+#
+# linked worktree (rebase / merge skill が作る一時 checkout) では走らせない —
+# symlink がそこを指すと worktree の削除で全部切れる。
+# installer の失敗で git 操作を失敗させない。installer の出力は捨て、失敗時に
+# stderr へ 1 行だけ残す (詳細は bin/install を手で回して見る)。
+set -u
+
+git_dir=$(git rev-parse --git-dir) || exit 0
+common_dir=$(git rev-parse --git-common-dir) || exit 0
+[ "$git_dir" = "$common_dir" ] || exit 0
+
+root=$(git rev-parse --show-toplevel) || exit 0
+cd "$root" || exit 0
+./bin/install >/dev/null 2>&1 || echo "dotfiles: bin/install failed (run it by hand to see why)" >&2
+exit 0

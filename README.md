@@ -17,6 +17,7 @@ The `bin/install` script sets up symbolic links for the following configuration 
 
 ### Root Directory
 - `~/.editorconfig` -> `.editorconfig`
+- Sets repo-local `core.hooksPath` to `hooks/`. After that, every commit or merge in the main checkout re-runs `bin/install` via `hooks/run-install`. Linked worktrees are skipped.
 
 
 ### SSH Directory

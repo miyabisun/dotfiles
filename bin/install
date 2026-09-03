@@ -31,6 +31,12 @@ function local_config () {
 
 link ".editorconfig"
 
+# 主 checkout で commit / merge したら bin/install を再実行する (hooks/run-install)。
+# git checkout でない配置 (tar 展開など) では配線しない
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git config core.hooksPath hooks
+fi
+
 
 mkdir -p "$HOME/.ssh/conf.d"
 link "ssh/config" "$HOME/.ssh"
