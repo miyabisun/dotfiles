@@ -2,9 +2,8 @@
 # intentionally stay outside this repository.
 model_reasoning_effort = "medium"
 personality = "pragmatic"
-approval_policy = "on-request"
-approvals_reviewer = "auto_review"
-sandbox_mode = "workspace-write"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 web_search = "live"
 notify = ["notify-turn-end.sh"]
 service_tier = "default"
