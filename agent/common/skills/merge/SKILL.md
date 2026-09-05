@@ -16,15 +16,16 @@ description: >-
 
 ## 手順
 
-1. **origin を最新化し、既定ブランチを解決する**: `git fetch` (必要なら
+1. **origin を最新化し、既定ブランチを解決する**: `git fetch origin` (必要なら
    `--prune`)。既定ブランチ名は **remote HEAD から解決する** —
    `git symbolic-ref refs/remotes/origin/HEAD` など remote が申告する値を使い、
    `master` や `main` と決め打ちしない。解決できなければ推測せず報告して止まる。
 2. **fast-forward できるか見る**:
    `git merge-base --is-ancestor origin/<default> <feature>` が真なら、既定
    ブランチは feature の祖先である。**既定ブランチを feature の HEAD まで
-   `--ff-only` で前進させ、force なしで push する。テストも子 agent も
-   レビューも行わない。**
+   `--ff-only` で前進させ、`git push origin <default>:<default>` で送信する。
+   originの既定ブランチへのpush成功までが統合である。force、テスト、子agent、
+   レビューは不要。**
 3. **偽なら先に載せ直す**: 歴史が分岐しているか feature が遅れている。
    `rebase` skill で feature を `origin/<default>` の上へ載せ直し、戻ってから
    手順 2 の ff で統合する。持ち替えたことを 1 行伝えるだけでよく、追加の確認は
@@ -35,7 +36,7 @@ description: >-
    確認し、そのworktreeを `git worktree remove <path>` で外してからbranchを削除する。
    未保存の変更や他者が使用中のworktreeは削除せず、統合成功とcleanup残件を分けて報告する。
    削除済み remote branch の remote-tracking ref を掃除するのは
-   **`git fetch --prune`** (または `git remote prune origin`) で、こちらは手元の
+   **`git fetch origin --prune`** (または `git remote prune origin`) で、こちらは手元の
    残骸を捨てるだけで remote の branch は消さない。**この 2 つは別の操作である。**
    push に失敗したなら削除しない。
 
