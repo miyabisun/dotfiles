@@ -53,10 +53,12 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
 
 ## 中断・復帰
 
-親の作業メモはrepository外に置き、task ID、worktree、子のhandle、claim期限、
-完了工程のSHA・tag・CI URL、次の工程だけを随時保存する。タスク状態の正本は台帳。
-待機中もleaseを更新する。子の観測timeoutは終了ではなく、同じhandleを確認する。
-親が再開したら台帳・Git・CI・子の稼働を照合し、既に統合・公開済みの工程は飛ばす。
+worktree、子のhandle、完了工程のSHA・tag・CI URL、次の工程は、工程の境界で
+[台帳のcheckpoint](references/queue.md#引き継ぎ情報)へ保存する。未送信payloadと詳細ログは
+repository外へ保管し、その参照先を残す。待機中もleaseを更新する。
+子の観測timeoutは終了ではなく、同じhandleを確認する。親が再開したらcheckpointを読み、
+台帳・Git・CI・子の実在と稼働を照合し、既に統合・公開済みの工程は飛ばす。
+新claimでは必要な引き継ぎ値だけを保存し直す。前の実行の状態や所有権を引き継いだとみなさない。
 CI失敗は原因を修正して再確認する。公開済みtagは動かさず、追加releaseが必要なら
 同じ依頼の範囲でbump-tagを使う。失敗を理由に最初からdeliverやbumpを繰り返さない。
 

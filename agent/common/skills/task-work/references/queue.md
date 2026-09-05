@@ -36,3 +36,16 @@ taskの対象SHAに対応する今回の達成分だけを渡す。証拠の説�
 返された`report_id`の原文はMCP `run_get({id:"…"})`で取得できる。送信失敗なら保存した同じpayloadを
 再送してから次のclaimへ進む。同claim・同payloadは冪等。内容不一致409なら、保存した
 元payloadとtaskの`report_id`を照合し、別内容で上書きしない。
+
+## 引き継ぎ情報
+
+MCP `task_checkpoint_get({id,execution_id?})`で引き継ぎ値を取得する。execution_idはclaim ID。
+省略時は各実行のcheckpointを取得でき、未claimなら空。期限切れ後も過去の値を読める。
+応答は`{task_id,active_claim_id,checkpoints:[...]}`。手元で所有するclaimとactive_claim_idを照合し、
+現在のcheckpointを選ぶ。各checkpointは`execution_id,revision,updated_at,values`を持つ。
+
+更新は`task_checkpoint_update({id,claim_id,expected_revision,set?,delete_keys?})`。
+getで得たrevisionを渡し、setオブジェクトで必要なキーだけ更新、delete_keys配列で明示削除する。
+更新が競合したら再取得して必要なキーだけ再適用する。claim喪失なら更新を押し通さない。
+JSON値は引き継ぎ用であり、正式なtask状態・milestone・leaseを変更しない。
+branch/worktree、agent、CI URL、next_step、詳細ログの参照先などを保存し、認証情報は入れない。
