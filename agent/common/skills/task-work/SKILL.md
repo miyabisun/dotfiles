@@ -16,6 +16,8 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
 ## 引き取る
 
 1. `knowledge-read` と `git` を読み、MCPでタスク一覧とproduct情報を取得する。
+   着手する製品は`product_get({id})`でrepository・local_path・releasesを読む。
+   未設定値は実在と運用設定を確認して`product_update`で補う。releasesの未設定とfalseを混同しない。
    全件は通常タスクのdraft・ready・再開対象blocked。closedとarchivedは除く。
    詳細は着手する1件だけ取得してfileへ保存し、子へ参照先を渡す。親のcontextには
    ID・product・状態・短い成果を残し、本文・legacy・ログ全文を毎回展開しない。
@@ -28,7 +30,7 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
 
 ## 1件を完走する
 
-1. productのrepositoryとローカルbare repositoryを照合し、originの既定ブランチ
+1. productのlocal_pathを入口にrepositoryとGitのoriginを照合し、originの既定ブランチ
    からタスク専用branch・worktreeを作る。通常cloneならそのrepositoryで同じ操作を
    行う。再開時は記録した自分のworktreeと変更を再利用し、他者の作業を保護する。
 2. **新しいサブエージェント**へ、タスク本文、worktree、対象repoの規約、達成条件、
