@@ -144,12 +144,10 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
   し、自分が書いた path だけを stage する。staged diff を `review` の召喚1回で
   レビューし、local で commit する
 
-`deliver` は自分で実装し、独立性が要る仕事だけを別文脈へ出す
-(`agent/common/skills/deliver/CONTRACT.md`「作業の分担」):
-
-- レビュワー召喚 — 同期の `codex exec` (`bin/review`)
-- `designer` — 未解決の視覚・操作判断があるときだけ、達成条件を design brief にする
-- `ui-checker` — 証拠付きで実測するだけ (戦略やテストは書かない)
+`deliver` の分担とレビューは
+[共通契約](common/skills/deliver/CONTRACT.md) に従う。
+実装担当はコンテキストの分離や独立した作業にサブエージェントを使える。
+独立レビューはサブエージェントまたは `review` wrapper で行い、二重に重ねない。
 
 ## 新しい agent tool を足す
 

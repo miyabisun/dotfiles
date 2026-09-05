@@ -27,7 +27,7 @@ description: >-
 `projects/<name>/index.md`) **だけ**を読む。リンク先は辿らない。
 
 1. **修正する**: 自分で編集し、検証コマンドを実行する。agent は作らない
-   (deliver/CONTRACT.md「作業の分担」と同じ理由)
+   (小さい変更では分担の調整費用が見合わないため)
 2. **codex exec で独立レビュー1回**: staged diff と変更目的を渡す。起動形は
    spike / polish と同じ。
    `review "$repo" --schema "$schema" --result "$result" < "$prompt"` を使う。

@@ -1,39 +1,28 @@
 ---
 name: deliver
 description: >-
-  互換ディスパッチャ。変更の性質から spike / polish を自動判断して選択と
-  根拠を宣言する。新しい体験・greenfield・まだ動いていないもの → spike。
-  動いているものの改善・不満の解消 → polish。迷ったら polish。
-  push・deploy・release はしない。
+  開発依頼を受け、変更の性質に応じて spike / polish を選び、検証済みの
+  local commit まで届ける。新しい体験や未稼働のものは spike、既存の改善は
+  polish。push・deploy・release は含まない。
 ---
 
-# deliver (dispatcher)
+# deliver
 
-`deliver` は spike と polish の入口である。
+開発の入口。依頼を受けた担当は、適切な段階を選び、その skill を実行する。
 
-| 段階 | スキル | 概要 |
-|---|---|---|
-| 黎明期 (〜v0.1.0) | `spike` | まず動かして体験を得る。TDD+軽い実装レビュー |
-| ブラッシュアップ (全 version) | `polish` | 不満を直し成熟へ磨く。隣接チェック+実装レビュー |
+| 変更の性質 | スキル |
+|---|---|
+| 新しい体験・greenfield・まだ動いていないもの | `spike` |
+| 動いているものの改善・不満の解消 | `polish` |
 
-段階を跨ぐ正本は 2 つある。**工程と所有者は [PROCESS.md](PROCESS.md)**、
-**段階 skill の共通契約は [CONTRACT.md](CONTRACT.md)** が持つ。
-`spike` / `polish` は段階固有の差分だけを持つ。
+ユーザーが段階を指定していれば従う。未指定なら変更の性質で選び、理由を短く
+伝える。迷ったら polish。version や変更行数だけで選ばない。
 
-## ディスパッチ規則
-
-1. 変更の性質から **spike / polish を自動判断**し、選択した段階と根拠を
-   宣言して実行する。新しい体験・greenfield・まだ動いていないもの → spike。
-   動いているものの改善・不満の解消 → polish。
-   **迷ったら polish** (検証が厚い方)。
-2. user が同じ依頼文で段階を明示した場合はそれに従う。
-3. `$deliver` 自体に commit 手順は無い。選択した段階スキル (`spike` /
-   `polish`) の documented workflow に commit が含まれるとき、その
-   commit 授権を継承する。
-4. `$deliver` は user の直接起動のほかに、task-worker が claim した task の
-   session からも呼ばれる (pipeline 経路)。どちらの経路でも `$deliver` 自身と
-   それが選ぶ `spike` / `polish` は push しない。
-   起動 prompt が **pipeline 所有を宣言しているとき**は、独立実装レビューを
-   control plane の review 工程が所有する。段階 skill は実装レビュー召喚を
-   行わない。**宣言が無ければ local へ倒す** (推測しない)。宣言の文面と
-   所有者は [PROCESS.md](PROCESS.md#レビュー工程の所有者) が持つ。
+- 工程と所有者は [PROCESS.md](PROCESS.md)、共通の判断基準は
+  [CONTRACT.md](CONTRACT.md) が持つ。選んだ段階だけを読み、無関係な資料を広げない。
+- 直接の依頼、親からの委譲、task 経由のどれでも使える。担当は実装・検証・
+  指摘修正・報告まで引き受け、必要ならサブエージェントへ分担する。
+- 選んだ段階の local commit 授権を継承する。外側で依頼済みの統合等を妨げないが、
+  この skill だけで push・merge・deploy・release の権限を作らない。
+- 独立レビューは既定で local 所有。外側が pipeline 所有を明示した場合の扱いは
+  [レビュー工程の所有者](PROCESS.md#レビュー工程の所有者) に従う。

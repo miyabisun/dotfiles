@@ -1,125 +1,53 @@
-# delivery の工程表
+# delivery の工程と所有者
 
-この文書は、1 delivery が通る**工程と、その工程の所有者の唯一の正本**である。
-段階 skill (`spike` / `polish`) は、ここに書かれた所有者を上書きしない。skill 本文と食い違ったときは、この表が正である。
-
-## 経路は 2 つ
-
-- **直接経路**: user が `$deliver` / `$spike` / `$polish` を明示起動する。
-  task-server の task を伴わない。commit までで契約が終わる。
-- **pipeline 経路**: 無人 daemon の `task-worker` が task-server から task を
-  claim する。実体は `~/projects/sunny-side/task-worker` にある。claim したら
-  専用 worktree で coding agent を起動する。commit の後に
-  report → review → approve → merge が続く。
-  task-worker は skill を名指ししない — 起動された session が GLOBAL.md の
-  場面表から `$deliver` へ入る。
+`deliver` / `spike` / `polish` の工程と所有者はこの文書が持つ。
+判断基準・レビュー・停止・報告の共通規則は [CONTRACT.md](CONTRACT.md) が持つ。
+サービスの実装済み状況や配備状態はここに固定せず、必要時に実装を確認する。
 
 ## 工程一覧
 
-下の表の並びは**直接経路の実行順**である。pipeline 経路は commit のあとで
-順序が変わるので、表の後の「[経路別の実行順](#経路別の実行順)」を見る。
+| 工程 | 所有者 | 完了条件 |
+|---|---|---|
+| 依頼・現在地・既存変更の確認 | delivery 担当 | 目的、対象、権限、保護する作業を把握する |
+| 段階選択 | deliver、または段階を指定した user | 新しい体験は spike、既存の改善は polish |
+| 方針と達成条件 | delivery 担当 | 必要な知識を読み、検証方法を決める。独立 planning は設計上の不確実性があるとき |
+| 実装・検証 | delivery 担当と委譲先 | 達成条件を満たし、変更に必要な checks が通る |
+| 独立レビュー | 下記の review 所有者 | 対象差分と証拠を確認する |
+| 指摘修正・再確認 | delivery 担当と review 所有者 | 有効な blocking が解消し、修正による回帰がない |
+| local commit・結果報告 | delivery 担当 | 実際の成果、検証、レビュー状態、未完了事項を報告する |
 
-| ID | 工程 | 直接経路 | pipeline 経路 | 備考 |
-|---|---|---|---|---|
-| P1 | task の受領と現在地の照合 | — (user の依頼文がそのまま契約) | `task-worker` | 食い違ったら着手しない |
-| P2 | 作業場所の複製 (worktree・feature branch) | — (現在の作業場所のまま) | `task-worker` | 1 task = 1 worktree = 1 branch |
-| P3 | 段階の判定 (spike / polish) | `deliver` | `deliver` | 迷ったら polish |
-| P4 | knowledge の読み込み (index・テスト戦略) | 段階 skill (`knowledge-read` の手順) | 同左 | index から入り、関係するリンクだけ辿る |
-| P5 | 方針すり合わせ (planning 召喚 1 回) | 段階 skill | 同左 | 両経路で据え置く |
-| P6 | 契約化 (達成条件・テスト戦略の決定) | 段階 skill | 同左 | 達成条件は最大3項目 (spike) / 最大5行 (polish)。`spike` は手順 2 で決めたテスト戦略を `knowledge-deposit` で預ける (棚卸しは省くが、この預け入れだけは例外) |
-| P7 | 基線正規化 (formatting commit) | `polish` のみ・条件付き最大 1 個 | 同左 | 差分が無ければ no-op |
-| P8 | 実装 | 段階 skill | 同左 | 発火 pane が自分で行う。別文脈は独立性が要るときだけ (CONTRACT.md「作業の分担」) |
-| P9 | 検証 (テスト・隣接 check・formatter/linter・UI 実測) | 段階 skill | 同左 | 実行不能な check は理由を receipt へ |
-| P10 | commit 前 mechanical gate | 段階 skill | 同左 | nonzero なら止まる。経路によらず必須。`polish` は手順 6 の gate、`spike` は手順 3 の green と手順 5 の formatter/linter が当たる |
-| P11 | **独立実装レビュー** | **段階 skill (codex exec 召喚)** | **control plane の review 工程 (別 worker)** | 所有者は経路ごとに一意。真実の門は P10 で、レビューはその記録の整合を見る。pipeline 経路でも control plane の review が同じ役割を担う |
-| P12 | **blocking の修正と再レビューの巡回** | **段階 skill (pass まで)** | **control plane (`request_changes` → `ready` → 再 delivery)** | 巡回数に上限は無い |
-| P13 | commit | 段階 skill | 同左 | local 所有はレビューを通してから commit する。pipeline 所有では commit が review の subject になる |
-| P14 | push | — (行わない) | — (行わない) | task-worker は push せず、commit できた成果の `commit_sha` を report する |
-| P15 | 完了の報告 (report) | — (行わない) | `task-worker` | report が review 発行を連れてくる |
-| P16 | approve | — (行わない) | control plane (`approved` への昇格と `instant:merge` の発行は同一 tx) | 未レビューの commit を approve しない |
-| P17 | merge | `merge` skill (user 起動) | `task-worker` (`instant:merge` task) | 既定ブランチへの統合。task-worker の `instant:merge` 実行は未実装 (task-worker README「v0.1.0 でできないこと」) |
-| P18 | release | `bump-tag` (user 起動) | 人間の API (`api_release`) | release は task ではない。水準の決定は user だけが担う |
-| P19 | receipt の報告 | 段階 skill | 段階 skill | どちらの経路でレビューしたかを残す |
-
-太字にした 2 工程 (P11 独立実装レビュー / P12 blocking の巡回) が、この分割の
-要点である。他の工程は両経路で所有者が同じか、経路の外側 (`task-worker`) に
-あるが、この 2 工程だけは**経路によって所有者が入れ替わる**。
-
-delivery の外側にある knowledge の棚卸しは工程表に載せない。段階 skill は
-棚卸しを工程として持たず、`spike` の預け入れだけが P6 の内側にある。
-
-### 経路別の実行順
-
-表の並びは直接経路の実行順である。pipeline 経路は P13 commit のあとに
-report が挟まり、レビューと approve が commit の後ろへ回る。
-
-- **直接経路**: P1 → … → P10 に続けて
-  - P11 (独立実装レビュー) → P12 (巡回) → P13 (commit)
-  - P19 (receipt)
-  - 契約は P13 で終わる。P17 merge と P18 release は user が別途起動する。
-- **pipeline 経路**: P1 → … → P10 に続けて
-  - P13 (commit) → P19 (receipt — 段階 skill の session はここで終わる)
-  - P15 (report — task-worker が `commit_sha` を送る)
-  - P11 (review) → P12 (再巡回) → P16 (approve) → P17 (merge)
-  - P12 の再巡回は、`request_changes` が対象を `ready` へ戻し、
-    P8〜P15 をもう一巡する形になる。
-  - review task を claim して `/worker/review-report` で答える worker が
-    まだ無い (task-worker は未対応)。発行はされるが誰も拾わない段階である。
+担当は受領時に決める。サブエージェントを delivery 担当にしてよい。
+部分委譲しても、担当は成果の確認・未解消事項の処理・報告まで責任を持つ。
+親は子の開発を重複実行せず、結果と証拠の参照先を受け取る。
 
 ## レビュー工程の所有者
 
-独立実装レビュー (P11) の所有者は、**1 delivery につき必ず 1 つ**である。
-二重に持たない。0 個にもしない。
+独立レビューの所有者は 1 delivery につき 1 つ。実行者を交代しても二重に実施しない。
 
-- **既定は local** — 段階 skill が `codex exec` を召喚して所有する。
-- **pipeline 所有になるのは**、task-worker が claim した task の delivery で、
-  起動 prompt が**次の宣言を運んでいるときだけ**である。宣言文はこれである:
-  「この delivery は pipeline 経路であり、独立実装レビューは control plane の
-  review 工程が所有する」。宣言を prompt 前置きで運ぶのは task-worker の
-  profile 設定の仕事である。現時点では未実装 (follow-up 起票済み)。したがって
-  今日の pipeline delivery は local レビューへ倒れ、control plane の review と
-  重なる。0 個よりよい。
-- 段階 skill は pipeline の有無を**推測しない**。宣言が無ければ local へ倒す。
-  branch 名・worktree の形・cwd から推測してはならない。推測を許すと、宣言の
-  欠落や誤読でレビューが丸ごと省かれる。
-- pipeline 所有のとき、段階 skill の**実装レビュー召喚は 0 回**になる。
-- **planning 召喚 (P5) 1 回は両経路で据え置く。** planning は merge gate では
-  なく、依頼整合の確認と第二の設計空間の探索である。control plane の review は
-  それを代替しない。
+- **local (既定)**: delivery 担当が独立レビュワーを使い、修正と再確認まで進める。
+  親・子のどちらから起動したかでこの責務は変わらない。
+- **pipeline (互換経路)**: 起動依頼が「この delivery は pipeline 経路であり、
+  独立実装レビューは control plane の review 工程が所有する」と宣言した場合。
+  その経路では local の実装レビューを重ねない。担当は検証済み commit と
+  証拠を渡し、「外部レビュー待ち」と報告する。宣言だけでレビュー済みにはしない。
+  外側は指摘を担当へ戻し、修正後の commit を確認してから統合する責任を持つ。
+
+宣言がなければ local。branch 名や cwd から pipeline 所有を推測しない。
+外側の review 工程が動かない場合は、その未完了状態を明示する。
+経路を変更する場合は所有者を更新して引き継ぎ、古い経路での完了と混同しない。
 
 ### レビューを通らない変更を main line へ入れない
 
-どちらの経路でも、**レビューを一度も通らないまま main line へ入る変更を
-作らない**。これが両経路に共通する規範である。守り方だけが経路で違う。
+local では検証とレビューを満たしてから delivery を完了とする。
+作業保存用の checkpoint は作業 branch に置けるが、完了や統合の証拠にはしない。
+pipeline では review 対象 commit と統合対象を一致させる。
+実行障害時の扱いは [fallback](CONTRACT.md#fallback-circuit-breaker) に従い、
+自己レビューを独立レビューとして報告しない。
 
-- **local 所有**: 未レビューの source 変更を commit しない。commit の前に
-  レビューを通す。
-- **pipeline 所有**: commit が review の subject である。**未レビューの
-  commit を approve / merge しない**。report した commit を review が
-  snapshot する。その commit と一致するときにしか `approve` は通らない。
-  だから、この不変条件を control plane が機械的に保証する。
+## delivery の外側
 
-ここで言う「source 変更」は delivery の実装変更を指す。意味保存契約のある
-formatter が生成した style commit (P7 基線正規化) は、それ自体が独立実装
-レビューの対象ではない。ただし pipeline 経路では、**report した commit の
-一部として review の subject に含まれる**。
-
-### pipeline 経路で未レビューの変更が残らない根拠
-
-- worker が normal task を `outcome: "done"` で report する。同一 transaction で
-  その task の `review` task が発行される。**発行できなければ report ごと
-  拒否される** — 未レビューで放置される窓が無い。
-- reviewer の `request_changes` は同一 tx で対象を `ready` へ戻す。worker は
-  自分の card の `latest_review` で理由を読む。再 report すると次の review が
-  `review:<id>~2`、`~3` として発行される。**巡回数に上限は無い**。
-- `approve` は対象がまだ `done` で、review が発行された commit のままである
-  ことを tx 内で確認してから `approved` へ移す。commit が動いていれば
-  `review_subject_changed` 等で拒否される。
-
-したがって pipeline 経路では、**commit した変更は必ず最後の修正まで
-レビューされる**。段階 skill が local レビューを重ねる必要は無い。
-
-## 工程表を跨ぐときの規律
-
-工程の所有者を変えるときは、**この表を先に直す**。skill 本文だけを直して表と
-食い違わせない。表に無い工程を skill 本文が勝手に増やさない。
+task の取得・状態保存・haystack の記録は呼び出し元が持つ。
+`deliver` の local commit は task 全体の merge / release 完了を意味しない。
+push・merge・deploy・release は、それぞれの依頼と対応する skill の責務である。
+既に依頼されている外側の工程は local commit 後に続け、同じ授権を聞き直さない。
+これらの操作を `deliver` の起動だけで新たに授権しない。
