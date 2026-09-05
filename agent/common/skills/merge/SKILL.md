@@ -31,6 +31,9 @@ description: >-
    求めない。
 4. **push が成功したら feature branch を速やかに削除する**: local は
    `git branch -d <feature>`、remote は **`git push origin --delete <feature>`**。
+   featureが専用worktreeでcheckout中なら、使用していたagentの終了とcleanなことを
+   確認し、そのworktreeを `git worktree remove <path>` で外してからbranchを削除する。
+   未保存の変更や他者が使用中のworktreeは削除せず、統合成功とcleanup残件を分けて報告する。
    削除済み remote branch の remote-tracking ref を掃除するのは
    **`git fetch --prune`** (または `git remote prune origin`) で、こちらは手元の
    残骸を捨てるだけで remote の branch は消さない。**この 2 つは別の操作である。**

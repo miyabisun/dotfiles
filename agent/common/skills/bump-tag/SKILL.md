@@ -25,10 +25,11 @@ authority は task の終わりとともに終わる — 自分で作り出さ�
 
 ## release が起きるとき
 
-**release が通常の delivery や worker loop に相乗りすることはない**。日常の
-delivery・レビュー・worker cycle が、この skill を単独で発火させることはない。
-release が起きるのはちょうど 2 つの場合だけである。user がこの skill を起動するか、
-user が発行した release task が claim されてこの skill を呼ぶかである。
+release は、user がこのskillを起動した場合、user発行のrelease taskをclaimした
+場合、またはuserが [task-work](../task-work/SKILL.md) による実行を依頼した場合に行う。
+task-workでは、その実行が引き受けたタスクのproductに限りpatchを既定とする。
+明示された水準と制限を優先し、依頼の終了後や別productへ授権を持ち出さない。
+通常のdeliver・レビュー・worker cycleだけではreleaseを発火させない。
 
 ## 1. bump 水準を決める
 

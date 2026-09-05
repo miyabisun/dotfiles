@@ -138,6 +138,8 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 主な skill:
 
 - `deliver` — 成果駆動の実装、証拠ゲート、local commit
+- `task-work` — task-serverの全件処理。新しい子でdeliver → merge → patchリリース。
+  `/goal $task-work を使ってタスクを全てこなして` で起動する
 - `git` — commit message とブランチフローの house rule
 - `bump-tag` — semver の bump、tag、push
 - `knowledge-deposit` — 再利用できる knowledge を預ける。エントリを書き、lint
