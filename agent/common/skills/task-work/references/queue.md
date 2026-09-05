@@ -21,15 +21,18 @@ HTTPはleaseと結果記録を担う。現行MCPにclaim/heartbeat/reportツー�
 | --- | --- |
 | `/worker/claim` | `{"worker":"task-work:<run-id>"}` → 204、または `{claim_id,lease_expires_at,task}` |
 | `/worker/heartbeat` | `{"claim_id":"…"}` → 更新された期限。応答期限の半分以内、最大30秒間隔で更新 |
-| `/worker/report` | `{claim_id,outcome:"done"または"blocked",commit_sha,summary,verification,checks:[],milestones:[]}` |
-| `/worker/runs` | `{source:"task-work",task_id,claim_id,attempt:1,note:"成果・検証・残件・参照先"}` |
+| `/worker/report` | `{claim_id,outcome:"done"または"blocked",report_markdown,commit_sha?,checks?,milestones?,run:{worker:"task-work"}}` → `report_id`を含むtask（`?`は省略可） |
 
 claimは全readyから選び、ID指定はできない。対象を限定した依頼で範囲外のreadyがある
 場合は引き取らず、その制約を報告する。全件実行なら依存がdoneのものから順に取れる。
-claim中はMCPからtaskを更新できない。期限切れ・409では所有権を失っているので子を
-止めて成果を保全し、台帳を読み直す。古いclaimでreportを押し通さない。
+claim中はMCPからtaskを更新できない。heartbeatで期限切れ・claim喪失を確認したら
+子を止めて成果を保全し、台帳を読み直す。reportの内容不一致409とは区別する。
+古いclaimで未受理のreportを押し通さない。
 
-milestoneは `{name,evidence,commit_sha}`。nameはimplemented/verified/reviewed/merged/
-released。taskの対象SHAに対応する証拠と今回の追加分だけを渡す。既存証拠を再送しない。
-report成功後にrunsを送る。送信失敗なら保存した同じpayloadで再送してから次のclaimへ
-進む（reportは同claim・同payload、runsはsource+claim_id+attemptで冪等）。
+成果・検証・残件・参照先は自由なMarkdownの`report_markdown`へ一度書く。
+reportはその原文をhaystackへ保存し、taskとmilestoneから参照する。別のruns追記は不要。
+milestoneは `{name,commit_sha?}`。nameはimplemented/verified/reviewed/merged/released。
+taskの対象SHAに対応する今回の達成分だけを渡す。証拠の説明は原文にまとめ、各欄へ複製しない。
+返された`report_id`の原文はMCP `run_get({id:"…"})`で取得できる。送信失敗なら保存した同じpayloadを
+再送してから次のclaimへ進む。同claim・同payloadは冪等。内容不一致409なら、保存した
+元payloadとtaskの`report_id`を照合し、別内容で上書きしない。

@@ -47,7 +47,7 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
    workflowの成功、公開artifactを確認する。起動確認だけではreleasedにしない。
    `releases: false` はリリース不要と記録する。変更不要なら既存artifactの包含を
    確認し、空のreleaseを作らない。配備がタスクに含まれる場合は実反映・動作確認も行う。
-6. 要求された成果がそろってからdoneをreportし、haystackへ短い結果を追記する。
+6. 要求された成果がそろってから、doneと結果の原文を一度reportする（haystackにも保存される）。
    merge済みcommitをtaskの対象SHAとし、release tag・artifact・CI URLも証拠に残す。
    次のタスクへ進む。local commitやCIの起動で依頼全体を終えない。
 
@@ -60,6 +60,6 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
 CI失敗は原因を修正して再確認する。公開済みtagは動かさず、追加releaseが必要なら
 同じ依頼の範囲でbump-tagを使う。失敗を理由に最初からdeliverやbumpを繰り返さない。
 
-進められない1件は理由・保存先・残工程をblockedとhaystackへ残し、他のタスクを続ける。
+進められない1件は理由・保存先・残工程をblockedのreportに残し、他のタスクを続ける。
 最後に一覧を再確認し、残件があれば全件完了とは報告しない。元のexecutorを復元し、
 完了件数、release、未完了と実際に必要な対応だけを返す。
