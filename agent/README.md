@@ -149,6 +149,14 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 実装担当はコンテキストの分離や独立した作業にサブエージェントを使える。
 独立レビューはサブエージェントまたは `review` wrapper で行い、二重に重ねない。
 
+`review <repo> --kind implementation --result <temp-result.json>` は標準入力の依頼に
+定型 prompt と schema を添え、結果の形式・判定の矛盾を検査する（Python 3 が必要）。
+`planning` / `recheck` も選べる。終了コード 0 は有効な結果を示し、
+`changes_required` を pass と扱わない。詳細ログは `<temp-result.json>.log` に残す。
+既存の `--schema` 呼び出しは従来どおり、独自形式の検証を呼び出し側が持つ。
+Claude の編集ごとの一括テスト・build hooks は使わず、変更に必要な checks を
+担当がまとめて実行する。残る Markdown lint hook は補助であり、検証完了の証明ではない。
+
 ## 新しい agent tool を足す
 
 1. tool 固有の設定を持つ `agent/<tool>/` を作る
