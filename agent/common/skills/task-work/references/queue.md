@@ -42,6 +42,7 @@ taskの対象SHAに対応する今回の達成分だけを渡す。証拠の説�
 MCP `task_checkpoint_get({id,execution_id?})`で引き継ぎ値を取得する。execution_idはclaim ID。
 省略時は各実行のcheckpointを取得でき、未claimなら空。期限切れ後も過去の値を読める。
 応答は`{task_id,active_claim_id,checkpoints:[...]}`。手元で所有するclaimとactive_claim_idを照合し、
+現claimはexecution_idで直接指定でき、未指定の履歴はnext_offsetがnullになるまでページを取得する。
 現在のcheckpointを選ぶ。各checkpointは`execution_id,revision,updated_at,values`を持つ。
 
 更新は`task_checkpoint_update({id,claim_id,expected_revision,set?,delete_keys?})`。

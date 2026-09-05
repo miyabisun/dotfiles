@@ -18,6 +18,9 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
 1. `knowledge-read` と `git` を読み、MCPでタスク一覧とproduct情報を取得する。
    着手する製品は`product_get({id})`でrepository・local_path・releasesを読む。
    未設定値は実在と運用設定を確認して`product_update`で補う。releasesの未設定とfalseを混同しない。
+   一覧はnext_offsetがnullになるまでページを取得し、最初のページだけで全件完了にしない。
+   本文はtask_get、報告原文はrun_get、証拠履歴はtask_history、再開情報はtask_checkpoint_getで
+   必要なものだけ取得する。一覧や更新応答に詳細が埋め込まれる前提を置かない。
    全件は通常タスクのdraft・ready・再開対象blocked。closedとarchivedは除く。
    詳細は着手する1件だけ取得してfileへ保存し、子へ参照先を渡す。親のcontextには
    ID・product・状態・短い成果を残し、本文・legacy・ログ全文を毎回展開しない。
