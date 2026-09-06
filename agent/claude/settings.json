@@ -58,27 +58,9 @@
             "statusMessage": "Markdown の日本語 lint (meiseki)"
           }
         ]
-      },
-      {
-        "matcher": "WebFetch",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.claude/hooks/webfetch-fallback.sh\""
-          }
-        ]
       }
     ],
     "PreToolUse": [
-      {
-        "matcher": "Grep|Glob",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.claude/hooks/prefer-semble.sh\""
-          }
-        ]
-      },
       {
         "matcher": "Bash",
         "hooks": [

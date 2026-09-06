@@ -10,16 +10,6 @@
             "timeout": 10
           }
         ]
-      },
-      {
-        "matcher": "Grep|Glob|grep|list_dir",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "./prefer-semble.sh",
-            "timeout": 5
-          }
-        ]
       }
     ]
   }

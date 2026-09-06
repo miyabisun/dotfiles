@@ -68,7 +68,6 @@ assert_contains "$grok_config" 'hooks = false'
 assert_contains "$grok_config" '[compat.claude]'
 assert_contains "$grok_config" '[compat.cursor]'
 assert_contains "$grok_config" '[mcp_servers.obscura]'
-assert_contains "$grok_config" '[mcp_servers.semble]'
 assert_contains "$grok_config" 'Bash(bw:*)'
 # bin/install の grok 配線 (hooks / config.toml / AGENTS.md) を字面 grep して
 # いた assert は削除した。grok-agent-install.bash が fake HOME で本物の
