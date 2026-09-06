@@ -157,7 +157,41 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 `changes_required` を pass と扱わない。詳細ログは `<temp-result.json>.log` に残す。
 既存の `--schema` 呼び出しは従来どおり、独自形式の検証を呼び出し側が持つ。
 Claude の編集ごとの一括テスト・build hooks は使わず、変更に必要な checks を
-担当がまとめて実行する。残る Markdown lint hook は補助であり、検証完了の証明ではない。
+担当がまとめて実行する。
+
+## Markdown lint
+
+編集後の hook が、変更された `.md` だけに `meiseki-lint` の決定論層を掛ける。
+共通処理は `common/bin/meiseki-lint-markdown` (Python 3) が持つ。
+既存の textlint 起動形は `common/bin/meiseki-lint` に置く。
+LLM rewrite や repo 全体の検査は起動しない。
+
+| runtime | 対象の編集 | 指摘の返却 |
+| --- | --- | --- |
+| Claude Code | `Write` / `Edit` / `MultiEdit` | `PostToolUse.additionalContext` |
+| Codex | `apply_patch` (code mode の nested call を含む) | `PostToolUse.additionalContext` |
+| Grok | `search_replace` | `~/.grok/logs/markdown-lint.log` のみ |
+
+Codex 0.153.4 と Claude Code 2.1.252 で、実編集から次のモデル入力への返却を確認した。
+Grok 1.0.13 は `PostToolUse` の出力本文を破棄するため、adapter が診断をログへ保存する。
+`GROK_HOME` 指定時はその配下の `logs/markdown-lint.log` を使う。
+指摘を編集担当モデルへ返す経路と、この構成で利用不可の `apply_patch` は未対応である。
+任意の shell コマンドや MCP tool の書込みは自動検出しない。その経路では担当が
+変更した Markdown へ `meiseki-lint <file>` を実行する。
+
+正常時は無出力、指摘と起動失敗は区別して返す。複数ファイルの patch は編集先を
+重複なく検査し、削除ファイルは除く。hook 全体の時間枠を超えた対象は未実行として返す。
+指摘は補助情報であり、文章の好みを承認待ちや検証完了の証明にしない。
+knowledge repository の形式 lint は OKF の検査を所有し、この hook からは呼ばない。
+
+`bin/install` は各 runtime の hooks directory をリンクする。既存の Claude settings は
+machine-local なので matcher の変更を `config-merge` で取り込む。Codex の新規・変更 hook は
+`/hooks` で内容を確認して trust するまで実行されない。自動試験では、内容を検査済みの
+隔離 hook に限り `--dangerously-bypass-hook-trust` を使った。
+
+隔離検証は `python3 -B test/markdown-edit-hook.py` と
+`bash test/meiseki-lint-hook.bash` で行う。
+決定論層は `bash test/meiseki-lint.bash` で検証する。
 
 ## 新しい agent tool を足す
 

@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Lint Markdown targets from completed edit tools; return advisory hook context."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+
+def edited_markdown(event):
+    name = event.get("tool_name", "")
+    data = event.get("tool_input", {})
+    paths = []
+    if name in {"Edit", "Write", "MultiEdit", "search_replace"}:
+        paths = [data.get("file_path", "")]
+    elif name == "apply_patch":
+        # Headers are unprefixed; content lines start with +, - or a space.
+        for line in data.get("command", "").splitlines():
+            if line.startswith(("*** Add File: ", "*** Update File: ")):
+                paths.append(line.split(": ", 1)[1])
+            elif line.startswith("*** Move to: ") and paths:
+                paths[-1] = line.removeprefix("*** Move to: ")
+    cwd = Path(event.get("cwd") or os.getcwd())
+    return list(dict.fromkeys(str(cwd / path) for path in paths if path.endswith(".md")))
+
+
+def lint_file(lint, path, timeout):
+    try:
+        # The shared wrapper also terminates npx/textlint descendants on timeout.
+        bounded = str(Path(__file__).resolve().with_name("with-timeout"))
+        result = subprocess.run([bounded, str(max(1, int(timeout))), lint, path],
+                                capture_output=True, text=True)
+    except OSError as error:
+        return f"{path}: Markdown lint 未実行 (clean ではない): {error}"
+    if result.returncode == 0:
+        return ""
+    if result.returncode == 1:
+        try:
+            findings = [f"{path}:{msg['line']}:{msg['column']} [{msg['ruleId']}] {msg['message']}"
+                        for entry in json.loads(result.stdout) for msg in entry["messages"]]
+            if findings:
+                return "meiseki-lint の指摘 (編集済み・advisory):\n" + "\n".join(findings)
+        except (ValueError, KeyError, TypeError):
+            pass
+    return (f"{path}: Markdown lint 未実行 (clean ではない): {lint} exit {result.returncode}\n"
+            + (result.stderr.strip() or "lint が有効な結果を返さなかった"))
+
+
+def main():
+    event = json.load(sys.stdin)
+    lint = os.environ.get("MEISEKI_LINT", str(Path.home() / ".local/bin/meiseki-lint"))
+    # Leave time for feedback before the harness's 60 second hook timeout.
+    deadline = time.monotonic() + 50
+    messages = []
+    for path in edited_markdown(event):
+        remaining = deadline - time.monotonic()
+        message = (lint_file(lint, path, min(45, remaining)) if remaining > 0 else
+                   f"{path}: Markdown lint 未実行 (hook の実行時間上限)")
+        if message:
+            messages.append(message)
+    if messages:
+        if "--grok" in sys.argv:
+            # Grok 1.0.13 discards PostToolUse output; its adapter saves stderr.
+            print("\n\n".join(messages), file=sys.stderr)
+            return
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse",
+            "additionalContext": "\n\n".join(messages)}}, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

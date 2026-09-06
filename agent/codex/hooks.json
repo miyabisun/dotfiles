@@ -1,5 +1,18 @@
 {
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/meiseki-lint-markdown.sh\"",
+            "timeout": 60,
+            "statusMessage": "Markdown の日本語 lint (meiseki)"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "hooks": [

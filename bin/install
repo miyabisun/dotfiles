@@ -139,7 +139,7 @@ link "agent/common/agents" "$HOME/.agents"
 link "agent/common/designs" "$HOME/.agents"
 
 link "agent/codex/hooks/notify-turn-end.sh" "$HOME/.local/bin"
-# codex exec 召喚の共通起動形 (spike / polish / chore / knowledge-deposit)
+# codex exec 召喚の共通起動形 (spike / polish / knowledge-deposit)
 link "agent/common/bin/review" "$HOME/.local/bin"
 # timeout(1) が macOS に無いことの吸収。review が打ち切りをここへ委譲する
 link "agent/common/bin/with-timeout" "$HOME/.local/bin"

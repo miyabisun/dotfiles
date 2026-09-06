@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^search_replace$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./meiseki-lint-markdown.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

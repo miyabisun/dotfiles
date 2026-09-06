@@ -192,7 +192,7 @@ done
 
 # 10. settings.json が Edit|Write の PostToolUse としてこの hook を配線している
 jq -e '[.hooks.PostToolUse[]
-  | select(.matcher == "Edit|Write")
+  | select(.matcher == "^(Edit|Write|MultiEdit)$")
   | .hooks[]
   | select(.command == "bash \"$HOME/.claude/hooks/meiseki-lint-markdown.sh\"")
   | select(.timeout >= 30)] | length == 1' "$settings" >/dev/null \
