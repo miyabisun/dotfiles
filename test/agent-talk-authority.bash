@@ -101,7 +101,7 @@ if grep -Fq 'pattern = ["agent-talk"]' "$codex_rules"; then
 fi
 
 result="$(codex execpolicy check --rules "$codex_rules" \
-  "$notifier_command" codex 619 2>/dev/null)"
+  "$notifier_command" codex 2>/dev/null)"
 python3 - "$result" <<'PY'
 import json
 import sys
@@ -114,7 +114,7 @@ PY
 for unsafe_command in \
   "$HOME/.local/bin/agent-talk-peer send %24 --no-reply -- done" \
   'agent-talk-peer who' \
-  'notify-file-permission.sh codex 619' \
+  'notify-file-permission.sh codex' \
   'agent-talk who' \
   'agent-talk read 619' \
   'agent-talk reply 619' \
@@ -159,7 +159,7 @@ if json.loads(sys.argv[1]).get("decision") == "allow":
 PY
 
 result="$(codex execpolicy check --rules "$codex_rules" \
-  "$notifier_command" codex 619 2>/dev/null)"
+  "$notifier_command" codex 2>/dev/null)"
 python3 - "$result" <<'PY'
 import json
 import sys
@@ -170,8 +170,8 @@ PY
 
 # Shell wrappers and pipelines stay outside the narrow notification allow rules.
 for wrapped_command in \
-  "$notifier_command codex 619" \
-  "$notifier_command codex 619 | grep settings"; do
+  "$notifier_command codex" \
+  "$notifier_command codex | grep settings"; do
   result="$(codex execpolicy check --rules "$codex_rules" \
     bash -lc "$wrapped_command" 2>/dev/null)"
   python3 - "$result" <<'PY'

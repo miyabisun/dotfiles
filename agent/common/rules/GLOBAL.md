@@ -13,8 +13,7 @@
 |---|---|
 | git コマンドでの操作 | `git` |
 | 開発を行う | `knowledge-read` → `deliver` |
-| Herdr 内の他エージェントとの情報共有 (自己判断で可) | `agent-talk` |
-| 他エージェントからの着信 (`[agent-talk]` 呼び鈴・`<cross-session-message>`) | `agent-talk` |
+| agent-talk のブラウザから届いた人間の指示への対応 | `agent-talk` |
 
 ## 仕事の進め方
 

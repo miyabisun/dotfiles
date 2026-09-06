@@ -98,7 +98,7 @@ done
 CONTEXT="${PWD##*/}"
 [[ -n "${CONTEXT}" ]] || CONTEXT="project"
 
-# 完了通知は workspace が静穏になったときだけ出す。協働 (agent-talk の往復)
+# 完了通知は workspace が静穏になったときだけ出す。複数 agent の作業
 # の途中では誰かが working なので黙り、最後のターンが終わって全員 done/idle
 # になった1回だけ鳴る。判定不能 (herdr/jq/env の欠落・照会失敗) は従来どおり
 # 通知する — herdr の不調で完了通知が消える方を避ける (fail-open)。

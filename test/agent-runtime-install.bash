@@ -63,7 +63,7 @@ if grep -Fq 'agent-talk-peer' "$rules_file"; then
 fi
 
 result="$(codex execpolicy check --rules "$rules_file" \
-  "$runtime_bin/notify-file-permission.sh" codex 619 2>/dev/null)"
+  "$runtime_bin/notify-file-permission.sh" codex 2>/dev/null)"
 python3 - "$result" <<'PY'
 import json
 import sys
@@ -73,7 +73,7 @@ if json.loads(sys.argv[1]).get("decision") != "allow":
 PY
 
 result="$(codex execpolicy check --rules "$rules_file" \
-  notify-file-permission.sh codex 619 2>/dev/null)"
+  notify-file-permission.sh codex 2>/dev/null)"
 python3 - "$result" <<'PY'
 import json
 import sys
@@ -122,9 +122,15 @@ stale_home="$test_root/stale-home"
 mkdir -p "$stale_home/.local/bin"
 printf '#!/bin/sh\nexit 0\n' >"$stale_home/.local/bin/agent-talk-peer"
 chmod 0755 "$stale_home/.local/bin/agent-talk-peer"
+ln -s "$repo_root/config/herdr/bin/herdr-addr" "$stale_home/.local/bin/herdr-addr"
 HOME="$stale_home" PATH="$tool_bin:/usr/bin:/bin" "$installer"
 if test -e "$stale_home/.local/bin/agent-talk-peer"; then
   echo 'installer must remove a previously installed peer dispatcher' >&2
+  exit 1
+fi
+
+if test -e "$stale_home/.local/bin/herdr-addr" || test -L "$stale_home/.local/bin/herdr-addr"; then
+  echo 'installer must remove the retired cross-session address helper' >&2
   exit 1
 fi
 

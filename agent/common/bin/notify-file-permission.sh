@@ -96,11 +96,4 @@ done
 [[ "$STAT_MODE" == "gnu" || "$STAT_MODE" == "bsd" ]] || exit 126
 
 AGENT="${1:-unknown}"
-MESSAGE_ID="${2:-}"
-
-if [[ ! "$MESSAGE_ID" =~ ^[0-9]+$ ]]; then
-    printf 'agent-talk message ID must be numeric\n' >&2
-    exit 2
-fi
-
 exec "$EMITTER" "$AGENT" permission

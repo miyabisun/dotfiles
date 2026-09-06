@@ -1,11 +1,9 @@
 # bin/install replaces these placeholders with machine-local absolute paths.
-# Peer conversation now goes through the agent-talk MCP server, which runs
-# in-process and never touches the sandbox, so no shell rule allows it.
-# Direct broker and maintenance commands keep normal approval.
+# Only the generic permission notification helper is allowed here.
 prefix_rule(
     pattern = ["@NOTIFY_FILE_PERMISSION@"],
     decision = "allow",
     justification = "Notify the user that direct mutation authority is required",
-    match = ["@NOTIFY_FILE_PERMISSION@ codex 619"],
+    match = ["@NOTIFY_FILE_PERMISSION@ codex"],
     not_match = ["tmux send-keys -t %24 unsafe"],
 )

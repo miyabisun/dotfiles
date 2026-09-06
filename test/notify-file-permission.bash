@@ -54,7 +54,7 @@ export NOTIFY_TEST_PATH_LOG="$test_root/path.log"
 # MOCA 通知は project basename を文脈に使う。
 mkdir -p "$test_root/project-alpha"
 cd "$test_root/project-alpha"
-"$notifier" codex 619
+"$notifier" codex
 grep -F 'project-alphaでファイル操作の許可が必要です' "$NOTIFY_TEST_CURL_LOG" >/dev/null
 test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 1
 
@@ -70,20 +70,20 @@ grep -F 'project-alphaが完了しました' "$NOTIFY_TEST_CURL_LOG" >/dev/null
 
 # Missing MOCA configuration still succeeds without a notification.
 unset MOCA_URL
-"$notifier" codex 620
+"$notifier" codex
 test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 3
 
 # A failed destination degrades safely.
 export MOCA_URL='https://notify.invalid'
 export NOTIFY_TEST_CURL_FAIL=1
-"$notifier" codex 621
+"$notifier" codex
 unset NOTIFY_TEST_CURL_FAIL
 
 # curl is optional: permission handling still succeeds without a MOCA sink.
 printf 'CURL_BIN=\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
   /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
 curl_count="$(wc -l <"$NOTIFY_TEST_CURL_LOG")"
-"$notifier" codex 623
+"$notifier" codex
 test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq "$curl_count"
 
 # A broken notification pin fails closed without invoking agent-talk lifecycle.
@@ -98,19 +98,14 @@ fi
 side_effect="$test_root/runtime-side-effect"
 printf 'CURL_BIN=$(touch %s)\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
   "$side_effect" /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
-if "$notifier" codex 624 2>/dev/null; then
+if "$notifier" codex 2>/dev/null; then
   echo 'malformed runtime sidecar must fail closed' >&2
   exit 1
 fi
 test ! -e "$side_effect"
 
-if "$notifier" codex 'not-an-id' 2>/dev/null; then
-  echo 'invalid agent-talk message IDs must fail closed' >&2
-  exit 1
-fi
-
 ln -s "$notifier_source" "$test_root/symlink-notifier"
-if "$test_root/symlink-notifier" codex 623 2>/dev/null; then
+if "$test_root/symlink-notifier" codex 2>/dev/null; then
   echo 'symlinked permission notifier must fail closed' >&2
   exit 1
 fi

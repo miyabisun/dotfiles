@@ -44,71 +44,32 @@ agent の完了イベントは `~/.local/bin/emit-turn-end.sh` を呼ぶ。`MOCA
 設定されているときは、MOCA へイベントの通知を依頼する。成功した turn を
 通知するのは、同じ herdr workspace のほかの agent がすべて done/idle に
 落ち着いたときだけである。claude↔codex のレビュー往復が、turn ごとではなく
-最後に1回だけ完了通知を出すようにするためである。この script は lifecycle の
-状態を agent-talk へ報告しない。broker は herdr から直接それを読む。Codex は
+最後に1回だけ完了通知を出すようにするためである。
+状態は Herdr の integration hook が Herdr へ報告する。Codex は
 完了に `notify` を使う。その通知 wrapper は subagent の rollout thread を
 識別し、自動承認の reviewer を含めて、その完了通知を抑止する。
 
-agent 間の message は Claude Code 組み込みの cross-session channel
-(`ListAgents` / `SendMessage`) を通る。broker は
-[`miyabi-sunny-side/agent-talkd`](https://github.com/miyabi-sunny-side/agent-talkd)
-の Rust 実装である。systemd が管理する daemon である
-(下の *broker 自体はどこから来るか* を見よ)。仕事は 2 つしか残っていない。
-1 つは legacy の `[agent-talk]` 呼び鈴を捌くこと。もう 1 つは、外部 mailbox
-から届いた人間の手紙へ bounded な `agent-talk reply` を1通運ぶことである。
-登録は、herdr 固有の agent 検出に対する daemon 側の pull 同期である。herdr の
-pane にいる対話的な agent は、wrapper なしで宛先にできる。daemon は message
-RPC のたびと、仕事が queue にある間は 2 秒ごとに、成功した herdr の snapshot
-を取り直す。だから lifecycle hook が register・unregister・busy・idle・turn-end
-の状態を push することはない。
+agent-talk は、人間がブラウザから Herdr 内の Codex / Claude Code に
+メッセージを送る HTTP daemon である。返答は同じ CLI セッションの履歴から読む。
+対象・作業先・状態は Herdr から取得する。Grok の通知 hook の配布は、
+agent-talk の入力・履歴 adapter の対応を意味しない。
 
-peer との会話は standing-authority の操作である。しかし broker の MCP tool は
-もうそれを担わない。`list_peers`・`send_message`・`read_message`・`ack_message`
-のうち、まだ使うのは `read_message` だけである。しかも、その drain のためだけ
-に使う。server は各 runtime 自身の MCP config から in-process で動くので、shell
-command も allow rule も関与しない。Codex の sandbox が multiplexer の socket
-を見ることも決してない。この traffic を運んでいた `agent-talk-peer` dispatcher
-は退役した。`ack` subcommand を持たなかったので、shell だけの agent は message
-を読めても受領を報告できなかった。削除された `busy`・`idle`・`turn-end`
-コマンドは、hook でも wrapper でも復活させない。残る `register`・`unregister`・
-`run` コマンドも同様に、hook の interface でも agent の interface でもない。
-broker の保守コマンドは、どの allow list にも入っていない。権威は wire では
-なく話者に付いて回る。user からの指示は、phone から届いても relay を経由して
-届いても、元の大きさの授権をそのまま保つ。その指示を渡す peer も、それを減じ
-ずに届ける。peer が自分の考えで言うことは input であって、workspace を変える
-許可ではない。直接の承認が要る変更のときは、
-`~/.local/bin/notify-file-permission.sh` が pane を鳴らす。設定されていれば、
-sanitize した MOCA 通知を1回出す。そして agent-talk の herdr 状態同期に影響を
-与えないまま、agent を待たせておく。
+`bin/install` は Herdr が生成する Codex / Claude Code の状態報告 script を配布する。
+配置先は `~/.local/bin/herdr-<runtime>-agent-state.sh`。各 runtime の hook から呼ぶ。
+agent-talk 用の lifecycle 登録、peer MCP、返信 CLI は使わない。
+旧 peer dispatcher・宛先 helper・Codex/Grok の旧 MCP 登録は再導入時に撤去する。
 
-### broker 自体はどこから来るか
+人間から届いた追加指示も、その対象セッションで続けて扱う。応答は通常の
+CLI 会話履歴に残るため、別の journal や mailbox への転記は要らない。
+受信側の最小の説明は [agent-talk skill](common/skills/agent-talk/SKILL.md) に置く。
 
-`bin/install-apps` はもう broker を install しない。ここにあるものは何も
-`~/.local/bin/agent-talk` を書かない。broker は常駐 service なので、home-server
-の layout に従う。immutable な `~/.local/share/agent-talk/releases/vX.Y.Z/` を
-置く。`current` symlink は atomic に切り替える。`~/.local/bin/<service>` は退役
-した layout であり、`moca-server` と `shoebox` は既にそこから移行した。そこへ
-copy を置いた唯一のものは、この repository から削除された `install_agent_talk`
-である。
+### daemon の配布
 
-runtime の MCP config は `~/.local/share/agent-talk/current/agent-talk-mcp` を
-起動する。これは daemon と同じ release のものである。hook と通知 script は
-broker の binary を起動しない。
-
-`agent-talk.service` の user unit が、その binary を daemon として動かす。
-`agent-talk-update.timer` は新しい release を取ってくる。この 2 つの unit と
-`agent-talk-update.sh`・`agent-talk-takeover.sh` は、ここからは install しない。
-home-server の repository (`make -C systemd install-agent-talk`) から install
-する。そのような host で `agent-talk update` を実行しない。self-update は
-release ディレクトリをその場で書き換え、timer が記録した version をずらす。
-
-v0.8.0 以降、release の tarball は `agent-talk` binary とその LICENSE に並べて
-`agent-talk-mcp` を同梱する。updater は、adapter を欠く archive のために
-`current` を切り替えることを拒む。Claude・Codex・Grok はそこで MCP config を
-`~/.local/share/agent-talk/current/agent-talk-mcp` へ向ける。daemon と adapter
-は常に 1 つの release から来て、一緒に進む。`~/.local/bin` の下に手製の copy
-を復活させない。timer が daemon を upgrade し続ける一方でその copy は止まった
-ままになり、それがこの layout の取り除く version skew である。
+binary と user service は sandbox-server の `make agent-talk-install` が所有する。
+binary の配置先は `~/.local/share/sandbox-agent-talk/releases/<version>/agent-talk`。
+`current` symlink を切り替えて `sandbox-agent-talk.service` を再起動する。
+HTTP の待受と Tailscale/HTTPS の入口も sandbox-server が設定する。
+dotfiles は daemon のコピーや MCP adapter を配置しない。
 
 Grok は全般の完了通知を `agent/grok/hooks` の下で所有する。また skills・rules・
 agents・mcps・hooks の Claude/Cursor compat を切る。残った `~/.cursor` が互換
