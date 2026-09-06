@@ -40,30 +40,8 @@ assert_absent() {
 # GLOBAL.md と agent-talk SKILL.md の本文を固定していた assert 群 (tool 契約・
 # 配達契約・権限境界・退役記述の不在) は削除した。markdown の字面 grep は
 # 「文字列が在る」しか証明しない — GLOBAL.md「テスト」
-codex_config="$repo_root/agent/codex/config.toml"
-assert_contains "$codex_config" '[mcp_servers.agent_talk]'
-# adapter は daemon と同じ release から動かす。PATH 解決や ~/.local/bin の
-# 複製へ戻すと、update.timer が daemon だけ進めて version skew が復活する。
-# Codex は MCP command を shell 非経由で spawn するため、sh -c が $HOME を
-# 展開して exec で release 実体へ置き換わる (user-home 固定を持ち込まない)
-assert_contains "$codex_config" 'command = "sh"'
-assert_contains "$codex_config" 'exec \"$HOME/.local/share/agent-talk/current/agent-talk-mcp\"'
-assert_absent "$codex_config" 'command = "agent-talk-mcp"'
-assert_absent "$codex_config" '.local/bin/agent-talk-mcp'
-# user-home 固定 path の検査は test/portable-paths.bash が tracked file 全体に
-# 対して測るので、ここでは重複して持たない
-assert_contains "$codex_config" 'HERDR_PANE_ID'
-assert_contains "$codex_config" 'HERDR_SOCKET_PATH'
-# tmux backend 撤去後、TMUX 系の forward は復活させない
-assert_absent "$codex_config" '"TMUX"'
-
+# MCP removal is verified through real installation in agent-hook-install.py.
 grok_config="$repo_root/agent/grok/config.toml"
-assert_contains "$grok_config" '[mcp_servers.agent-talk]'
-# Grok は [mcp_servers.*] の文字列を load-time に ${VAR} 展開する (docs 契約)
-assert_contains "$grok_config" 'command = "${HOME}/.local/share/agent-talk/current/agent-talk-mcp"'
-assert_absent "$grok_config" 'command = "agent-talk-mcp"'
-assert_absent "$grok_config" '.local/bin/agent-talk-mcp'
-# user-home 固定 path は portable-paths.bash が repo 全体で測る (同上)
 assert_contains "$grok_config" 'hooks = false'
 assert_contains "$grok_config" '[compat.claude]'
 assert_contains "$grok_config" '[compat.cursor]'
@@ -190,8 +168,7 @@ if json.loads(sys.argv[1])["decision"] != "allow":
     raise SystemExit("permission notifier must be allowed")
 PY
 
-# Shell wrappers and pipelines stay outside the narrow allow rules. Peer
-# conversation runs in-process over MCP, so no shell form is needed at all.
+# Shell wrappers and pipelines stay outside the narrow notification allow rules.
 for wrapped_command in \
   "$notifier_command codex 619" \
   "$notifier_command codex 619 | grep settings"; do

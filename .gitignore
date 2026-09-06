@@ -4,9 +4,10 @@ config/tmux/plugins/
 # per-machine colorscheme choice
 config/nvim/colorscheme.txt
 
-# herdr writes its integration scripts through the ~/.claude/hooks symlink and
-# overwrites them on every reinstall, so the checkout must not track them
+# Ignore legacy Herdr-generated files. The session wrapper is repo-owned;
+# bin/install generates the actual integration outside this checkout.
 agent/claude/hooks/herdr-*.sh
+!agent/claude/hooks/herdr-agent-state.sh
 
 # local Python bytecode (herdr helpers and anything else)
 __pycache__/

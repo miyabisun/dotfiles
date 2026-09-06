@@ -88,14 +88,6 @@ allow = [
   "Bash(~/.local/bin/notify-file-permission.sh:*)",
 ]
 
-# adapter は daemon と同じ release から動かす。PATH 解決や ~/.local/bin の
-# 複製へ戻すと、update.timer が daemon だけ進めて version skew が復活する。
-# MCP の command は shell ではないため `~` や `$HOME` は展開されない。
-[mcp_servers.agent-talk]
-# Grok は [mcp_servers.*] の文字列を load-time に ${VAR} 展開する (docs 契約)
-command = "${HOME}/.local/share/agent-talk/current/agent-talk-mcp"
-enabled = true
-
 [mcp_servers.obscura]
 command = "obscura"
 args = ["mcp"]

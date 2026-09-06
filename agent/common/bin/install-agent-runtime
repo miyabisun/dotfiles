@@ -67,8 +67,7 @@ cp "$SOURCE_ROOT/agent/common/bin/notify-file-permission.sh" \
 chmod 0755 "$RUNTIME_BIN/emit-turn-end.sh" \
     "$RUNTIME_BIN/notify-file-permission.sh"
 
-# MCP (agent-talk-mcp) が peer 会話の唯一の経路になったので、旧 CLI dispatcher は
-# 配置しない。以前の配置が残っていると PATH 上で生き続けるため明示的に撤去する。
+# 旧 peer 通信は廃止済み。PATH に残った dispatcher も撤去する。
 rm -f "$RUNTIME_BIN/agent-talk-peer"
 
 RULES_TARGET="$RULES_DIR/agent-talk.rules"
@@ -83,3 +82,27 @@ sed \
 mv "$RULES_TEMP" "$RULES_TARGET"
 chmod 0644 "$RULES_TARGET"
 trap - EXIT
+
+# Generate with the installed Herdr version in an isolated home. Its integration
+# installer owns the reporters; only scripts are copied so machine-local harness
+# settings and the repository-linked hook directories are never overwritten.
+if [[ -n "$HERDR_RUNTIME" ]]; then
+    INTEGRATION_HOME="$(mktemp -d)"
+    trap 'rm -rf "$INTEGRATION_HOME"' EXIT
+    mkdir -p "$INTEGRATION_HOME/.codex" "$INTEGRATION_HOME/.claude"
+    for AGENT in codex claude; do
+        HOME="$INTEGRATION_HOME" "$HERDR_RUNTIME" integration install "$AGENT"
+        if [[ "$AGENT" == claude ]]; then
+            GENERATED_HOOK="$INTEGRATION_HOME/.claude/hooks/herdr-agent-state.sh"
+        else
+            GENERATED_HOOK="$INTEGRATION_HOME/.codex/herdr-agent-state.sh"
+        fi
+        [[ -f "$GENERATED_HOOK" ]] || exit 1
+        TARGET_HOOK="$RUNTIME_BIN/herdr-$AGENT-agent-state.sh"
+        [[ ! -L "$TARGET_HOOK" ]] || unlink "$TARGET_HOOK"
+        cp "$GENERATED_HOOK" "$TARGET_HOOK"
+        chmod 0755 "$TARGET_HOOK"
+    done
+    rm -rf "$INTEGRATION_HOME"
+    trap - EXIT
+fi
