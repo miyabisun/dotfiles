@@ -1,25 +1,27 @@
 ---
 name: knowledge-read
 description: >-
-  あらゆる開発作業を始める前に実行する。$KNOWLEDGE_REPO から knowledge (OKF)
-  repository の場所を特定し、そこに置かれた共通の開発ルールと user の
-  context を読む。
+  開発開始時や対象product/repositoryの切替時に、外部knowledgeから関連する
+  設計判断・共有テスト戦略を読む。同じ対象の既読情報は再利用する。
 ---
 
 # knowledge-read
 
-開発作業を始める前に、knowledge の共有情報を読む。
+対象の実装・CI・テスト設定を事実として確認し、knowledgeで意図・背景・共有戦略を補う。
+共通知識を各repositoryのAGENTS.md等へ複製しない。
 
-ユーザーに関する情報や共通開発ルールは knowledge に **OKF** として
-まとめられている (OKF: Google 発の、Markdown で作るゆるい DB 形式)。
+1. 依頼のproduct名と対象repositoryのremote・一次文書を照合して対象を定める。
+   cwdやworktreeのdirectory名だけで判断しない。別対象へ移ったら解決し直す。
+2. knowledgeの場所は `$KNOWLEDGE_REPO`、または今回明示されたcheckoutを使う。
+   未設定・読めない場合はその不足を伝え、一次情報で進められる作業を続ける。
+   実際に必要な未確定方針だけを尋ね、pathや方針を捏造しない。
+3. 対象の `projects/<org>/<repo>/index.md` から、今回に関係する判断・テスト戦略を読む。
+   bundle名が不明なら `projects/index.md` を使い、旧名の探索にだけcatalogを使う。
+   横断事項は `library/index.md` の該当リンクへ進む。全区画や利用者profileを一括で読まない。
+4. 対象・読んだpath・今回の判断に必要な要点を会話内で把握し、同じ対象の既読情報は再利用する。
+   更新の兆候や矛盾が出た文書だけ再確認する。新しいsessionではこの入口から解決する。
+   全履歴や全knowledgeの転送、永続cacheの新設は要らない。
 
-## 手順
-
-1. knowledge repository の場所は環境変数 `$KNOWLEDGE_REPO` が教える。
-   これはマシンローカルのシェル設定 (`~/.zshrc` など) が持つマシン固有の
-   事実であり、スキルにパスを決め打ちしない
-2. `$KNOWLEDGE_REPO` が未設定なら、ユーザーに場所を尋ね、シェル設定への
-   `export KNOWLEDGE_REPO=<path>` の追記を提案する。勝手に推測しない
-3. repository 直下の index (README や `library/index.md`) から入る。
-   現在のプロジェクトに関係する `projects/<name>/` と共通ルールを読む。
-   以後は OKF のルールに従って情報を閲覧する
+適用する方針とテスト戦略が必要な範囲で分かったら実装へ進む。
+bundleや戦略が無ければ実装・CIの現状から検証方法を決め、未確認の意図は未確認と扱う。
+knowledgeと一次情報が食い違えば差を示し、背景の記録を現行の命令や挙動と取り違えない。

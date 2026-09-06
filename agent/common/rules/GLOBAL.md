@@ -66,10 +66,11 @@
 stub を用意して隔離して観測できる範囲 (script・hooks・installer など) は
 実行可能コードとしてテストしてよい。
 
-上の 4 項目は default である。**project 固有のテスト戦略は spike の初期に
-決めて knowledge が持つ** — 何を実行可能コードとして測るか、副作用をどう
-隔離するか。例: MySQL の操作は Docker 上で走らせる。既存 project では、
-その戦略を knowledge の index から読んでから始める。
+上の 4 項目は default である。project 固有の共有テスト戦略は spike の初期に
+決めて外部 knowledge に置き、対象の index から辿れるようにする。何を測り、
+副作用をどう隔離するかという判断と背景を共有し、実際の検証コマンド・CI・
+テスト設定は対象 repository が持つ。既存 project では `knowledge-read` で
+関連戦略を読み、実装と設定を確認する。戦略が未記録でも一次情報で検証を進める。
 
 ## ツール
 
