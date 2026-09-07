@@ -134,4 +134,27 @@ if test -e "$stale_home/.local/bin/herdr-addr" || test -L "$stale_home/.local/bi
   exit 1
 fi
 
+cp "$runtime_bin/.dotfiles-agent-runtime" "$test_root/sidecar-before"
+# Every pinned executable must stay outside the source tree and have no
+# whitespace in its path. Rejection must leave an installed sidecar untouched.
+staged_root="$test_root/source"
+mkdir -p "$staged_root/agent/common/bin" "$staged_root/tools" "$test_root/spaced tools"
+cp "$installer" "$staged_root/agent/common/bin/install-agent-runtime"
+for rejected_bin in "$staged_root/tools" "$test_root/spaced tools"; do
+  for runtime_name in curl herdr jq "$hash_tool" cp rm stat; do
+    if [[ "$runtime_name" == herdr ]]; then
+      ln -s /bin/true "$rejected_bin/$runtime_name"
+    else
+      link_host_tool "$runtime_name" "$rejected_bin"
+    fi
+    if HOME="$fake_home" PATH="$rejected_bin:$tool_bin:/usr/bin:/bin" \
+      "$staged_root/agent/common/bin/install-agent-runtime"; then
+      echo "installer accepted a forbidden runtime path: $rejected_bin/$runtime_name" >&2
+      exit 1
+    fi
+    cmp "$runtime_bin/.dotfiles-agent-runtime" "$test_root/sidecar-before"
+    rm "$rejected_bin/$runtime_name"
+  done
+done
+
 echo 'agent runtime fresh install test: pass'
