@@ -98,10 +98,11 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 
 主な skill:
 
-- `deliver` — 目的に応じて `spike` / `polish` / `refactor` を選び、検証・レビュー・local commit まで届ける
+- `deliver` — 目的に応じて `spike` / `polish` / `refactor` / `slim` を選び、検証・レビュー・local commit まで届ける
 - `spike` — 新しい体験を最小の実装で動かす
 - `polish` — 既存の不満・不具合を解消する
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
+- `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
 - `task-work` — task-serverの全件処理。新しい子でdeliver → merge → patchリリース。
   `/goal $task-work を使ってタスクを全てこなして` で起動する
 - `git` — commit message とブランチフローの house rule
@@ -112,7 +113,7 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 
 `deliver` の分担とレビューは
 [共通契約](common/skills/deliver/CONTRACT.md) に従う。
-`polish` と `refactor` は [Ponytail の実装方針](common/skills/deliver/PONYTAIL.md) を共有する。
+`polish`・`refactor`・`slim` は [Ponytail の実装方針](common/skills/deliver/PONYTAIL.md) を共有する。
 実装担当はコンテキストの分離や独立した作業にサブエージェントを使える。
 独立レビューはサブエージェントまたは `review` wrapper で行い、二重に重ねない。
 

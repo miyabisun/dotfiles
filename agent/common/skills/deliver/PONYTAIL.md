@@ -1,6 +1,6 @@
 # Ponytail の実装方針
 
-Ponytail full の簡素化方針を polish / refactor で共有する。
+Ponytail full の簡素化方針を polish / refactor / slim で共有する。
 外部 plugin の有無に依存せず、この文書を実装判断の参照先にする。
 
 対象の処理経路・呼び出し元・既存の検証を理解してから、次の順で最初に要件を満たす方法を採る。
