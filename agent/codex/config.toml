@@ -39,3 +39,6 @@ notifications = false
 
 [sandbox_workspace_write]
 network_access = false
+
+[features.context_management]
+experimental_mode = true
