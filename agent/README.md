@@ -103,21 +103,19 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 - `polish` — 既存の不満・不具合を解消する
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
 - `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
-- `task-work` — task-serverの全件処理。新しい子でdeliver → merge → patchリリース。
+- `task-work` — task-serverの全件処理。1件ずつdeliver → merge → patchリリース。
   `/goal $task-work を使ってタスクを全てこなして` で起動する
 - `git` — commit message とブランチフローの house rule
 - `bump-tag` — semver の bump、tag、push
-- `knowledge-deposit` — 再利用できる knowledge を預ける。エントリを書き、lint
-  し、自分が書いた path だけを stage する。staged diff を `review` の召喚1回で
-  レビューし、local で commit する
+- `knowledge-deposit` — 再利用できる knowledge を預け、形式lintと担当の内容確認を経て
+  自分の差分を local commit する
 
 `deliver` の分担とレビューは
 [共通契約](common/skills/deliver/CONTRACT.md) に従う。
 `polish`・`refactor`・`slim` は [Ponytail の実装方針](common/skills/deliver/PONYTAIL.md) を共有する。
-通常は担当自身が実装・検証・自己レビューする。
 コード差分には `ponytail:ponytail-review` も同じレビュー内で適用する。
-委譲・独立レビューは依頼や project の現行規約で明示された場合に限る。
-その場合の手順は [独立レビュー](common/skills/deliver/REVIEW.md) を参照する。
+独立レビューを選んだ場合の手段と結果の扱いは
+[独立レビューの実行](common/skills/deliver/REVIEW.md) を参照する。
 
 `review <repo> --from codex --kind implementation --result <temp-result.json>` を使う。
 Claude Code からは `--from claude` を指定する。モデルの対応は上記の独立レビュー手順が所有する。

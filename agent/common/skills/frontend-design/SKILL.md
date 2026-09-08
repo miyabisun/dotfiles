@@ -41,9 +41,8 @@ ARIA と live region も同じである。test だけの変更・build 設定・
 3. 共有の Sumi・Kinari・その他の template は bootstrap input としてのみ扱う。
    Project root の `DESIGN.md` へ取り込んだ後は、Project が規則を所有し、
    共有 template はそれを上書きできない。
-4. Project の authority が無いか、既存の規則と pattern が視覚や操作の
-   判断を決められないなら、実装の前に止まる。contract 自体を変える必要が
-   あるときは、担当自身が root の `DESIGN.md` を確立または更新する。
+4. Project の authority が無いか、既存の規則と pattern で判断が決まらなければ、依頼と既存の体験から不足する方針を解決する。
+   実装前に root の `DESIGN.md` を確立または更新する。
 
 Project の design と、適用する design brief は、この skill にある
 一般的な美的助言をすべて上書きする。typography・構成・motion の助言も含む。
