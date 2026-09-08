@@ -69,6 +69,23 @@ See `agent/README.md` for details.
 - `tmux-session-picker` -> `config/tmux/bin/tmux-session-picker`
 - `tmux-mux` -> `config/tmux/bin/tmux-mux`
 
+## pen CLI updates
+
+Run `bash bin/install-apps --run-step install_pen` from this checkout to install
+or update only pen. An already installed current version is left in place.
+Downloads must pass the published checksum and report the selected release version.
+
+Banner-only releases v0.1.0/v0.1.1 are no longer accepted as download artifacts.
+An existing executable with the legacy pen help banner is still recognized for a
+one-time migration: the same command replaces it with the latest verified release.
+If download or validation fails, the existing binary stays in place; retry the
+command after the release or connection is fixed. Unrecognized targets are refused.
+
+As of 2026-09-08, [v0.1.0 still has public Linux/macOS release assets](https://github.com/miyabi-sunny-side/pen-cli/releases/tag/v0.1.0),
+and [v0.1.1 source also lacks `--version`](https://github.com/miyabi-sunny-side/pen-cli/blob/v0.1.1/src/lib.rs)
+although it has no published release assets. Other machines may still run these
+versions; retaining target recognition avoids requiring manual removal first.
+
 # Utilities
 
 This repository includes several utility scripts in the `bin/` directory to help manage specific configurations.

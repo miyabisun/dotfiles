@@ -141,25 +141,27 @@ MUX
     test "$write_out" = '%{url_effective}'
     test -n "$follow_redirects"
     printf '%s%s' 'https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/tag/' \
-      "${INSTALL_APPS_TEST_PEN_LATEST_TAG:-v0.1.0}"
+      "${INSTALL_APPS_TEST_PEN_LATEST_TAG:-v0.1.3}"
     exit 0
     ;;
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-linux-x86_64.tar.gz|\
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-macos-aarch64.tar.gz|\
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-linux-x86_64.tar.gz|\
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-macos-aarch64.tar.gz)
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v*/pen-linux-x86_64.tar.gz|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v*/pen-macos-aarch64.tar.gz)
     archive_root="${output}.root"
     mkdir -p "$archive_root"
     if [ -n "${INSTALL_APPS_TEST_PEN_LEGACY_ARCHIVE:-}" ]; then
       cat >"$archive_root/pen" <<'PEN'
 #!/bin/sh
+if [ "${1:-}" = --version ]; then
+  echo 'unknown command: --version' >&2
+  exit 1
+fi
 echo 'pen — suspend and restore herdr workspaces'
 PEN
     else
       cat >"$archive_root/pen" <<'PEN'
 #!/bin/sh
 if [ "${1:-}" = "--version" ]; then
-  echo "pen ${PEN_STUB_VERSION:-0.1.0}"
+  echo "pen ${PEN_STUB_VERSION:-0.1.3}"
   exit 0
 fi
 echo 'pen — suspend and restore herdr workspaces'
@@ -171,10 +173,8 @@ PEN
     rm -rf "$archive_root"
     exit 0
     ;;
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-linux-x86_64.tar.gz.sha256|\
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.0/pen-macos-aarch64.tar.gz.sha256|\
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-linux-x86_64.tar.gz.sha256|\
-  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v0.1.2/pen-macos-aarch64.tar.gz.sha256)
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v*/pen-linux-x86_64.tar.gz.sha256|\
+  https://github.com/miyabi-sunny-side/pen-cli-renamed/releases/download/v*/pen-macos-aarch64.tar.gz.sha256)
     archive_path="${output%.sha256}"
     archive_name="$(basename "$archive_path")"
     if [ -n "${INSTALL_APPS_TEST_BAD_PEN_CHECKSUM:-}" ]; then
@@ -243,7 +243,7 @@ test -x "$fake_home/.local/bin/mux"
 test "$("$fake_home/.local/bin/mux" --version)" = "mux 0.1.1"
 test -x "$fake_home/.local/bin/pen"
 "$fake_home/.local/bin/pen" | grep -Fq 'pen — suspend and restore herdr workspaces'
-test "$("$fake_home/.local/bin/pen" --version)" = "pen 0.1.0"
+test "$("$fake_home/.local/bin/pen" --version)" = "pen 0.1.3"
 test -z "$(find "$tmp_dir" -mindepth 1 -print -quit)"
 
 PATH="$fake_bin:$fake_home/.local/bin:/usr/bin:/bin" \
@@ -263,7 +263,7 @@ grep -F "Codex CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Grok CLI already installed" "$test_root/second-run.out" >/dev/null
 grep -F "Updating mux via mux update" "$test_root/second-run.out" >/dev/null
 test "$(grep -Fxc update "$mux_log")" -eq 1
-grep -F "pen v0.1.0 already installed" "$test_root/second-run.out" >/dev/null
+grep -F "pen v0.1.3 already installed" "$test_root/second-run.out" >/dev/null
 test "$(grep -Fc 'pen-linux-x86_64.tar.gz' "$log")" -eq 2
 
 linux_home="$test_root/linux-home"
@@ -533,58 +533,64 @@ PATH="$fake_bin:$update_pen_home/.local/bin:/usr/bin:/bin" \
   INSTALL_APPS_TEST_ARGS_LOG="$test_root/update-pen-curl-args.log" \
   TMPDIR="$update_pen_tmp" \
   bash "$repo_root/bin/install-apps" >"$test_root/update-pen.out"
-grep -F "pen v0.1.0 installed" "$test_root/update-pen.out" >/dev/null
-if grep -Fq "==> pen v0.1.0 already installed" "$test_root/update-pen.out"; then
+grep -F "pen v0.1.3 installed" "$test_root/update-pen.out" >/dev/null
+if grep -Fq "==> pen v0.1.3 already installed" "$test_root/update-pen.out"; then
   echo "recognized old pen should be replaced, not treated as current" >&2
   exit 1
 fi
 update_pen_after="$(sha256_file "$update_pen_home/.local/bin/pen")"
 test "$update_pen_before" != "$update_pen_after"
-test "$("$update_pen_home/.local/bin/pen" --version)" = "pen 0.1.0"
+test "$("$update_pen_home/.local/bin/pen" --version)" = "pen 0.1.3"
 test -z "$(find "$update_pen_tmp" -mindepth 1 -print -quit)"
 
-legacy_idem_home="$test_root/legacy-idem-home"
-legacy_idem_tmp="$test_root/legacy-idem-tmp"
-prepare_mux_case "$legacy_idem_home" "$legacy_idem_tmp"
-cp "$fake_home/.local/bin/mux" "$legacy_idem_home/.local/bin/mux"
-PATH="$fake_bin:$legacy_idem_home/.local/bin:/usr/bin:/bin" \
-  HOME="$legacy_idem_home" \
-  INSTALL_APPS_TEST_LOG="$test_root/legacy-idem-curl.log" \
-  INSTALL_APPS_TEST_ARGS_LOG="$test_root/legacy-idem-curl-args.log" \
-  INSTALL_APPS_TEST_PEN_LEGACY_ARCHIVE=1 \
-  TMPDIR="$legacy_idem_tmp" \
-  bash "$repo_root/bin/install-apps" >"$test_root/legacy-idem-1.out"
-grep -F "pen v0.1.0 installed" "$test_root/legacy-idem-1.out" >/dev/null
-legacy_idem_hash="$(sha256_file "$legacy_idem_home/.local/bin/pen")"
-PATH="$fake_bin:$legacy_idem_home/.local/bin:/usr/bin:/bin" \
-  HOME="$legacy_idem_home" \
-  INSTALL_APPS_TEST_LOG="$test_root/legacy-idem-curl.log" \
-  INSTALL_APPS_TEST_ARGS_LOG="$test_root/legacy-idem-curl-args.log" \
-  INSTALL_APPS_TEST_PEN_LEGACY_ARCHIVE=1 \
-  TMPDIR="$legacy_idem_tmp" \
-  bash "$repo_root/bin/install-apps" >"$test_root/legacy-idem-2.out"
-grep -F "pen v0.1.0 already installed" "$test_root/legacy-idem-2.out" >/dev/null
-test "$legacy_idem_hash" = "$(sha256_file "$legacy_idem_home/.local/bin/pen")"
-test -z "$(find "$legacy_idem_tmp" -mindepth 1 -print -quit)"
-
-future_strict_home="$test_root/future-strict-home"
-future_strict_tmp="$test_root/future-strict-tmp"
-prepare_mux_case "$future_strict_home" "$future_strict_tmp"
-cp "$fake_home/.local/bin/mux" "$future_strict_home/.local/bin/mux"
-if PATH="$fake_bin:$future_strict_home/.local/bin:/usr/bin:/bin" \
-  HOME="$future_strict_home" \
-  INSTALL_APPS_TEST_LOG="$test_root/future-strict-curl.log" \
-  INSTALL_APPS_TEST_ARGS_LOG="$test_root/future-strict-curl-args.log" \
-  INSTALL_APPS_TEST_PEN_LATEST_TAG=v0.1.2 \
-  INSTALL_APPS_TEST_PEN_LEGACY_ARCHIVE=1 \
-  TMPDIR="$future_strict_tmp" \
-  bash "$repo_root/bin/install-apps" >"$test_root/future-strict.out" 2>&1; then
-  echo "a future banner-only pen release must be rejected" >&2
+# Banner-only artifacts are rejected for both historic and current tags.
+# Failure must preserve an installed legacy target so migration can be retried.
+for rejected_tag in v0.1.0 v0.1.1 v0.1.3; do
+  rejected_home="$test_root/rejected-$rejected_tag-home"
+  rejected_tmp="$test_root/rejected-$rejected_tag-tmp"
+  prepare_mux_case "$rejected_home" "$rejected_tmp"
+  cat >"$rejected_home/.local/bin/pen" <<'LEGACY_PEN'
+#!/bin/sh
+if [ "${1:-}" = --version ]; then
+  echo 'unknown command: --version' >&2
   exit 1
 fi
-grep -F "pen binary does not look like pen in release v0.1.2" "$test_root/future-strict.out" >/dev/null
-test ! -e "$future_strict_home/.local/bin/pen"
-test -z "$(find "$future_strict_tmp" -mindepth 1 -print -quit)"
+echo 'pen — suspend and restore herdr workspaces'
+LEGACY_PEN
+  chmod +x "$rejected_home/.local/bin/pen"
+  rejected_before="$(sha256_file "$rejected_home/.local/bin/pen")"
+  if PATH="$fake_bin:/usr/bin:/bin" \
+    HOME="$rejected_home" \
+    INSTALL_APPS_TEST_LOG="$test_root/rejected-curl.log" \
+    INSTALL_APPS_TEST_ARGS_LOG="$test_root/rejected-curl-args.log" \
+    INSTALL_APPS_TEST_PEN_LATEST_TAG="$rejected_tag" \
+    INSTALL_APPS_TEST_PEN_LEGACY_ARCHIVE=1 \
+    TMPDIR="$rejected_tmp" \
+    bash "$repo_root/bin/install-apps" --run-step install_pen >"$test_root/rejected.out" 2>&1; then
+    echo "banner-only pen artifact $rejected_tag must be rejected" >&2
+    exit 1
+  fi
+  grep -F "pen binary version does not match $rejected_tag" "$test_root/rejected.out" >/dev/null
+  test "$rejected_before" = "$(sha256_file "$rejected_home/.local/bin/pen")"
+  test -z "$(find "$rejected_tmp" -mindepth 1 -print -quit)"
+done
+
+wrong_pen_home="$test_root/wrong-pen-home"
+wrong_pen_tmp="$test_root/wrong-pen-tmp"
+prepare_mux_case "$wrong_pen_home" "$wrong_pen_tmp"
+if PATH="$fake_bin:/usr/bin:/bin" \
+  HOME="$wrong_pen_home" \
+  INSTALL_APPS_TEST_LOG="$test_root/wrong-pen-curl.log" \
+  INSTALL_APPS_TEST_ARGS_LOG="$test_root/wrong-pen-curl-args.log" \
+  PEN_STUB_VERSION=9.9.9 \
+  TMPDIR="$wrong_pen_tmp" \
+  bash "$repo_root/bin/install-apps" --run-step install_pen >"$test_root/wrong-pen.out" 2>&1; then
+  echo "pen binary with the wrong version must be rejected" >&2
+  exit 1
+fi
+grep -F "pen binary version does not match v0.1.3" "$test_root/wrong-pen.out" >/dev/null
+test ! -e "$wrong_pen_home/.local/bin/pen"
+test -z "$(find "$wrong_pen_tmp" -mindepth 1 -print -quit)"
 
 legacy_pen_home="$test_root/legacy-pen-home"
 legacy_pen_tmp="$test_root/legacy-pen-tmp"
@@ -592,6 +598,10 @@ prepare_mux_case "$legacy_pen_home" "$legacy_pen_tmp"
 cp "$fake_home/.local/bin/mux" "$legacy_pen_home/.local/bin/mux"
 cat >"$legacy_pen_home/.local/bin/pen" <<'LEGACY_PEN'
 #!/bin/sh
+if [ "${1:-}" = --version ]; then
+  echo 'unknown command: --version' >&2
+  exit 1
+fi
 echo 'pen — suspend and restore herdr workspaces'
 LEGACY_PEN
 chmod +x "$legacy_pen_home/.local/bin/pen"
@@ -601,8 +611,9 @@ PATH="$fake_bin:$legacy_pen_home/.local/bin:/usr/bin:/bin" \
   INSTALL_APPS_TEST_ARGS_LOG="$test_root/legacy-pen-curl-args.log" \
   TMPDIR="$legacy_pen_tmp" \
   bash "$repo_root/bin/install-apps" >"$test_root/legacy-pen.out"
-grep -F "pen v0.1.0 installed" "$test_root/legacy-pen.out" >/dev/null
-test "$("$legacy_pen_home/.local/bin/pen" --version)" = "pen 0.1.0"
+grep -F "Migrating legacy pen" "$test_root/legacy-pen.out" >/dev/null
+grep -F "pen v0.1.3 installed" "$test_root/legacy-pen.out" >/dev/null
+test "$("$legacy_pen_home/.local/bin/pen" --version)" = "pen 0.1.3"
 test -z "$(find "$legacy_pen_tmp" -mindepth 1 -print -quit)"
 
 bad_pen_checksum_home="$test_root/bad-pen-checksum-home"
