@@ -125,6 +125,18 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 Claude の編集ごとの一括テスト・build hooks は使わず、変更に必要な checks を
 担当がまとめて実行する。
 
+## Git の変更破棄 hook
+
+`common/bin/block-git-discard` は、未コミット変更を誤って破棄する事故を減らす補助である。
+2026-07-03 の `git checkout .` と clean による消失事故を踏まえて維持する。
+各 runtime の既存登録から呼び、Claude/Codex の `hookSpecificOutput` と
+Grok の `decision` を返す。登録範囲は既存どおりで、Codex は `Bash` に限る。
+
+分類は shell 文字列の正規表現による近似で、複合コマンドや引用などを網羅しない。
+任意の shell を実行できる agent を封じ込める認可境界ではない。
+隔離検証は `python3 -B test/git-discard-hook.py` で登録済み hook を実行する。
+安全な操作の無出力、危険操作の拒否、runtime ごとの入出力を確認する。
+
 ## Markdown lint
 
 編集後の hook が、変更された `.md` だけに `meiseki-lint` の決定論層を掛ける。
