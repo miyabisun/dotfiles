@@ -7,6 +7,7 @@ sandbox_mode = "danger-full-access"
 web_search = "live"
 notify = ["notify-turn-end.sh"]
 service_tier = "default"
+model = "gpt-6-astra"
 
 [features]
 hooks = true
@@ -36,6 +37,8 @@ url = "https://developers.openai.com/mcp"
 # Completion and approval notifications use emit-turn-end.sh so MOCA_URL
 # stays the one notification path without duplicate TUI BELs.
 notifications = false
+status_line = ["model-with-reasoning", "current-dir"]
+status_line_use_colors = true
 
 [sandbox_workspace_write]
 network_access = false
