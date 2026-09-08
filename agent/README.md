@@ -118,8 +118,9 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 委譲・独立レビューは依頼や project の現行規約で明示された場合に限る。
 その場合の手順は [独立レビュー](common/skills/deliver/REVIEW.md) を参照する。
 
-`review <repo> --kind implementation --result <temp-result.json>` は標準入力の依頼に
-定型 prompt と schema を添え、結果の形式・判定の矛盾を検査する（Python 3 が必要）。
+`review <repo> --from codex --kind implementation --result <temp-result.json>` を使う。
+Claude Code からは `--from claude` を指定する。モデルの対応は上記の独立レビュー手順が所有する。
+標準入力の依頼に定型 prompt と schema を添え、結果の形式・判定の矛盾を検査する（Python 3 が必要）。
 `planning` / `recheck` も選べる。終了コード 0 は有効な結果を示し、
 `changes_required` を pass と扱わない。詳細ログは `<temp-result.json>.log` に残す。
 既存の `--schema` 呼び出しは従来どおり、独自形式の検証を呼び出し側が持つ。

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Contract: review は codex exec 召喚の唯一の起動形である。固定 flag (fast mode
+# Contract: Claude Code からの codex exec 経路。固定 flag (fast mode
 # を含む) を必ず渡し、prompt を stdin のまま透過し、stdout を汚さず、exit code
 # を無加工で返し、使い方の誤りは codex を呼ばずに exit 2 で弾く。
 # codex 本物は決して起動せず、REVIEW_CODEX に差した stub で実測する。
@@ -70,7 +70,7 @@ run_review() {
     STUB_STDIN="$stdin_capture" \
     STUB_EXIT="$stub_exit" \
     STUB_SLEEP="$stub_sleep" \
-    "$review_bin" "$@" <"$prompt_file" >"$out_file" 2>"$err_file"
+    "$review_bin" --from claude "$@" <"$prompt_file" >"$out_file" 2>"$err_file"
   status=$?
   set -e
 }
@@ -105,7 +105,7 @@ has_flag --ignore-user-config
 has_flag --ephemeral
 has_flag -
 has_pair -C "$work_dir"
-has_pair -m gpt-5.6-sol
+has_pair -m gpt-6-astra
 has_pair -s read-only
 has_pair --color never
 has_pair --output-schema "$schema_file"

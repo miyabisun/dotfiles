@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Bounded Codex invocation; --kind owns review boilerplate and result checks.
+"""Cross-model review: Codex -> Claude Fable 5.1, Claude -> GPT-6 Astra.
 
---schema retains the legacy prompt/log/exit-code passthrough contract.
+--schema retains the legacy Codex prompt/log/exit-code passthrough contract.
 --kind writes verbose logs to <result>.log; exit 0 means a valid report, NOT pass.
 """
 import argparse
@@ -85,6 +85,7 @@ class Parser(argparse.ArgumentParser):
 def main():
     parser = Parser(description=__doc__)
     parser.add_argument("dir", type=Path)
+    parser.add_argument("--from", dest="caller", choices=["codex", "claude"], required=True)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--schema", type=Path)
     mode.add_argument("--kind", choices=SCHEMAS)
@@ -102,12 +103,15 @@ def main():
         parser.error("schema and result must be different files")
     if not re.fullmatch(r"[1-9][0-9]*", args.timeout):
         parser.error("--timeout must be positive integer seconds")
+    if args.caller == "codex" and args.sandbox != "read-only":
+        parser.error("Claude reviews support read-only access only")
     # Never let a previous successful report survive a new execution failure.
     args.result.unlink(missing_ok=True)
-    codex = shutil.which(os.environ.get("REVIEW_CODEX", "codex"))
+    backend = "claude" if args.caller == "codex" else "codex"
+    executable = shutil.which(os.environ.get(f"REVIEW_{backend.upper()}", backend))
     runner = Path(__file__).resolve().with_name("with-timeout")
-    if not codex or not os.access(runner, os.X_OK):
-        print("review: codex or with-timeout not found", file=sys.stderr)
+    if not executable or not os.access(runner, os.X_OK):
+        print(f"review: {backend} or with-timeout not found", file=sys.stderr)
         return 127
     with tempfile.TemporaryDirectory(prefix="review-") as tmp:
         schema = args.schema
@@ -116,27 +120,51 @@ def main():
             schema = Path(tmp) / "schema.json"
             schema.write_text(json.dumps(SCHEMAS[args.kind]))
             prompt = (COMMON_PROMPT + PROMPTS[args.kind] + "\n依頼・資料:\n").encode() + prompt
-        command = [str(runner), args.timeout, codex, "exec", "--strict-config",
+        command = [str(runner), args.timeout, executable, "exec", "--strict-config",
                    "--ignore-user-config", "--ephemeral", "-C", str(args.dir),
-                   "-m", "gpt-5.6-sol", "-c", 'model_reasoning_effort="high"',
+                   "-m", "gpt-6-astra", "-c", 'model_reasoning_effort="high"',
                    "-c", 'approval_policy="never"', "-c", 'features.fast_mode=true',
                    "-c", 'service_tier="fast"', "-s", args.sandbox, "--color", "never",
                    "--output-schema", str(schema), "-o", str(args.result), "-"]
-        if not args.kind:
+        if backend == "claude":
+            command = [str(runner), args.timeout, executable, "-p",
+                       "--model", "claude-fable-5-1", "--effort", "high",
+                       "--output-format", "json", "--json-schema", schema.read_text(),
+                       "--safe-mode", "--strict-mcp-config", "--no-session-persistence",
+                       "--tools", "Read,Glob,Grep", "--allowedTools", "Read,Glob,Grep",
+                       "--permission-mode", "dontAsk"]
+        if not args.kind and backend == "codex":
             return subprocess.run(command, input=prompt, stdout=sys.stderr).returncode
         log_path = Path(str(args.result) + ".log")
-        with log_path.open("wb") as log:
-            status = subprocess.run(command, input=prompt, stdout=log, stderr=log).returncode
+        output_path = Path(tmp) / "claude.json"
+        with log_path.open("wb") as log, output_path.open("wb") as output:
+            status = subprocess.run(command, input=prompt,
+                                    cwd=args.dir if backend == "claude" else None,
+                                    stdout=output if backend == "claude" else log,
+                                    stderr=log).returncode
+        if backend == "claude":
+            with log_path.open("ab") as log:
+                log.write(output_path.read_bytes())
         try:
             if status:
                 raise ValueError(f"execution failed (exit {status})")
-            report = json.loads(args.result.read_text())
-            validate(report, SCHEMAS[args.kind])
+            if backend == "claude":
+                envelope = json.loads(output_path.read_text())
+                if (not isinstance(envelope, dict) or envelope.get("is_error") is not False
+                        or envelope.get("subtype") != "success" or "structured_output" not in envelope):
+                    raise ValueError("Claude did not return successful structured output")
+                report = envelope["structured_output"]
+            else:
+                report = json.loads(args.result.read_text())
+            if args.kind:
+                validate(report, SCHEMAS[args.kind])
             if args.kind == "implementation" and report["verdict"] == "pass" and report["blocking"]:
                 raise ValueError("pass contradicts blocking findings")
             if args.kind == "recheck" and report["verdict"] == "pass":
                 if any(not item["resolved"] for item in report["items"]) or report["evidence_integrity"]["verdict"] != "clean":
                     raise ValueError("pass contradicts unresolved findings or evidence")
+            if backend == "claude":
+                args.result.write_text(json.dumps(report, ensure_ascii=False) + "\n")
         except (ValueError, OSError) as error:
             args.result.unlink(missing_ok=True)
             print(f"review: {error}; log: {log_path}", file=sys.stderr)
@@ -144,7 +172,8 @@ def main():
                 log.seek(max(0, log_path.stat().st_size - 1600))
                 print(log.read().decode(errors="replace"), file=sys.stderr)
             return status if status > 0 else 1
-        print(f"review: {report.get('verdict', 'planning ready')}; result: {args.result}; log: {log_path}",
+        verdict = report.get('verdict', 'result ready') if isinstance(report, dict) else 'result ready'
+        print(f"review: {verdict}; result: {args.result}; log: {log_path}",
               file=sys.stderr)
         return 0
 
