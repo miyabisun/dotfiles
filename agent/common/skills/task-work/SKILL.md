@@ -39,7 +39,7 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
 2. **新しいサブエージェント**へ、タスク本文、worktree、対象repoの規約、達成条件、
    再開時の証拠だけを渡し、そこで `knowledge-read` → `deliver` を実行させる。
    会話全文・全タスク・haystack全文は渡さない。Codexのspawn_agentでは
-   `fork_turns: "none"` を指定する。子は検証・独立レビュー・指摘修正と
+   `fork_turns: "none"` を指定する。子は共通契約に従う検証・レビュー・指摘修正と
    local commitまでを担当し、merge・release・台帳操作は親へ返す。この分担を子へ
    明示し、他者の変更を戻さないよう伝える。
 3. 子の返却は成果、commit、検証・レビュー証拠、残件と参照先。親は差分と証拠を

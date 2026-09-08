@@ -114,8 +114,9 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 `deliver` の分担とレビューは
 [共通契約](common/skills/deliver/CONTRACT.md) に従う。
 `polish`・`refactor`・`slim` は [Ponytail の実装方針](common/skills/deliver/PONYTAIL.md) を共有する。
-実装担当はコンテキストの分離や独立した作業にサブエージェントを使える。
-独立レビューはサブエージェントまたは `review` wrapper で行い、二重に重ねない。
+通常は担当自身が実装・検証・自己レビューする。
+委譲・独立レビューは依頼や project の現行規約で明示された場合に限る。
+その場合の手順は [独立レビュー](common/skills/deliver/REVIEW.md) を参照する。
 
 `review <repo> --kind implementation --result <temp-result.json>` は標準入力の依頼に
 定型 prompt と schema を添え、結果の形式・判定の矛盾を検査する（Python 3 が必要）。

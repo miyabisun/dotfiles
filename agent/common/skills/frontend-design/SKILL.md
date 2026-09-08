@@ -43,12 +43,13 @@ ARIA と live region も同じである。test だけの変更・build 設定・
    共有 template はそれを上書きできない。
 4. Project の authority が無いか、既存の規則と pattern が視覚や操作の
    判断を決められないなら、実装の前に止まる。contract 自体を変える必要が
-   あるときは、`designer` を起動して root の `DESIGN.md` を確立または更新する。
+   あるときは、担当自身が root の `DESIGN.md` を確立または更新する。
 
-Project の design と、適用できる designer の brief は、この skill にある
+Project の design と、適用する design brief は、この skill にある
 一般的な美的助言をすべて上書きする。typography・構成・motion の助言も含む。
-design contract を変える現在の user 要求は、`designer` を通して reconcile
-する。code がそれに依存するより前に、root の `DESIGN.md` へ記録する。
+design contract を変える現在の user 要求は、担当が既存 contract と整合させる。
+code がそれに依存するより前に、root の `DESIGN.md` へ記録する。
+`designer` / `ui-checker` への委譲条件は [delivery の共通契約](../deliver/CONTRACT.md) に従う。
 
 ## 手順
 
