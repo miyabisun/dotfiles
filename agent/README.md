@@ -115,6 +115,7 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 [共通契約](common/skills/deliver/CONTRACT.md) に従う。
 `polish`・`refactor`・`slim` は [Ponytail の実装方針](common/skills/deliver/PONYTAIL.md) を共有する。
 通常は担当自身が実装・検証・自己レビューする。
+コード差分には `ponytail:ponytail-review` も同じレビュー内で適用する。
 委譲・独立レビューは依頼や project の現行規約で明示された場合に限る。
 その場合の手順は [独立レビュー](common/skills/deliver/REVIEW.md) を参照する。
 
