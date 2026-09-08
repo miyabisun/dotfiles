@@ -21,6 +21,7 @@ Claude の利用ツールは Read / Glob / Grep に限定するため、対象�
 ### 召喚は3種
 
 CLI の schema・定型 prompt・起動設定・結果の形式検証は `review` が所有する。毎回作り直さない。
+通常は wrapper の既定 timeout を使い、呼び出し側で短縮しない。
 一時領域に依頼と結果を置き、必要な種別を指定する:
 
 ```bash

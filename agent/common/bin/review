@@ -91,7 +91,7 @@ def main():
     mode.add_argument("--kind", choices=SCHEMAS)
     parser.add_argument("--result", required=True, type=Path)
     parser.add_argument("--sandbox", choices=["read-only", "workspace-write"], default="read-only")
-    parser.add_argument("--timeout", default="600")
+    parser.add_argument("--timeout", default="600", help="Timeout in seconds (default: %(default)s)")
     args = parser.parse_args()
     if not args.dir.is_dir():
         parser.error(f"not a directory: {args.dir}")
