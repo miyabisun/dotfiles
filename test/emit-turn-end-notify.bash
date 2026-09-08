@@ -44,12 +44,6 @@ cat >"$test_root/bin/.dotfiles-agent-runtime" <<EOF
 CURL_BIN=$test_root/bin/curl
 HERDR_BIN=$test_root/bin/herdr
 JQ_BIN=/usr/bin/jq
-SHA256_BIN=/usr/bin/sha256sum
-SHA256_MODE=sha256sum
-CP_BIN=/usr/bin/cp
-RM_BIN=/usr/bin/rm
-STAT_BIN=/usr/bin/stat
-STAT_MODE=gnu
 EOF
 
 fail() {

@@ -32,8 +32,8 @@ printf 'PATH dirname must not run\n' >>"$NOTIFY_TEST_PATH_LOG"
 exit 99
 DIRNAME
 
-printf 'CURL_BIN=%s\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
-  "$fake_bin/curl" /usr/bin/sha256sum \
+printf 'CURL_BIN=%s\nHERDR_BIN=\nJQ_BIN=\n' \
+  "$fake_bin/curl" \
   >"$trusted_bin/.dotfiles-agent-runtime"
 chmod +x "$fake_bin/curl" "$fake_bin/dirname" \
   "$notifier" "$emitter"
@@ -80,15 +80,15 @@ export NOTIFY_TEST_CURL_FAIL=1
 unset NOTIFY_TEST_CURL_FAIL
 
 # curl is optional: permission handling still succeeds without a MOCA sink.
-printf 'CURL_BIN=\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
-  /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
+printf 'CURL_BIN=\nHERDR_BIN=\nJQ_BIN=\n' \
+  >"$trusted_bin/.dotfiles-agent-runtime"
 curl_count="$(wc -l <"$NOTIFY_TEST_CURL_LOG")"
 "$notifier" codex
 test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq "$curl_count"
 
 # A broken notification pin fails closed without invoking agent-talk lifecycle.
-printf 'BROKEN=1\nCURL_BIN=\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
-  /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
+printf 'BROKEN=1\nCURL_BIN=\nHERDR_BIN=\nJQ_BIN=\n' \
+  >"$trusted_bin/.dotfiles-agent-runtime"
 if "$emitter" codex success talk 2>/dev/null; then
   echo 'a malformed pin should fail notification processing' >&2
   exit 1
@@ -96,8 +96,8 @@ fi
 
 # The sidecar is parsed as strict data, never sourced as shell code.
 side_effect="$test_root/runtime-side-effect"
-printf 'CURL_BIN=$(touch %s)\nHERDR_BIN=\nJQ_BIN=\nSHA256_BIN=%s\nSHA256_MODE=sha256sum\nCP_BIN=/usr/bin/cp\nRM_BIN=/usr/bin/rm\nSTAT_BIN=/usr/bin/stat\nSTAT_MODE=gnu\n' \
-  "$side_effect" /usr/bin/sha256sum >"$trusted_bin/.dotfiles-agent-runtime"
+printf 'CURL_BIN=$(touch %s)\nHERDR_BIN=\nJQ_BIN=\n' \
+  "$side_effect" >"$trusted_bin/.dotfiles-agent-runtime"
 if "$notifier" codex 2>/dev/null; then
   echo 'malformed runtime sidecar must fail closed' >&2
   exit 1

@@ -9,26 +9,7 @@ mkdir -p "$RUNTIME_BIN" "$RULES_DIR"
 CURL_RUNTIME="$(command -v curl || true)"
 HERDR_RUNTIME="$(command -v herdr || true)"
 JQ_RUNTIME="$(command -v jq || true)"
-if SHA256_RUNTIME="$(command -v sha256sum)"; then
-    SHA256_MODE=sha256sum
-elif SHA256_RUNTIME="$(command -v shasum)"; then
-    SHA256_MODE=shasum
-else
-    exit 1
-fi
-COPY_RUNTIME="$(command -v cp)" || exit 1
-REMOVE_RUNTIME="$(command -v rm)" || exit 1
-STAT_RUNTIME="$(command -v stat)" || exit 1
-if "$STAT_RUNTIME" -c %a "$SOURCE_ROOT" >/dev/null 2>&1; then
-    STAT_MODE=gnu
-elif "$STAT_RUNTIME" -f %Lp "$SOURCE_ROOT" >/dev/null 2>&1; then
-    STAT_MODE=bsd
-else
-    exit 1
-fi
-for RUNTIME_PATH in "$CURL_RUNTIME" "$HERDR_RUNTIME" "$JQ_RUNTIME" \
-    "$SHA256_RUNTIME" \
-    "$COPY_RUNTIME" "$REMOVE_RUNTIME" "$STAT_RUNTIME"; do
+for RUNTIME_PATH in "$CURL_RUNTIME" "$HERDR_RUNTIME" "$JQ_RUNTIME"; do
     case "$RUNTIME_PATH" in "$SOURCE_ROOT"/*) exit 1 ;; esac
     [[ "$RUNTIME_PATH" != *[$' \t\r\n']* ]] || exit 1
 done
@@ -39,10 +20,8 @@ if [[ -L "$RUNTIME_PATHS" ]]; then
 fi
 RUNTIME_PATHS_TEMP="$(mktemp "$RUNTIME_BIN/.dotfiles-agent-runtime.XXXXXX")"
 trap 'rm -f "$RUNTIME_PATHS_TEMP"' EXIT
-printf 'CURL_BIN=%s\nHERDR_BIN=%s\nJQ_BIN=%s\nSHA256_BIN=%s\nSHA256_MODE=%s\nCP_BIN=%s\nRM_BIN=%s\nSTAT_BIN=%s\nSTAT_MODE=%s\n' \
+printf 'CURL_BIN=%s\nHERDR_BIN=%s\nJQ_BIN=%s\n' \
     "$CURL_RUNTIME" "$HERDR_RUNTIME" "$JQ_RUNTIME" \
-    "$SHA256_RUNTIME" "$SHA256_MODE" \
-    "$COPY_RUNTIME" "$REMOVE_RUNTIME" "$STAT_RUNTIME" "$STAT_MODE" \
     >"$RUNTIME_PATHS_TEMP"
 chmod 0644 "$RUNTIME_PATHS_TEMP"
 mv "$RUNTIME_PATHS_TEMP" "$RUNTIME_PATHS"

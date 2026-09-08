@@ -84,7 +84,7 @@ PY
 
 # bin/install must propagate a runtime-installer failure instead of continuing
 # with a stale policy. This PATH provides bootstrap tools but deliberately no
-# hash tool, so the helper exits nonzero at its runtime dependency check.
+# mktemp, so the helper exits nonzero before publishing its sidecar.
 bootstrap_bin="$test_root/bootstrap-tools"
 bootstrap_home="$test_root/bootstrap-home"
 mkdir -p "$bootstrap_bin" "$bootstrap_home"
@@ -97,24 +97,55 @@ if HOME="$bootstrap_home" PATH="$bootstrap_bin" \
   exit 1
 fi
 
-# curl is optional because it is only a MOCA sink. A host with a hash tool but
-# no curl — and no tmux at all — must still receive a working runtime.
+# Notification runtime needs neither hash/stat tools nor curl to install.
 no_curl_bin="$test_root/no-curl-tools"
 no_curl_home="$test_root/no-curl-home"
 mkdir -p "$no_curl_bin" "$no_curl_home"
-for tool_name in dirname mkdir cp chmod unlink mktemp sed mv rm stat; do
+for tool_name in dirname mkdir cp chmod unlink mktemp sed mv rm; do
   link_host_tool "$tool_name" "$no_curl_bin"
 done
-if command -v sha256sum >/dev/null 2>&1; then
-  hash_tool=sha256sum
-else
-  hash_tool=shasum
-fi
-link_host_tool "$hash_tool" "$no_curl_bin"
 HOME="$no_curl_home" PATH="$no_curl_bin" "$installer"
 grep -Fx 'CURL_BIN=' \
   "$no_curl_home/.local/bin/.dotfiles-agent-runtime" >/dev/null
 test -x "$no_curl_home/.local/bin/notify-file-permission.sh"
+
+# Exercise the installed files with a PATH containing no hash/stat commands.
+for runtime_name in emit-turn-end.sh notify-file-permission.sh; do
+  env -i HOME="$no_curl_home" PATH="$no_curl_bin" MOCA_URL=https://notify.invalid \
+    "$no_curl_home/.local/bin/$runtime_name" codex
+done
+cat >"$no_curl_bin/curl" <<'TOOL'
+#!/bin/bash
+printf '%s\n' "$*" >>"$NOTIFY_TEST_CURL_LOG"
+exit "${NOTIFY_TEST_CURL_FAIL:-0}"
+TOOL
+chmod +x "$no_curl_bin/curl"
+export NOTIFY_TEST_CURL_LOG="$test_root/installed-curl.log"
+# A legacy sidecar may point to tools that no longer exist. Reinstall replaces
+# it with the reduced format.
+printf 'SHA256_BIN=/missing/sha256sum\nSHA256_MODE=sha256sum\nCP_BIN=/missing/cp\nRM_BIN=/missing/rm\nSTAT_BIN=/missing/stat\nSTAT_MODE=gnu\n' \
+  >>"$no_curl_home/.local/bin/.dotfiles-agent-runtime"
+HOME="$no_curl_home" PATH="$no_curl_bin" "$installer"
+# The persisted data format contains only the three notification dependencies.
+printf 'CURL_BIN=%s\nHERDR_BIN=\nJQ_BIN=\n' "$no_curl_bin/curl" >"$test_root/expected-sidecar"
+cmp "$test_root/expected-sidecar" "$no_curl_home/.local/bin/.dotfiles-agent-runtime"
+for runtime_name in emit-turn-end.sh notify-file-permission.sh; do
+  env -i HOME="$no_curl_home" PATH="$no_curl_bin" MOCA_URL=https://notify.invalid \
+    NOTIFY_TEST_CURL_LOG="$NOTIFY_TEST_CURL_LOG" \
+    "$no_curl_home/.local/bin/$runtime_name" codex
+done
+test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 2
+grep -F 'が完了しました' "$NOTIFY_TEST_CURL_LOG" >/dev/null
+grep -F 'でファイル操作の許可が必要です' "$NOTIFY_TEST_CURL_LOG" >/dev/null
+# Missing MOCA and a failing destination still return success after migration.
+for runtime_name in emit-turn-end.sh notify-file-permission.sh; do
+  env -i HOME="$no_curl_home" PATH="$no_curl_bin" \
+    "$no_curl_home/.local/bin/$runtime_name" codex
+  env -i HOME="$no_curl_home" PATH="$no_curl_bin" MOCA_URL=https://notify.invalid \
+    NOTIFY_TEST_CURL_LOG="$NOTIFY_TEST_CURL_LOG" NOTIFY_TEST_CURL_FAIL=22 \
+    "$no_curl_home/.local/bin/$runtime_name" codex
+done
+test "$(wc -l <"$NOTIFY_TEST_CURL_LOG")" -eq 4
 
 # 既に配置済みの旧 dispatcher は、再インストールで撤去されなければならない。
 # 残すと PATH 上で生き続け、ack できない経路が復活する
@@ -141,7 +172,7 @@ staged_root="$test_root/source"
 mkdir -p "$staged_root/agent/common/bin" "$staged_root/tools" "$test_root/spaced tools"
 cp "$installer" "$staged_root/agent/common/bin/install-agent-runtime"
 for rejected_bin in "$staged_root/tools" "$test_root/spaced tools"; do
-  for runtime_name in curl herdr jq "$hash_tool" cp rm stat; do
+  for runtime_name in curl herdr jq; do
     if [[ "$runtime_name" == herdr ]]; then
       ln -s /bin/true "$rejected_bin/$runtime_name"
     else
