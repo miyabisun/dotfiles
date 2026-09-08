@@ -115,8 +115,9 @@ link "agent/common/agents" "$HOME/.agents"
 link "agent/common/designs" "$HOME/.agents"
 
 link "agent/codex/hooks/notify-turn-end.sh" "$HOME/.local/bin"
-# codex exec 召喚の共通起動形 (spike / polish / knowledge-deposit)
+# 別モデルによる実装レビューの共通起動形
 link "agent/common/bin/review" "$HOME/.local/bin"
+link "agent/common/bin/agent-test" "$HOME/.local/bin"
 # timeout(1) が macOS に無いことの吸収。review が打ち切りをここへ委譲する
 link "agent/common/bin/with-timeout" "$HOME/.local/bin"
 # 日本語明晰化 (本体は bin/install-apps が ~/.local/share/meiseki へ置く)

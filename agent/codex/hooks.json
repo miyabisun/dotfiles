@@ -24,6 +24,27 @@
           }
         ],
         "matcher": "^Bash$"
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.local/bin/agent-test\" hook",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.local/bin/agent-test\" hook",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "SessionStart": [

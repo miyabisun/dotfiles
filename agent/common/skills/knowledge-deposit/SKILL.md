@@ -20,7 +20,7 @@ description: >-
   `scripts/lint --enforce-scope <今回のpath>...` を使う。規則やschemaを作り直さない。
   lintは既知形式しか検出しないため、担当が秘密の混入、内容、出典、重複、参照を確認する。
 - 通常更新はこのlintと担当確認で完了する。開発に伴う独立レビューが必要なら
-  `deliver/CONTRACT.md` の所有者が関連差分を一緒に扱い、投入だけのレビューを重ねない。
+  `deliver/SKILL.md` の所有者が関連差分を一緒に扱い、投入だけのレビューを重ねない。
   指摘を新しい承認権限にせず、無関係な既存文書まで修正を広げない。
 - `git` skillで自分のpath/hunkだけをstageし、commit対象を確認してlocal commitする。
   他者のstaged差分が別pathなら `git commit --only -- <自分のpath>...` で分離できる。

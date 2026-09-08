@@ -7,10 +7,9 @@ import tempfile
 import unittest
 
 REVIEW = Path(__file__).resolve().parents[1] / "agent/common/bin/review"
-PASS = dict(verdict="pass", blocking=[], non_blocking=[], evidence_integrity="checked",
-            scope_check="checked", formatter_linter_check="checked")
+PASS = dict(verdict="pass", blocking=[])
 RECHECK = dict(verdict="pass", items=[dict(id="1", resolved=True, reason="fixed")],
-               evidence_integrity=dict(verdict="clean", findings=[]), notes=[])
+               notes=[])
 
 
 class ReviewPresets(unittest.TestCase):
@@ -48,9 +47,7 @@ sys.exit(int(os.environ.get('STATUS', '0')))
                               text=True, capture_output=True, env=self.env)
 
     def test_modes_and_quiet_logs(self):
-        for kind, reply in [("implementation", PASS), ("recheck", RECHECK),
-                            ("planning", dict(dissatisfaction="x", minimal_plan="x",
-                                              regression_evidence="x", ux_risks="x"))]:
+        for kind, reply in [("implementation", PASS), ("recheck", RECHECK)]:
             with self.subTest(kind=kind):
                 run = self.run_review(kind, reply)
                 self.assertEqual(run.returncode, 0, run.stderr)
@@ -77,11 +74,11 @@ sys.exit(int(os.environ.get('STATUS', '0')))
 
     def test_changes_required_is_valid_result(self):
         reply = dict(PASS, verdict="changes_required", blocking=[
-            dict(path="x", line=1, issue="broken", required_fix="fix")])
+            dict(category="intent", path="x", line=1, issue="broken", required_fix="fix")])
         self.assertEqual(self.run_review(reply=reply).returncode, 0)
 
     def test_invalid_or_contradictory_result_is_not_pass(self):
-        cases = [dict(PASS, blocking=[dict(path="x", line=1, issue="x", required_fix="x")]),
+        cases = [dict(PASS, blocking=[dict(category="intent", path="x", line=1, issue="x", required_fix="x")]),
                  dict(PASS, verdict="unknown"), {}, [], "invalid JSON shape",
                  dict(PASS, extra="unexpected"), dict(PASS, blocking=[dict(path="x")])]
         for reply in cases:
@@ -90,10 +87,20 @@ sys.exit(int(os.environ.get('STATUS', '0')))
                 self.assertNotEqual(run.returncode, 0)
                 self.assertFalse(self.result.exists())
 
-    def test_recheck_cannot_pass_with_unresolved_or_bad_evidence(self):
-        for reply in [dict(RECHECK, items=[dict(id="1", resolved=False, reason="later")]),
-                      dict(RECHECK, evidence_integrity=dict(verdict="cheating", findings=["x"]))]:
-            self.assertNotEqual(self.run_review("recheck", reply).returncode, 0)
+    def test_recheck_cannot_pass_with_unresolved_findings(self):
+        reply = dict(RECHECK, items=[dict(id="1", resolved=False, reason="later")])
+        self.assertNotEqual(self.run_review("recheck", reply).returncode, 0)
+
+    def test_planning_is_rejected_before_invocation(self):
+        self.assertEqual(self.run_review("planning").returncode, 2)
+        self.assertFalse(self.capture.exists())
+
+    def test_only_requirements_and_intent_findings_are_accepted(self):
+        for category in ("requirements", "intent", "style"):
+            reply = dict(verdict="changes_required", blocking=[dict(
+                category=category, path="x", line=1, issue="wrong", required_fix="fix")])
+            run = self.run_review(reply=reply)
+            self.assertEqual(run.returncode, 1 if category == "style" else 0, run.stderr)
 
     def test_stale_result_is_removed_on_empty_or_failed_execution(self):
         for env in [dict(OMIT="1"), dict(STATUS="3", OMIT="0")]:

@@ -71,6 +71,16 @@
             "statusMessage": "git 破棄コマンドチェック"
           }
         ]
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.local/bin/agent-test\" hook",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -91,6 +101,15 @@
           {
             "type": "command",
             "command": "bash \"$HOME/.claude/hooks/stop-turn-end.sh\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.local/bin/agent-test\" hook",
+            "timeout": 30
           }
         ]
       }

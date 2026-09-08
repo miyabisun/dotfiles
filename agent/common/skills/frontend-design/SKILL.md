@@ -48,7 +48,7 @@ Project の design と、適用する design brief は、この skill にある
 一般的な美的助言をすべて上書きする。typography・構成・motion の助言も含む。
 design contract を変える現在の user 要求は、担当が既存 contract と整合させる。
 code がそれに依存するより前に、root の `DESIGN.md` へ記録する。
-`designer` / `ui-checker` への委譲条件は [delivery の共通契約](../deliver/CONTRACT.md) に従う。
+`designer` / `ui-checker` への委譲条件は [delivery の共通契約](../deliver/SKILL.md) に従う。
 
 ## 手順
 

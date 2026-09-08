@@ -66,6 +66,7 @@ See `agent/README.md` for details.
 #### `~/.local/bin`
 - `emit-turn-end.sh` -> `agent/common/bin/emit-turn-end.sh`
 - `review` -> `agent/common/bin/review` — cross-model review.
+- `agent-test` -> `agent/common/bin/agent-test` — user-level test gate for Codex and Claude Code.
   Set the caller with `--from codex|claude`.
 - `tmux-session-picker` -> `config/tmux/bin/tmux-session-picker`
 - `tmux-mux` -> `config/tmux/bin/tmux-mux`

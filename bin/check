@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Repository-owned check command; tests isolate their external effects.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+shopt -s nullglob
+checks=(test/*.py test/*.bash)
+if ((${#checks[@]} == 0)); then
+  echo 'check: no tests found' >&2
+  exit 1
+fi
+for check in "${checks[@]}"; do
+  echo "check: $check"
+  case "$check" in
+    *.py) python3 -B "$check" ;;
+    *.bash) bash "$check" ;;
+  esac
+done

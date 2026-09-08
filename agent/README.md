@@ -98,9 +98,7 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 
 主な skill:
 
-- `deliver` — 目的に応じて `spike` / `polish` / `refactor` / `slim` を選び、検証・レビュー・local commit まで届ける
-- `spike` — 新しい体験を最小の実装で動かす
-- `polish` — 既存の不満・不具合を解消する
+- `deliver` — 新規開発と既存改善を、Ponytail full・TDD・実装レビュー・local commitまで同じ手順で届ける
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
 - `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
 - `task-work` — task-serverの全件処理。1件ずつdeliver → merge → patchリリース。
@@ -110,21 +108,36 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 - `knowledge-deposit` — 再利用できる knowledge を預け、形式lintと担当の内容確認を経て
   自分の差分を local commit する
 
-`deliver` の分担とレビューは
-[共通契約](common/skills/deliver/CONTRACT.md) に従う。
-`polish`・`refactor`・`slim` は [Ponytail の実装方針](common/skills/deliver/PONYTAIL.md) を共有する。
-コード差分には `ponytail:ponytail-review` も同じレビュー内で適用する。
-独立レビューを選んだ場合の手段と結果の扱いは
-[独立レビューの実行](common/skills/deliver/REVIEW.md) を参照する。
+設計・実装・検証は [deliver](common/skills/deliver/SKILL.md) が所有する。
+主担当がPonytailで差分を確認し、別モデルには要件とのずれと実装意図の2点だけを渡す。
+設計レビューは行わない。実行方法は [実装レビュー](common/skills/deliver/REVIEW.md) を参照する。
 
 `review <repo> --from codex --kind implementation --result <temp-result.json>` を使う。
 Claude Code からは `--from claude` を指定する。モデルの対応は上記の独立レビュー手順が所有する。
 標準入力の依頼に定型 prompt と schema を添え、結果の形式・判定の矛盾を検査する（Python 3 が必要）。
-`planning` / `recheck` も選べる。終了コード 0 は有効な結果を示し、
+指摘の修正確認には `recheck` を選ぶ。終了コード 0 は有効な結果を示し、
 `changes_required` を pass と扱わない。詳細ログは `<temp-result.json>.log` に残す。
 既存の `--schema` 呼び出しは従来どおり、独自形式の検証を呼び出し側が持つ。
 Claude の編集ごとの一括テスト・build hooks は使わず、変更に必要な checks を
 担当がまとめて実行する。
+
+## エージェント共通のテストゲート
+
+Codexの `~/.codex/hooks.json` とClaude Codeのユーザー設定に、
+`agent-test hook` をPreToolUse / Stopとして登録する。各projectの `.git` は変更しない。
+`bin/install` が共通コマンドを `~/.local/bin/agent-test` に配置する。
+Codexがhookの信頼確認を求める場合は、ユーザーが `/hooks` で有効にする。
+
+対象repoで `agent-test run -- <既存テストコマンドと引数>` を実行する。
+このrepoでは `agent-test run -- bin/check` を使う。
+結果はユーザーのstate directoryに保存する。失敗・未検証・検証後の編集は直接の `git commit` を拒否する。
+stage・検証・commitは別コマンドで実行し、部分stageの内容はコミットしない。
+Stopは同じsessionで始めた検証を確認する。未完了の報告が必要なら `agent-test pause` を使い、
+未完了の内容と再開条件を報告する。pauseはコミットを許可しない。
+
+これは通常の直接コマンドに対する作業ミス防止で、任意script内のcommitや別の実行経路を封じる境界ではない。
+Hookはテストの網羅性やTDDの実施順序を証明しない。新規・変更する副作用のない処理のTDDはdeliverが要求する。
+submoduleを含むrepoは現在対象外で、黙って検証済みにはしない。
 
 ## Git の変更破棄 hook
 
