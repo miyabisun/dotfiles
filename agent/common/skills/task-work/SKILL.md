@@ -9,15 +9,18 @@ description: >-
 
 担当は台帳と次の工程を持ち、各タスクを成果まで進める。
 `/goal $task-work を使ってtask-serverのタスクを全てこなして` が入口。
-**userによるこの実行依頼は、対象タスクのcommit・push・mergeと、リリース対象
-productの `$bump-tag patch` を含む。** スキルの作成・説明依頼では実行しない。
+userによる実行依頼は、対象タスクのcommit・push・mergeを含む。
+リリース対象productでは `$bump-tag patch` まで実行する。 スキルの作成・説明依頼では実行しない。
 タスクに明示されたrelease水準やuserの制限は優先する。
 
 ## 引き取る
 
-1. `knowledge-read` と `git` を読み、MCPでタスク一覧とproduct情報を取得する。
+1. `knowledge-read` と `git` を読む。実行先は呼び出し元の設定・userの指定に従い、
+   指定がなければ現行運用の `sandbox` とする。`homeserver` は明示された場合だけ選ぶ。
+   MCPでタスク一覧とproduct情報を取得し、今回の実行先に一致するタスクを対象にする。
+   タスク本文から実行先を推測したり、取得のために実行先を変更したりしない。
    着手する製品は`product_get({id})`でrepository・local_path・releasesを読む。
-   未設定値は実在と運用設定を確認して`product_update`で補う。releasesの未設定とfalseを混同しない。
+   未設定のrepository・releasesは実在と運用設定を確認して`product_update`で補う。releasesの未設定とfalseを混同しない。
    一覧はnext_offsetがnullになるまでページを取得し、最初のページだけで全件完了にしない。
    本文はtask_get、報告原文はrun_get、証拠履歴はtask_history、再開情報はtask_checkpoint_getで
    必要なものだけ取得する。一覧や更新応答に詳細が埋め込まれる前提を置かない。
@@ -33,8 +36,10 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
 
 ## 1件を完走する
 
-1. productのlocal_pathを入口にrepositoryとGitのoriginを照合し、originの既定ブランチ
-   からタスク専用branch・worktreeを作る。通常cloneならそのrepositoryで同じ操作を
+1. productのlocal_pathがこのマシンに存在すればrepositoryとGitのoriginを照合する。
+   存在しない・未設定なら、登録済みrepositoryからこの実行者のローカル領域へcloneする。
+   別マシンの絶対パスを再現せず、共有productのlocal_pathも書き換えない。
+   originの既定ブランチからタスク専用branch・worktreeを作る。通常cloneならそのrepositoryで同じ操作を
    行う。再開時は記録した自分のworktreeと変更を再利用し、他者の作業を保護する。
 2. そのworktreeで `knowledge-read` → `deliver` を進め、検証・レビュー・指摘修正と
    local commitまで完了する。分担とレビュー方法はdeliverの手順に従う。
@@ -49,10 +54,20 @@ productの `$bump-tag patch` を含む。** スキルの作成・説明依頼で
    version計算・commit・tag・pushは同skillに任せる。担当はそのcommitのCIとrelease
    workflowの成功、公開artifactを確認する。起動確認だけではreleasedにしない。
    `releases: false` はリリース不要と記録する。変更不要なら既存artifactの包含を
-   確認し、空のreleaseを作らない。配備がタスクに含まれる場合は実反映・動作確認も行う。
+   確認し、空のreleaseを作らない。配備・実機確認は、その作業を含むhomeserver向けタスクで実施する。
 6. 要求された成果がそろってから、doneと結果の原文を一度reportする（haystackにも保存される）。
    merge済みcommitをtaskの対象SHAとし、release tag・artifact・CI URLも証拠に残す。
    次のタスクへ進む。local commitやCIの起動で依頼全体を終えない。
+
+## 開発と実機作業の引き継ぎ
+
+開発と実機確認の両方が必要な依頼は、sandbox向け開発とhomeserver向け配備・確認に
+分け、後者の `depends_on` に開発タスクのIDを設定する。作成時に `execution_target` を
+明示する。開発側はsandbox上の再現・修正・回帰検証など、実行可能な条件を達成してdoneにする。
+実機作業の未実施だけで開発をblockedにせず、問題全体の完了とも報告しない。
+後続の本文へ対象artifact/版、適用手順、確認対象・操作方法、成功を判定するログやDB等の
+観測点を渡す。自然発生を待つだけの条件にしない。授権済みの後続はreadyで依存完了を待たせ、
+範囲外の発見はdeliverのdraft登録に従う。全リリースへの配備タスク自動生成はしない。
 
 ## 中断・復帰
 
@@ -66,5 +81,6 @@ CI失敗は原因を修正して再確認する。公開済みtagは動かさず
 同じ依頼の範囲でbump-tagを使う。失敗を理由に最初からdeliverやbumpを繰り返さない。
 
 進められない1件は理由・保存先・残工程をblockedのreportに残し、他のタスクを続ける。
-最後に一覧を再確認し、残件があれば全件完了とは報告しない。元のexecutorを復元し、
+最後に両実行先の一覧を再確認し、依頼範囲に別実行先の残件があればその待機先を報告する。
+残件があれば全件完了とは報告しない。元のexecutorを復元し、
 完了件数、release、未完了と実際に必要な対応だけを返す。
