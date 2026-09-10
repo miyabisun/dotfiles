@@ -78,7 +78,9 @@ groups live tabs by directory. Neovim 0.10+, fzf-lua and `fzf` are required.
 The normal installer links this configuration; lazy.nvim installs the public tag
 on the next Neovim startup.
 
-Use `:TabspacesAdd Name` to bookmark or rename the current directory.
+Press **z then q in normal mode** to name and bookmark the current directory.
+Leave the name empty and press Enter to use the directory's basename.
+Press Esc to cancel. `:TabspacesAdd Name` also remains available.
 For any other directory, including non-Git locations:
 
 ```vim

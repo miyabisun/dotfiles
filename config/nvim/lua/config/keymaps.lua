@@ -11,6 +11,16 @@ map("n", "ze", "<cmd>Ex<cr>", { desc = "Go back to explorer" })
 
 -- zp: Fzf Project Files
 map("n", "zp", "<cmd>FzfLua files<cr>", { desc = "Fzf Project Files" })
+
+map("n", "zq", function()
+  local cwd = vim.fn.getcwd()
+  local default_name = vim.fs.basename(cwd)
+  vim.ui.input({ prompt = "Bookmark name (Enter: " .. default_name .. "): " }, function(name)
+    if name == nil then return end
+    require("tabspaces").add(name == "" and default_name or name, cwd)
+  end)
+end, { desc = "Bookmark current directory" })
+
 -- z/: Grep → Quickfix (Full Text Search)
 map("n", "z/", function()
   vim.ui.input({ prompt = "Grep: " }, function(pattern)
