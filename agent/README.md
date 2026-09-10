@@ -98,7 +98,8 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
 
 主な skill:
 
-- `deliver` — 新規開発と既存改善を、Ponytail full・TDD・実装レビュー・local commitまで同じ手順で届ける
+- `task-creater` — 元の依頼・最小性・利用先を実行前にレビューし、必要な依存タスクを登録する
+- `deliver` — 事前判断を引き継ぎ、Ponytail full・TDD・実装レビュー・local commitまで届ける
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
 - `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
 - `task-work` — task-serverの全件処理。1件ずつdeliver → merge → patchリリース。
@@ -109,13 +110,13 @@ fallback として読んでよい。ただしルートと docs が暗黙に merg
   自分の差分を local commit する
 
 設計・実装・検証は [deliver](common/skills/deliver/SKILL.md) が所有する。
-主担当がPonytailで差分を確認し、別モデルには要件とのずれと実装意図の2点だけを渡す。
-設計レビューは行わない。実行方法は [実装レビュー](common/skills/deliver/REVIEW.md) を参照する。
+事前の要件・方針判断は [task-creater](common/skills/task-creater/SKILL.md) で行い、実装後はその実現と検証証拠を確認する。
+実行方法は [共通review手順](common/skills/deliver/REVIEW.md) を参照する。
 
 `review <repo> --from codex --kind implementation --result <temp-result.json>` を使う。
 Claude Code からは `--from claude` を指定する。モデルの対応は上記の独立レビュー手順が所有する。
 標準入力の依頼に定型 prompt と schema を添え、結果の形式・判定の矛盾を検査する（Python 3 が必要）。
-指摘の修正確認には `recheck` を選ぶ。終了コード 0 は有効な結果を示し、
+事前レビューは `planning`、指摘の修正確認は `recheck` を選ぶ。終了コード 0 は有効な結果を示し、
 `changes_required` を pass と扱わない。詳細ログは `<temp-result.json>.log` に残す。
 既存の `--schema` 呼び出しは従来どおり、独自形式の検証を呼び出し側が持つ。
 Claude の編集ごとの一括テスト・build hooks は使わず、変更に必要な checks を

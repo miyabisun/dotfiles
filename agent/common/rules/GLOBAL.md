@@ -12,6 +12,7 @@
 | 場面 | スキル |
 |---|---|
 | git コマンドでの操作 | `git` |
+| タスクの作成・目的や範囲の大幅な変更 | `task-creater` |
 | 開発を行う | `knowledge-read` → `deliver` |
 | agent-talk のブラウザから届いた人間の指示への対応 | `agent-talk` |
 

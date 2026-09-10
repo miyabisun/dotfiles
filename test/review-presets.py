@@ -47,7 +47,7 @@ sys.exit(int(os.environ.get('STATUS', '0')))
                               text=True, capture_output=True, env=self.env)
 
     def test_modes_and_quiet_logs(self):
-        for kind, reply in [("implementation", PASS), ("recheck", RECHECK)]:
+        for kind, reply in [("planning", PASS), ("implementation", PASS), ("recheck", RECHECK)]:
             with self.subTest(kind=kind):
                 run = self.run_review(kind, reply)
                 self.assertEqual(run.returncode, 0, run.stderr)
@@ -91,9 +91,16 @@ sys.exit(int(os.environ.get('STATUS', '0')))
         reply = dict(RECHECK, items=[dict(id="1", resolved=False, reason="later")])
         self.assertNotEqual(self.run_review("recheck", reply).returncode, 0)
 
-    def test_planning_is_rejected_before_invocation(self):
-        self.assertEqual(self.run_review("planning").returncode, 2)
-        self.assertFalse(self.capture.exists())
+    def test_planning_validates_findings_and_removes_stale_results(self):
+        finding = dict(category="requirements", path="candidate.md", line=3,
+                       issue="scope mismatch", required_fix="keep original scope")
+        for reply, status in [(dict(verdict="changes_required", blocking=[finding]), 0),
+                              (dict(PASS, blocking=[finding]), 1), ({}, 1)]:
+            with self.subTest(reply=reply):
+                self.result.write_text(json.dumps(PASS))
+                run = self.run_review("planning", reply)
+                self.assertEqual(run.returncode, status, run.stderr)
+                self.assertEqual(self.result.exists(), status == 0)
 
     def test_only_requirements_and_intent_findings_are_accepted(self):
         for category in ("requirements", "intent", "style"):

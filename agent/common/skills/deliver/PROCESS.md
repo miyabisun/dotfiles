@@ -1,7 +1,8 @@
 # 外部レビューとの接続
 
 通常は delivery 担当が[deliver](SKILL.md) に沿って実装・検証・レビュー・指摘修正・local commit まで完遂する。
-この文書は外側が review を所有する場合だけ読む。
+この文書は外側が実装レビューを所有する場合だけ読む。
+事前判断は [task-creater](../task-creater/SKILL.md) が所有し、その結果を引き継ぐ。
 
 ## レビュー工程の所有者
 
