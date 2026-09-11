@@ -1,80 +1,41 @@
 ---
 name: frontend-design
 description: >-
-  Project の design authority と interaction contract を保ったまま、
-  production 水準の frontend UI を実装する。
-  browser-rendered frontend sources (HTML, CSS, JavaScript, or Svelte)
-  の編集が delivery に必要だと判断できたときだけ使う。
-  CLI/TUI、terminal 専用ツール、Node backend 専用の JavaScript、native UI、
-  config、docs、test だけの変更には使わない。拡張子だけでは足りない。
-  その frontend sources の変更が必要だと確認できないなら、この skill を使わない。
+  ブラウザに描画するHTML・CSS・JavaScript・Svelteの変更時に、製品のデザイン契約と画面全体の使い勝手を実装へ反映する。
+  CLI・TUI・backend・native UI・設定・文書・テストだけの変更には使わない。
 ---
 
 # Frontend Design
 
-確立された product と design の意図を、一貫した accessible な動作する UI へ
-変える。Project が既に visual language を持っているなら、新しいものを発明しない。
+既存の意匠と操作を保ちながら、今回の依頼を実装する。
+見た目だけでなく、文言・状態・ナビゲーション・keyboard・focus・ARIAの変更も対象とする。
 
-## UI surface と authority
+## 判断の根拠
 
-この skill を読み込むのは、browser-rendered frontend sources の編集が
-delivery に必要だと判断できたときだけである。ここでいう source は HTML、CSS、
-JavaScript、Svelte である。file の拡張子だけでは足りない。編集が browser
-(または webview / Electron) の表示を形づくるものでなければならない。
-CLI/TUI・terminal 専用ツール・Node backend 専用の JavaScript は対象外である。
-native UI・config・docs・test だけの変更も対象外である。その frontend
-sources の変更が必要だと確認できないなら、この skill を使わない。
+製品rootの `DESIGN.md` を読む。ない既存製品だけは `docs/DESIGN.md` を使い、両方を暗黙に混ぜない。
+考え方は `knowledge-read` で関連する設計判断を読む。共通原本はrust-svelte-templateのroot DESIGN.mdとする。
+原本を製品へ適用した後は、その製品の契約を正とし、共有原本の更新で自動上書きしない。
 
-読み込んだ後は、rendered DOM・CSS・token・theme・layout・responsive な挙動を
-変えうる変更を UI surface の作業として扱う。typography・motion・画像・icon・
-component・page・目に見える文言や state の意味・routing・navigation も
-同じである。keyboard・focus・touch の挙動、loading/empty/error の state、
-ARIA と live region も同じである。test だけの変更・build 設定・依存の保守・
-生成物・見た目と操作を変えないと証明された内部 refactor は、この境界の外である。
+現在の依頼が契約を変える場合は、担当が矛盾を解消してDESIGN.mdと実装を更新する。
+文書の欠落・曖昧さ・例外を承認待ちの理由にしない。依頼、既存画面、実装から判断して進める。
+結果を変える情報や権限が実際に不足する場合だけ尋ね、その回答に依存しない作業は続ける。
+DESIGN.mdの更新を新しい署名や許可の工程にしない。
 
-コードを書く前に design authority を解決する。
+## 実装と確認
 
-1. Project root の `DESIGN.md` を読む。これが自己完結した authority である。
-2. root の file が無い既存の Project では、`docs/DESIGN.md` が legacy
-   fallback である。この delivery ではそれを読む。両方の file を暗黙に
-   merge しない。
-3. 共有の Sumi・Kinari・その他の template は bootstrap input としてのみ扱う。
-   Project root の `DESIGN.md` へ取り込んだ後は、Project が規則を所有し、
-   共有 template はそれを上書きできない。
-4. Project の authority が無いか、既存の規則と pattern で判断が決まらなければ、依頼と既存の体験から不足する方針を解決する。
-   実装前に root の `DESIGN.md` を確立または更新する。
+1. 既存画面と関連実装を読み、主役の情報、維持する意匠と操作、追加情報を置く場所を短く定める。
+   新機能の成功条件に加え、既存の画面から守る条件も含める。別の計画書は必須にしない。
+2. 情報を足す前に、既存表示で分かるか、必要な操作の際だけ示せば足りるかを確認する。
+   重複する説明帯や装飾で、一覧・本文・画像の領域を削らない。
+3. 既存の部品・トークンとHTML/CSSの標準機能で実装する。
+   トークンを使っていても、広い塗りや強い縁取りで主役より目立つなら調整する。
+   選択・フォーカス・データの意味を分け、色だけで状態を伝えない。
+4. 同じデータと画面サイズで変更前後の全体を比較する。
+   主要情報の面積、見える件数、情報の重複、色の強さを変更に関係する範囲で確認する。
+   明暗・狭幅・長文・読込・空・失敗・keyboard/focusから必要な状態を実ブラウザで操作する。
+5. 実際の表示や操作が条件を満たさなければ、担当が修正して再確認する。
+   必要な回帰検証は製品へ残し、証拠を既存のdeliverレビューへ渡す。独立したUI承認段階は増やさない。
 
-Project の design と、適用する design brief は、この skill にある
-一般的な美的助言をすべて上書きする。typography・構成・motion の助言も含む。
-design contract を変える現在の user 要求は、担当が既存 contract と整合させる。
-code がそれに依存するより前に、root の `DESIGN.md` へ記録する。
-`designer` / `ui-checker` への委譲条件は [delivery の共通契約](../deliver/SKILL.md) に従う。
-
-## 手順
-
-1. 現在の interface・実装 stack・再利用できる component・token・影響を受ける
-   state を調べる。
-2. user の成果と、それを届ける最小で一貫した UI surface を特定する。
-   authority が意図的に変わらない限り、確立された pattern を保つ。
-3. 影響を受ける state・viewport・入力方法について、観測可能な達成条件を
-   定義する。該当するなら loading・empty・error・keyboard/focus・touch・
-   overflow・contrast・reduced motion を含める。
-4. Project の component と token で、実際に動作するコードを実装する。
-   一度きりの値や、並行する component の recipe を避ける。
-5. 変更した flow を実際の browser で動かし、結果を達成条件と Project の
-   authority と突き合わせる。テストと browser の証拠は目的が違う。
-   振る舞いが変わったなら両方を残す。
-
-## 実装の品質
-
-- 装飾を足す前に、階層・主要な action・state・navigation を読めるようにする。
-- typography・色・spacing・構成・画像・motion は、product の調子と task に
-  役立つから選ぶ — 一般的に大胆だからではない。
-- 結果を文脈固有で意図的なものに保つ。ありきたりな AI の pattern・恣意的な
-  gradient・過剰な card・装飾的な motion・理解を弱める目新しさを避ける。
-- semantic HTML・keyboard での操作・見える focus・touch target を保つ。
-  responsive な layout・読める contrast・reduced-motion の挙動も保つ。
-- 実装の複雑さを、承認された design に合わせる。抑制された system は正確さと
-  一貫性を要求する。表現的な system はより豊かな構成と motion を正当化しうる。
-- 既存の asset と icon system を再利用する。design の判断なしに、その場しのぎの
-  記号で代用したり、新しい visual vocabulary を導入したりしない。
+semantic HTML、読みやすいコントラスト、可視フォーカス、操作領域、reduced motionを保つ。
+既存のSVG・画像を再利用し、場当たりの記号や新しい装飾を持ち込まない。
+必要な設計・検証を委譲しても、修正と完了の責任はdeliverの担当が持つ。

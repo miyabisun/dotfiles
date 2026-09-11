@@ -7,7 +7,7 @@ agent/
 ├── common/          # Shared across tools
 │   ├── agents/      # Subagent role defs (designer, ui-checker)
 │   ├── bin/         # Shared notification helpers → ~/.local/bin
-│   ├── designs/     # DESIGN.md templates (Sumi, Kinari, …)
+│   ├── designs/     # Legacy design-template pointers
 │   ├── rules/       # GLOBAL.md
 │   └── skills/      # Agent Skills (SKILL.md)
 ├── claude/          # Claude Code only
@@ -84,12 +84,13 @@ Claude Code と Grok が共有する役割定義である。frontmatter は `nam
 `description` だけを持つので、親の chat model を継承する (`model` の既定は
 `inherit`)。Claude 固有の `model` / `effort` / `tools` は意図的に省く。
 
-Google 形式の `DESIGN.md` テンプレートは、bootstrap input としてここに置く。
-各 project は、テンプレートを取り込んで適合させたあと、自己完結したルートの
-`DESIGN.md` を所有する。共有テンプレートは外部の authority として残らない。
-`docs/DESIGN.md` しか持たない既存 project は、明示的な移行までそれを legacy
-fallback として読んでよい。ただしルートと docs が暗黙に merge されることは
-決してない。
+共通デザイン原本は[rust-svelte-template](https://github.com/miyabi-sunny-side/rust-svelte-template/blob/main/DESIGN.md)が持つ。
+設計の考え方と採用手順はknowledge、適用後の契約は各製品のroot DESIGN.mdが所有する。
+`common/designs` は旧参照からの案内だけを残し、原本を重複して置かない。
+rootがない既存製品だけは `docs/DESIGN.md` を使い、両方を暗黙に混ぜない。
+
+UIの表示と操作は既存のdeliverレビューで確認する。
+担当が文書の不足を補い、可逆な修正と再検証を進める。DESIGN.mdの更新を追加の承認待ちにしない。
 
 ## 新しい skill を足す
 
@@ -124,8 +125,8 @@ Claude の編集ごとの一括テスト・build hooks は使わず、変更に�
 
 ## エージェント共通のテストゲート
 
-Codexの `~/.codex/hooks.json` とClaude Codeのユーザー設定に、
-`agent-test hook` をPreToolUse / Stopとして登録する。各projectの `.git` は変更しない。
+`agent-test hook` をPreToolUse / Stopへ登録する。
+登録先はCodexの `~/.codex/hooks.json` とClaude Codeのユーザー設定であり、各projectの `.git` は変更しない。
 `bin/install` が共通コマンドを `~/.local/bin/agent-test` に配置する。
 Codexがhookの信頼確認を求める場合は、ユーザーが `/hooks` で有効にする。
 
