@@ -25,8 +25,12 @@ HTTPはleaseと結果記録を担う。現行MCPにclaim/heartbeat/reportツー�
 | `/worker/report` | `{claim_id,outcome:"done"または"blocked",report_markdown,commit_sha?,checks?,milestones?,run:{worker:"task-work"}}` → `report_id`を含むtask（`?`は省略可） |
 
 claimは `execution_target` に一致し、依存がdoneのreadyから選ぶ。実行先は
-`sandbox` / `homeserver` の単一値。タスク・旧claimクライアントの未指定はsandbox扱いで、
-旧クライアントにはhomeserverタスクが渡らない。新しい呼び出しは実行先を明示する。
+運用側の外部設定から注入された任意名を1つ指定する。製品は名称を固定しない。
+個人運用で `sandbox` を選ぶ方針は、製品が許容する名前の制限とは別である。
+定義と任意の既定値は `EXECUTION_TARGETS_FILE` が指す外部YAMLに置く。
+MCP `execution_targets_get` または `GET /api/execution-targets` で読める。
+タスク・旧claimの未指定を補えるのは、この外部既定値がある場合だけ。
+既定値なしのclaimは400となり、別キューへは配送されない。新しい呼び出しは実行先を明示する。
 対象を限定した依頼では `task_id` も指定し、返されたIDと実行先を確認する。
 実行先不一致・依存未完了はID指定時も204で待機し、それだけでblockedにしない。
 400/404/409は理由を確認し、IDや実行先を外した再取得で代用しない。
