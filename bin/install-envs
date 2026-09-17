@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Explicit setup/refresh only; shell startup must not depend on an unlocked vault.
+set -euo pipefail
+
+case "${1:-}" in
+  -h|--help)
+    echo 'Usage: bin/install-envs'
+    echo 'Restore Env Files/typesafe from Bitwarden to ~/.config/typesafe/env (0600).'
+    exit 0 ;;
+esac
+if [[ $# != 0 ]]; then
+  echo 'Usage: bin/install-envs (no arguments)' >&2
+  exit 1
+fi
+
+bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=bw/lib.sh
+source "$bin_dir/bw/lib.sh"
+env_dir="$HOME/.config/typesafe"
+env_file="$env_dir/env"
+if [[ -L "$env_dir" || ( -e "$env_dir" && ! -d "$env_dir" ) ||
+      -L "$env_file" || ( -e "$env_file" && ! -f "$env_file" ) ]]; then
+  echo "Error: expected a directory at $env_dir and a regular env file, without symlinks." >&2
+  exit 1
+fi
+
+require_unlocked
+rbw sync
+install -d -m 700 "$env_dir"
+tmp="$(mktemp "$env_file.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+"$bin_dir/bw/bw-env" load typesafe "$tmp" >/dev/null
+if [[ ! -s "$tmp" ]]; then
+  echo 'Error: the stored TypeSafe env is empty; existing credentials were kept.' >&2
+  exit 1
+fi
+chmod 600 "$tmp"
+mv -f "$tmp" "$env_file"
+printf 'Restored %s (0600). Open a new shell to load TYPESAFE_API_KEY.\n' "$env_file"

@@ -126,8 +126,45 @@ This repository includes several utility scripts in the `bin/` directory to help
 
 ## Bitwarden Integration
 
-Commands in `bin/bw/` integrate with Bitwarden CLI (`bw`) to manage secrets and keys.
+Commands in `bin/bw/` use `rbw` and `jq` to manage secrets and keys.
 Each command is grouped by domain and takes a subcommand; run it with no arguments to see usage.
+
+### Set up TypeSafe on another machine
+
+From the dotfiles checkout, update the shared skills and shell configuration:
+
+```bash
+git pull --ff-only
+bash bin/install
+bash bin/install-envs
+```
+
+`install-envs` requires a configured, logged-in `rbw` and `jq`.
+It unlocks and syncs the vault, then restores `Env Files` / `typesafe`.
+The destination is `~/.config/typesafe/env` (directory `0700`, file `0600`).
+The stored file must contain the shell-compatible assignment `TYPESAFE_API_KEY=...`.
+Retrieval failures leave the existing file intact. Key values are never printed.
+Run it again when the key changes; `bin/install` does not retrieve secrets.
+New bash/zsh sessions export the key from the local file without calling `rbw`.
+For an existing shell or a non-interactive API call, load it explicitly:
+
+```bash
+. "$HOME/.config/typesafe/env" && export TYPESAFE_API_KEY
+```
+
+The official TypeSafe skill is installed separately on each machine.
+If it is absent, use Codex's bundled skill installer:
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+  --repo typesafe-ai/skills --path skills/typesafe-ai
+```
+
+The skill is available on the next agent turn.
+See the [official TypeSafe skill documentation](https://docs.typesafe.ai/agent-skill)
+for other agents and updates.
+
+### Commands
 
 | Command | Bitwarden folder | Subcommands |
 |---|---|---|
