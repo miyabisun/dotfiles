@@ -114,12 +114,9 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 事前の要件・方針判断は [task-creater](common/skills/task-creater/SKILL.md) で行い、実装後はその実現と検証証拠を確認する。
 実行方法は [共通review手順](common/skills/deliver/REVIEW.md) を参照する。
 
-`review <repo> --from codex --kind implementation --result <temp-result.json>` を使う。
-Claude Code からは `--from claude` を指定する。モデルの対応は上記の独立レビュー手順が所有する。
-標準入力の依頼に定型 prompt と schema を添え、結果の形式・判定の矛盾を検査する（Python 3 が必要）。
-事前レビューは `planning`、指摘の修正確認は `recheck` を選ぶ。終了コード 0 は有効な結果を示し、
-`changes_required` を pass と扱わない。詳細ログは `<temp-result.json>.log` に残す。
-既存の `--schema` 呼び出しは従来どおり、独自形式の検証を呼び出し側が持つ。
+利用可能なレビュー用ツールか別セッションへ、元の要求と候補／実差分・検証結果を渡す。
+目的に合致して要求を満たすかを `true / false` で確認する。同じモデルを使ってよく、
+Claude Codeや共通コマンド `review` の利用は必須にしない。
 Claude の編集ごとの一括テスト・build hooks は使わず、変更に必要な checks を
 担当がまとめて実行する。
 
