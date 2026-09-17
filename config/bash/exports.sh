@@ -9,6 +9,10 @@
 # --------------------------------------------------
 # shellcheck source=/dev/null
 [ -f "$HOME/.config/.secrets" ] && . "$HOME/.config/.secrets"
+if [ -r "$HOME/.config/typesafe/env" ]; then
+  # shellcheck source=/dev/null
+  . "$HOME/.config/typesafe/env" && export TYPESAFE_API_KEY
+fi
 
 # --------------------------------------------------
 # PATH (with dedup guard for re-sourcing safety)

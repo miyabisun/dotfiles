@@ -33,6 +33,15 @@ UIではDESIGN.mdと変更前後の画面の証拠も含める。テストの再
 
 ## Jevを使う場合
 
+導入済みの公式 `typesafe-ai` skillを読み、現在のAPI仕様に従う。
+APIキーは `TYPESAFE_API_KEY` を使う。sandboxでは `~/.config/typesafe/env`（mode600）から読む。
+Bitwardenの `Env Files` / `typesafe` との同期は初回・キー更新時だけとし、通常実行では `rbw` を呼ばない。
+非対話実行では、APIを呼ぶのと同じshellで次を実行する。キーの値は表示・記録しない。
+
+```sh
+. "$HOME/.config/typesafe/env" && export TYPESAFE_API_KEY
+```
+
 [Jev](https://docs.typesafe.ai/introduction/quickstart) は `state` にテキストを受け取る。
 元の要求・差分・必要な周辺情報・検証結果を `state` に含め、適合性を質問する。
 [Noul](https://docs.typesafe.ai/primitives/noul) の戻り値は真である確率（0〜1）なので、

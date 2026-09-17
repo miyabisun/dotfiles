@@ -232,6 +232,28 @@ if command -v zsh >/dev/null 2>&1; then
   esac
 fi
 
+# TypeSafeのenvがなければ継承値を保ち、あれば子プロセスにも渡す。
+check_typesafe_env() {
+  local expected="$1" shell
+  for shell in bash zsh; do
+    command -v "$shell" >/dev/null 2>&1 || continue
+    if ! env -i HOME="$home1" PATH="$run_path" TYPESAFE_API_KEY=inherited \
+      "$shell" -s -- "$repo_copy/config/bash/exports.sh" "$expected" <<'CHECK'
+[ "$2" = inherited ] || unset TYPESAFE_API_KEY
+. "$1"
+sh -c 'test "$TYPESAFE_API_KEY" = "$1"' sh "$2"
+CHECK
+    then
+      echo "exports.sh ($shell) did not export the expected TypeSafe key" >&2
+      return 1
+    fi
+  done
+}
+check_typesafe_env inherited
+mkdir -p "$home1/.config/typesafe"
+printf '%s\n' 'TYPESAFE_API_KEY=local-test-key' >"$home1/.config/typesafe/env"
+check_typesafe_env local-test-key
+
 # 2 回目の実行は状態を 1 bit も変えない (冪等)。
 snap1="$(snapshot_home "$home1")"
 run_install "$home1" >"$test_root/run2.out"
