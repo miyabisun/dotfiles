@@ -42,7 +42,7 @@ userによる実行依頼は、対象タスクのcommit・push・mergeを含む�
    originの既定ブランチからタスク専用branch・worktreeを作る。通常cloneならそのrepositoryで同じ操作を
    行う。再開時は記録した自分のworktreeと変更を再利用し、他者の作業を保護する。
 2. そのworktreeで `knowledge-read` → `deliver` を進め、検証・レビュー・指摘修正と
-   local commitまで完了する。分担とレビュー方法はdeliverの手順に従う。
+   commit・pushまで完了する。分担とレビュー方法はdeliverの手順に従う。
    委譲する場合はタスク本文・worktree・規約・達成条件・再開時の証拠の参照先を渡す。
    merge・release・台帳操作の所有者を明示し、成果、commit、検証・レビュー証拠、残件を受け取る。
 3. 差分と証拠を確認し、未達なら修正する。レビュー手順はdeliverが所有し、重複しない。
@@ -57,7 +57,7 @@ userによる実行依頼は、対象タスクのcommit・push・mergeを含む�
    確認し、空のreleaseを作らない。配備・実機確認は、その作業を含むhomeserver向けタスクで実施する。
 6. 要求された成果がそろってから、doneと結果の原文を一度reportする（haystackにも保存される）。
    merge済みcommitをtaskの対象SHAとし、release tag・artifact・CI URLも証拠に残す。
-   次のタスクへ進む。local commitやCIの起動で依頼全体を終えない。
+   次のタスクへ進む。commit・pushやCIの起動で依頼全体を終えない。
 
 ## 開発と実機作業の引き継ぎ
 

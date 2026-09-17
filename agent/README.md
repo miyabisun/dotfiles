@@ -100,7 +100,7 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 主な skill:
 
 - `task-creater` — 元の依頼・最小性・利用先を実行前にレビューし、必要な依存タスクを登録する
-- `deliver` — 事前判断を引き継ぎ、Ponytail full・TDD・実装レビュー・local commitまで届ける
+- `deliver` — 事前判断を引き継ぎ、Ponytail full・TDD・実装レビュー・commit・pushまで届ける
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
 - `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
 - `task-work` — task-serverの全件処理。1件ずつdeliver → merge → patchリリース。
@@ -108,9 +108,11 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 - `git` — commit message とブランチフローの house rule
 - `bump-tag` — semver の bump、tag、push
 - `knowledge-deposit` — 再利用できる knowledge を預け、形式lintと担当の内容確認を経て
-  自分の差分を local commit する
+  自分の差分をcommit・pushする
 
 設計・実装・検証は [deliver](common/skills/deliver/SKILL.md) が所有する。
+通常は着手時にリモートと同期し、完了時にcommit・pushする。明示されたローカル限定の指示は優先する。
+同期と競合時の進め方は [git](common/skills/git/SKILL.md) が所有し、push・pullの追加指示を待たない。
 事前の要件・方針判断は [task-creater](common/skills/task-creater/SKILL.md) で行い、実装後はその実現と検証証拠を確認する。
 実行方法は [共通review手順](common/skills/deliver/REVIEW.md) を参照する。
 

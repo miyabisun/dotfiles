@@ -1,4 +1,4 @@
 interface:
   display_name: "Deliver"
-  short_description: "要求を検証済みローカルコミットとして安全に完成させる"
-  default_prompt: "Use $deliver to complete this task as a verified local commit."
+  short_description: "要求を実装・検証・レビューし、コミットとpushまで完成させる"
+  default_prompt: "Use $deliver to implement, verify, review, commit, and push this task."
