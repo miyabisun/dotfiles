@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visitor Docs"
+  short_description: "READMEを訪問者向けに整え、Jevの項目別評価と文章lintで確かめる"
+  default_prompt: "Use $visitor-docs to edit this README for its intended readers."
