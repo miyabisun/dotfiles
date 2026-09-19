@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Context"
+  short_description: "UI変更に必要なknowledge・共通原本・製品設計を照合する"
+  default_prompt: "Use $design-context for the relevant part of this task."

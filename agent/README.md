@@ -114,7 +114,13 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 通常は着手時にリモートと同期し、完了時にcommit・pushする。明示されたローカル限定の指示は優先する。
 同期と競合時の進め方は [git](common/skills/git/SKILL.md) が所有し、push・pullの追加指示を待たない。
 事前の要件・方針判断は [task-creater](common/skills/task-creater/SKILL.md) で行い、実装後はその実現と検証証拠を確認する。
-実行方法は [共通review手順](common/skills/deliver/REVIEW.md) を参照する。
+実行方法は [change-review](common/skills/change-review/SKILL.md) を参照する。
+
+開発の入口は [deliver](common/skills/deliver/SKILL.md)。変更する責務に応じて小さなskillを読み、成果を渡す。
+UIは `design-context` でknowledge・共通原本・製品設計を照合し、必要な `ui-flow` / `ui-layout` / `ui-theme` で具体化する。
+Webは `frontend-design` → `web-ui-check`、Androidは `android-ui` → `android-ui-check` で実装と実画面をつなぐ。
+`ui-review` が要求・設計・画像・操作結果を照合し、共通の `test-verify` / `change-review` と配達へ戻す。
+非UI変更ではUI skillを呼ばず、部分変更では関係する責務だけを使う。全件への多人数レビューや新しい承認段階は設けない。
 
 通常はJevへ元の要求と候補／実差分・検証結果を渡し、適用する観点をそれぞれ0〜1で評価する。
 共通review手順のチェックリストを使い、数値と根拠を担当が照合する。合計点による自動合否にはしない。

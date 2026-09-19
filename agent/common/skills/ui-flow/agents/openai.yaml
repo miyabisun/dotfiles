@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Flow"
+  short_description: "主操作・画面遷移・外部起動と利用前後の経路を設計する"
+  default_prompt: "Use $ui-flow for the relevant part of this task."

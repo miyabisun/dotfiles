@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Theme"
+  short_description: "製品の色の役割と明暗テーマを共通原本から具体化して適用する"
+  default_prompt: "Use $ui-theme for the relevant part of this task."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Verify"
+  short_description: "変更する挙動のTDD・既存テスト・buildと実検証を行う"
+  default_prompt: "Use $test-verify for the relevant part of this task."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android UI Check"
+  short_description: "Androidの実画面・操作・通知を観測し確認済みの範囲を記録する"
+  default_prompt: "Use $android-ui-check for the relevant part of this task."

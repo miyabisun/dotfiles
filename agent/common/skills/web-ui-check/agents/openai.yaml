@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web UI Check"
+  short_description: "ChromiumとPlaywrightでWeb画面全体と実操作を検証する"
+  default_prompt: "Use $web-ui-check for the relevant part of this task."

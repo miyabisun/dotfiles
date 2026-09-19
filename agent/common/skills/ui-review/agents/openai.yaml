@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Review"
+  short_description: "UIの要求・適用設計・実画像と操作結果を照合して未達を返す"
+  default_prompt: "Use $ui-review for the relevant part of this task."

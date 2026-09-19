@@ -1,0 +1,4 @@
+interface:
+  display_name: "Change Review"
+  short_description: "要求と候補または実差分を照合しJevの項目別評価から修正する"
+  default_prompt: "Use $change-review for the relevant part of this task."

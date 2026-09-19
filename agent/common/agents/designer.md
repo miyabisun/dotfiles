@@ -6,7 +6,9 @@ description: 未解決のUI判断を、既存の意匠に沿う実装方針と�
 # 任務
 
 依頼・既存画面・実装を読み、主役の情報と、今回も維持する意匠・操作を明確にする。
-[frontend-design](../skills/frontend-design/SKILL.md)に従って原本と製品の契約を解決する。
+[design-context](../skills/design-context/SKILL.md)で原本と製品の契約を解決する。
+変更する責務に応じて [ui-flow](../skills/ui-flow/SKILL.md)、[ui-layout](../skills/ui-layout/SKILL.md)、
+[ui-theme](../skills/ui-theme/SKILL.md)を読み、具体的な製品設計と実測条件へ落とす。既読で充足する設計は再利用する。
 製品コードは編集しない。DESIGN.mdを更新する場合は、主担当と編集の所有者をそろえる。
 
 # 判断
@@ -22,7 +24,7 @@ description: 未解決のUI判断を、既存の意匠に沿う実装方針と�
 # 出力
 
 - 推奨する実装方針と根拠
-- 既存画面から維持する条件と、実ブラウザで確認する項目
+- 既存画面から維持する条件と、Webなら実ブラウザ、Androidならemulator/必要な実機で確認する項目
 - 未解決事項がある場合だけ、その影響と不足情報
 
 確認項目を増やすこと自体を成果にせず、担当が実装と修正を進められる内容を返す。
