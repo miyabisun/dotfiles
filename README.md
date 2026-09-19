@@ -1,181 +1,96 @@
-# Overview
+# dotfiles
 
-This repository manages my dotfiles.
-Instead of copying files directly, the installation script creates symbolic links from this repository to your home directory. This keeps your configuration files organized in one place and easy to update.
+Miyabi's personal dotfiles for shells, editors, terminal tools, and coding agents.
+Review Git identity, SSH hosts, and agent rules before adopting these settings.
+You can copy individual settings or install the managed configuration described below.
 
-# Installation
+## Install
 
-To install the dotfiles, run the following command. This will clone the repository and execute the `bin/install` script.
+Use Linux or macOS with Git, Bash, and the usual Unix command-line tools available.
+Clone into a permanent location: installed links point back to this checkout.
 
 ```bash
-curl -L https://raw.github.com/miyabisun/dotfiles/master/install | bash
+git clone https://github.com/miyabisun/dotfiles.git
+cd dotfiles
 ```
 
-## What the installer does
+Review [bin/install](bin/install) and back up existing configuration at the target paths.
+The installer has no general backup or rollback mechanism.
+Files at symbolic-link targets can be replaced; existing directories can cause failures.
+Earlier changes remain if a later step fails.
 
-The `bin/install` script sets up symbolic links for the following configuration files and directories:
+When ready, install the configuration:
 
-### Root Directory
-- `~/.editorconfig` -> `.editorconfig`
-- Sets repo-local `core.hooksPath` to `hooks/`. After that, every commit or merge in the main checkout re-runs `bin/install` via `hooks/run-install`. Linked worktrees are skipped.
-
-
-### SSH Directory
-- `~/.ssh/config` -> `ssh/config`
-- Creates `~/.ssh/conf.d` directory
-
-### Config Directory (`~/.config`)
-- `~/.config/git` -> `config/git`
-- `~/.config/nvim` -> `config/nvim`
-- `~/.config/tmux` -> `config/tmux`
-
-### Agent Tools
-
-All agent config lives under `agent/`:
-
-```
-agent/
-├── common/   # shared: agents, designs, skills, rules, bin
-├── claude/   # Claude Code only (hooks, workflows, settings)
-├── codex/    # Codex CLI only (hooks, config)
-└── grok/     # Grok CLI only (hooks, config)
+```bash
+bash bin/install
 ```
 
-See `agent/README.md` for details.
+Open a new Bash or Zsh session to load the shell settings.
+The installer updates existing `.bashrc` and `.zshrc` files; it does not create missing ones.
+Keep the checkout in place while using its linked settings.
 
-#### Claude Code (`~/.claude`)
-- `~/.claude/skills` -> `agent/common/skills`
-- `~/.claude/agents` -> `agent/common/agents`
-- `~/.claude/designs` -> `agent/common/designs`
-- `~/.claude/CLAUDE.md` -> `agent/claude/CLAUDE.md` -> `agent/common/rules/GLOBAL.md`
-- `~/.claude/workflows`, `hooks`, `settings.json` -> `agent/claude/*`
+## What changes
 
-#### Codex (`~/.codex`)
-- `~/.codex/AGENTS.md` -> `agent/common/rules/GLOBAL.md`
-- `~/.codex/agents`, `hooks.json` -> `agent/codex/*`
-- `~/.codex/config.toml` — machine-local copy seeded from `agent/codex/config.toml`
+| Area | Installed configuration |
+|---|---|
+| Editor defaults | `~/.editorconfig` links to [.editorconfig](.editorconfig) |
+| SSH | `~/.ssh/config` links to [ssh/config](ssh/config); `~/.ssh/conf.d` is created |
+| Git, Neovim, tmux | `~/.config/{git,nvim,tmux}` link to the matching [config](config) directories |
+| Herdr | `~/.config/herdr/config.toml` links to [config/herdr/config.toml](config/herdr/config.toml) |
+| Zsh plugins | `~/.config/sheldon/plugins.toml` links to [config/zsh/plugins.toml](config/zsh/plugins.toml) |
+| Bash and Zsh | A `DOTFILES_START` / `DOTFILES_END` block loads settings from this checkout |
+| Coding agents | Shared skills, rules, roles, and hooks; see [agent configuration](agent/README.md) |
+| Local commands | Helpers are installed under `~/.local/bin`; see below |
 
-#### Grok (`~/.grok`)
-- `~/.grok/skills` -> `agent/common/skills`
-- `~/.grok/agents` -> `agent/common/agents`
-- `~/.grok/designs` -> `agent/common/designs`
-- `~/.grok/AGENTS.md` -> `agent/common/rules/GLOBAL.md`
-- `~/.grok/hooks` -> `agent/grok/hooks`
-- `~/.grok/config.toml` — machine-local copy seeded from `agent/grok/config.toml`
+Claude's `settings.json`, Codex's `config.toml`, and Grok's `config.toml` are local copies.
+They are seeded from `agent/` only when absent.
+A legacy link to the matching template is converted to a copy with its contents preserved.
+Existing local settings are kept. Retired agent-talk peer MCP tables are removed.
+Use the [config-merge skill](agent/common/skills/config-merge/SKILL.md) to sync later template changes.
 
-#### `~/.local/bin`
-- `emit-turn-end.sh` -> `agent/common/bin/emit-turn-end.sh`
-- `review` -> `agent/common/bin/review` — cross-model review.
-- `agent-test` -> `agent/common/bin/agent-test` — user-level test gate for Codex and Claude Code.
-  Set the caller with `--from codex|claude`.
-- `tmux-session-picker` -> `config/tmux/bin/tmux-session-picker`
-- `tmux-mux` -> `config/tmux/bin/tmux-mux`
+Shell settings outside the managed block are preserved.
+Broken or duplicate block markers stop shell-file updates; correct them before retrying.
+Other installation steps may already have run when that error is reported.
 
-## Neovim bookmark spaces
+The installer also creates local agent runtime helpers and Herdr integration scripts.
+Herdr is optional; if present, its integration generator must succeed.
+If Sheldon is installed, the installer runs `sheldon lock`.
+It does not install applications or retrieve secrets.
 
-[tabspaces.nvim v0.1.2](https://github.com/miyabisun/tabspaces.nvim/releases/tag/v0.1.2)
-groups live tabs by directory. Neovim 0.10+, fzf-lua and `fzf` are required.
-The normal installer links this configuration; lazy.nvim installs the public tag
-on the next Neovim startup.
-
-Press **z then q in normal mode** to name and bookmark the current directory.
-Leave the name empty and press Enter to use the directory's basename.
-Press Esc to cancel. `:TabspacesAdd Name` also remains available.
-For any other directory, including non-Git locations:
-
-```vim
-:lua require('tabspaces').add('Shared data', '~/.local/share')
-```
-
-Press **Ctrl+n twice in normal mode** to search by bookmark name and switch.
-Paths and tab counts are displayed but are not searched.
-Live spaces appear first with their tab counts. `:tabe` adds a tab to the space.
-`gt` / `gT` wrap through its tabs; `g1`–`g9` select its visible tab numbers.
-Absent numbers do nothing. Switching back restores the last selected live tab.
-Existing `ze`, `zp` and split bindings remain available; `zp` uses the space cwd.
-Insert-mode Ctrl+n keeps its completion behavior.
-
-`:TabspacesRemove` removes the current bookmark without closing its tabs.
-Starting Neovim in a bookmarked directory assigns its initial tabs to that space.
-Startup files are preserved. Unregistered directories remain Unassigned;
-parent directories are not searched. Native `:tabnext` still reaches all tabs.
-`:qa` keeps normal unsaved warnings. Restarting starts fresh tabs and buffers.
-Only bookmark names and paths persist under Neovim's data directory, outside Git.
-See the plugin README or `:help tabspaces` for the full API and limitations.
-
-## pen CLI updates
-
-Run `bash bin/install-apps --run-step install_pen` from this checkout to install
-or update only pen. An already installed current version is left in place.
-Downloads must pass the published checksum and report the selected release version.
-
-Banner-only releases v0.1.0/v0.1.1 are no longer accepted as download artifacts.
-An existing executable with the legacy pen help banner is still recognized for a
-one-time migration: the same command replaces it with the latest verified release.
-If download or validation fails, the existing binary stays in place; retry the
-command after the release or connection is fixed. Unrecognized targets are refused.
-
-As of 2026-09-08, [v0.1.0 still has public Linux/macOS release assets](https://github.com/miyabi-sunny-side/pen-cli/releases/tag/v0.1.0),
-and [v0.1.1 source also lacks `--version`](https://github.com/miyabi-sunny-side/pen-cli/blob/v0.1.1/src/lib.rs)
-although it has no published release assets. Other machines may still run these
-versions; retaining target recognition avoids requiring manual removal first.
-
-# Utilities
-
-This repository includes several utility scripts in the `bin/` directory to help manage specific configurations.
-
-## Bitwarden Integration
-
-Commands in `bin/bw/` use `rbw` and `jq` to manage secrets and keys.
-Each command is grouped by domain and takes a subcommand; run it with no arguments to see usage.
-
-### Set up TypeSafe on another machine
-
-From the dotfiles checkout, update the shared skills and shell configuration:
+## Update
 
 ```bash
 git pull --ff-only
 bash bin/install
-bash bin/install-envs
 ```
 
-`install-envs` requires a configured, logged-in `rbw` and `jq`.
-It unlocks and syncs the vault, then restores `Env Files` / `typesafe`.
-The destination is `~/.config/typesafe/env` (directory `0700`, file `0600`).
-The stored file must contain the shell-compatible assignment `TYPESAFE_API_KEY=...`.
-Retrieval failures leave the existing file intact. Key values are never printed.
-Run it again when the key changes; `bin/install` does not retrieve secrets.
-New bash/zsh sessions export the key from the local file without calling `rbw`.
-For an existing shell or a non-interactive API call, load it explicitly:
+The installer sets this repository's `core.hooksPath` to `hooks/`.
+Commits and merges in the main checkout rerun it automatically.
+Linked worktrees skip automatic installation. Live links stay with the main checkout.
+If an update fails, keep existing data and inspect the reported conflict before rerunning.
+
+## Included tools
+
+| Purpose | Entry point |
+|---|---|
+| Coding-agent setup and skills | [agent/README.md](agent/README.md) |
+| Neovim bookmark spaces and navigation | [config/nvim/README.md](config/nvim/README.md) |
+| Optional CLI installers, including pen | [Tools and secrets](docs/utilities.md) |
+| Bitwarden-backed secrets, SSH keys, and env files | [Bitwarden commands](docs/utilities.md#bitwarden-commands) |
+| TypeSafe credentials on another machine | [TypeSafe setup](docs/utilities.md#typesafe-credentials) |
+
+Local helpers include `review`, `agent-test`, `meiseki-lint`, and tmux launchers.
+Some use separately installed applications; their source and setup are linked above.
+`bin/install-apps` installs optional CLIs.
+`bin/install-envs` restores TypeSafe credentials.
+Review each script before running it.
+
+## Verify changes
+
+The checks use temporary environments for installers, hooks, and utilities:
 
 ```bash
-. "$HOME/.config/typesafe/env" && export TYPESAFE_API_KEY
+bin/check
 ```
 
-The official TypeSafe skill is installed separately on each machine.
-If it is absent, use Codex's bundled skill installer:
-
-```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo typesafe-ai/skills --path skills/typesafe-ai
-```
-
-The skill is available on the next agent turn.
-See the [official TypeSafe skill documentation](https://docs.typesafe.ai/agent-skill)
-for other agents and updates.
-
-### Commands
-
-| Command | Bitwarden folder | Subcommands |
-|---|---|---|
-| `bw-secret` | CLI | `save <name> <value>` / `load` / `list` / `remove <name>` |
-| `bw-ssh-key` | SSH Keys | `generate <name>` / `save <name> [filename]` / `load <name> [filename]` / `public <name>` / `private <name>` / `list` / `remove <name>` |
-| `bw-ssh-config` | SSH Config | `save [name]` / `load <name>` / `load-all` / `cat <name>` / `list` / `remove <name>` |
-| `bw-age` | Age Keys | `create [name]` / `save [name] [file]` / `identity [name]` / `recipient [name]` / `list` / `remove <name>` |
-| `bw-env` | Env Files | `save <name> [file]` / `load <name> [file]` / `diff <name> [file]` / `get <name> <var>` / `keys <name>` / `list` / `remove <name>` |
-
-- `bw-secret load` writes all secrets to `~/.config/.secrets` as `export KEY="VALUE"` lines; `save`/`remove` refresh the file automatically.
-- `bw-age create` generates a key with `age-keygen` and stores it directly in Bitwarden without touching disk. Decrypt without leaving the key on disk: `age -d -i <(bw-age identity <name>) file.age`.
-- `bw-env` backs up a project's whole `.env` file as one secure note. Unlike `bw-secret`, nothing is exported to the shell environment; `load` restores the file (0600) and `get` prints a single variable for scripting.
-- `bw-env diff` checks a local `.env` against the stored copy before `load` overwrites it. It is read-only and prints keys without values: `-` exists only in Bitwarden, `+` only in the local file, `~` exists in both with different values, and a trailing `#` line summarises the counts. Pass `--values` (`-v`) to print the values too. It exits `0` when they match, `1` when they differ, and `2` on error, so scripts can gate a `load` on it. Multi-line values (quoted, or a bare PEM block) are compared whole, and a repeated key resolves to its first occurrence (like `bw-env get`). A line it cannot read as `KEY=value` — such as `KEY = value` with spaces around `=` — is an error reported with its line number, never a silent skip, so `diff` cannot claim a match it did not verify. A value wrapped over several lines without quotes is indistinguishable from separate assignments, so each line is compared as its own key; names that look like a base64 chunk are counted but withheld from the default output, since the name itself would be part of the value. Values are compared byte for byte, so a CRLF file against an LF one reports every key as different.
-- Shared plumbing (unlock check, folder lookup, upsert) lives in `bin/bw/lib.sh`.
+Agent workflow checks and tool requirements are described in [agent/README.md](agent/README.md).

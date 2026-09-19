@@ -26,19 +26,30 @@ agent/
     └── config.toml  # portable template → seed ~/.grok/config.toml
 ```
 
-`bin/install` が張る symlink:
+`bin/install`が張るsymlink（既存ファイルへの影響は[導入案内](../README.md)を参照）:
 
 | home 側 | source 側 |
 |------|--------|
 | `~/.claude/skills`, `~/.grok/skills` | `agent/common/skills` |
 | `~/.claude/agents`, `~/.grok/agents` | `agent/common/agents` |
 | `~/.claude/designs`, `~/.grok/designs` | `agent/common/designs` |
-| `~/.claude/*` (hooks, settings, …) | `agent/claude/*` |
-| `~/.codex/config.toml`, `~/.codex/hooks.json` | `agent/codex/*` |
+| `~/.claude/hooks`, `~/.claude/CLAUDE.md` | `agent/claude/hooks`, `agent/claude/CLAUDE.md` |
+| `~/.codex/agents`, `~/.codex/hooks`, `~/.codex/hooks.json` | `agent/codex/*` |
 | `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.claude/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.grok/hooks` | `agent/grok/hooks` |
-| `~/.grok/config.toml` | `agent/grok/config.toml` の seed copy (symlink ではない) |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
+
+次の設定はmachine-localなコピーとして配置します。
+
+| home側 | 初期コピー元 |
+|---|---|
+| `~/.claude/settings.json` | `agent/claude/settings.json` |
+| `~/.codex/config.toml` | `agent/codex/config.toml` |
+| `~/.grok/config.toml` | `agent/grok/config.toml` |
+
+未作成の設定をseedし、対応する旧symlinkは内容を保ってコピーへ変換します。
+既存の通常ファイルは保持します。ただしCodex/Grokの廃止したpeer MCP登録は除去します。
+テンプレートの後続変更は[config-merge](common/skills/config-merge/SKILL.md)で同期します。
 
 agent の完了イベントは `~/.local/bin/emit-turn-end.sh` を呼ぶ。`MOCA_URL` が
 設定されているときは、MOCA へイベントの通知を依頼する。成功した turn を
