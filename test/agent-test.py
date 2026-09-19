@@ -104,6 +104,57 @@ class AgentTest(unittest.TestCase):
         self.assertEqual(self.hook("python3 - <<'PY'\n# user's script\nprint(1)\nPY"), {})
         self.assertEqual(self.hook("cat <<'EOF'\nThis isn't a commit.\nEOF"), {})
 
+    def test_finished_worktree_can_be_removed_after_merge(self):
+        main = self.repo
+        feature = self.root / "feature"
+        self.git("worktree", "add", "-b", "feature", str(feature))
+        self.repo = feature
+        (feature / "value").write_text("tested change")
+        self.assertEqual(self.run_tests().returncode, 0)
+        self.git("add", ".")
+        self.git("commit", "-qm", "change")
+        self.repo = main
+        self.git("merge", "--ff-only", "feature")
+        self.repo = feature
+        self.assertEqual(self.invoke("finish").returncode, 0)
+        self.assertEqual(self.hook(stop=True), {})
+        self.assertEqual(self.hook()["hookSpecificOutput"]["permissionDecision"], "deny")
+        self.repo = main
+        self.git("worktree", "remove", str(feature))
+        self.assertEqual(self.hook(stop=True), {})
+        self.run_tests("assert False")
+        self.assertEqual(self.hook(stop=True)["decision"], "block")
+
+    def test_finish_requires_current_passing_tests_and_a_clean_commit(self):
+        self.assertNotEqual(self.invoke("finish").returncode, 0)
+        self.hook("agent-test run -- pending")
+        self.assertNotEqual(self.invoke("finish").returncode, 0)
+        self.run_tests("assert False")
+        self.assertNotEqual(self.invoke("finish").returncode, 0)
+        (self.repo / "value").write_text("uncommitted")
+        self.assertEqual(self.run_tests().returncode, 0)
+        self.assertNotEqual(self.invoke("finish").returncode, 0)
+        self.git("add", ".")
+        self.assertNotEqual(self.invoke("finish").returncode, 0)
+        self.git("commit", "-qm", "change")
+        self.assertEqual(self.invoke("finish").returncode, 0)
+        (self.repo / "value").write_text("changed after finish")
+        self.assertEqual(self.hook(stop=True)["decision"], "block")
+        self.assertNotEqual(self.invoke("finish").returncode, 0)
+        self.assertEqual(self.run_tests().returncode, 0)
+        self.git("add", ".")
+        self.assertEqual(self.hook(), {})
+
+    def test_removed_worktree_without_finish_still_blocks(self):
+        main = self.repo
+        feature = self.root / "feature"
+        self.git("worktree", "add", "-b", "feature", str(feature))
+        self.repo = feature
+        self.assertEqual(self.run_tests().returncode, 0)
+        self.repo = main
+        self.git("worktree", "remove", str(feature))
+        self.assertEqual(self.hook(stop=True)["decision"], "block")
+
     def test_git_c_and_cd_resolve_the_actual_repository(self):
         other = self.root / "other repo"
         other.mkdir()

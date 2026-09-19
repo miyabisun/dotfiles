@@ -58,7 +58,8 @@ def digest(root):
 
 def problem(root, committing=False):
     saved = read(root)
-    if saved.get("status") != "passed" or saved.get("digest") != digest(root):
+    allowed = ("passed",) if committing else ("passed", "finished")
+    if saved.get("status") not in allowed or saved.get("digest") != digest(root):
         return f"{root}: agent-test run -- <test command> を通してください。中断報告のみなら agent-test pause。"
     if committing:
         staged = set(git(root, "diff", "--cached", "--name-only", "-z").split(b"\0"))
@@ -114,7 +115,10 @@ def hook(event):
             for path in STATE.glob("*.json"):
                 saved = json.loads(path.read_text())
                 if session and saved.get("session_id") == session and saved.get("status") != "paused":
-                    reason = problem(Path(saved["root"]))
+                    root = Path(saved["root"])
+                    if saved.get("status") == "finished" and not root.exists():
+                        continue
+                    reason = problem(root)
                     if reason:
                         break
         else:
@@ -145,8 +149,18 @@ def main():
         saved["status"] = "paused"
         write(root, saved)
         return 0
+    if sys.argv[1:] == ["finish"]:
+        reason = problem(root)
+        if reason:
+            raise ValueError(reason)
+        git(root, "rev-parse", "--verify", "HEAD")
+        if git(root, "status", "--porcelain"):
+            raise ValueError("未commitの変更があります。作業を完了してからfinishしてください。")
+        saved["status"] = "finished"
+        write(root, saved)
+        return 0
     if sys.argv[1:3] != ["run", "--"] or len(sys.argv) < 4:
-        raise ValueError("usage: agent-test run -- <test command> | pause | hook")
+        raise ValueError("usage: agent-test run -- <test command> | pause | finish | hook")
     saved["status"] = "failed"
     write(root, saved)
     before = digest(root)
