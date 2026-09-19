@@ -13,7 +13,6 @@ agent/
 ├── claude/          # Claude Code only
 │   ├── hooks/
 │   ├── settings.json
-│   ├── CLAUDE.md    # Claude-only rules + @~/.claude/GLOBAL.md import
 │   ├── agents → ../common/agents
 │   ├── designs → ../common/designs
 │   └── skills → ../common/skills
@@ -33,9 +32,9 @@ agent/
 | `~/.claude/skills`, `~/.grok/skills` | `agent/common/skills` |
 | `~/.claude/agents`, `~/.grok/agents` | `agent/common/agents` |
 | `~/.claude/designs`, `~/.grok/designs` | `agent/common/designs` |
-| `~/.claude/hooks`, `~/.claude/CLAUDE.md` | `agent/claude/hooks`, `agent/claude/CLAUDE.md` |
+| `~/.claude/hooks` | `agent/claude/hooks` |
 | `~/.codex/agents`, `~/.codex/hooks`, `~/.codex/hooks.json` | `agent/codex/*` |
-| `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.claude/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
+| `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.claude/rules/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.grok/hooks` | `agent/grok/hooks` |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
@@ -50,6 +49,35 @@ agent/
 未作成の設定をseedし、対応する旧symlinkは内容を保ってコピーへ変換します。
 既存の通常ファイルは保持します。ただしCodex/Grokの廃止したpeer MCP登録は除去します。
 テンプレートの後続変更は[config-merge](common/skills/config-merge/SKILL.md)で同期します。
+
+## Claude Codeの指示ファイル
+
+共有規約は `~/.claude/rules/GLOBAL.md` から読み込みます。
+原本は `agent/common/rules/GLOBAL.md` で、Codex/Grokと共通です。
+`bin/install` は新しいリンクを確認してから、同じcheckoutを指す旧管理リンクを除去します。
+対象は `~/.claude/CLAUDE.md` と `~/.claude/GLOBAL.md` です。
+利用者の実ファイル・別リンク・他のrulesは保持します。
+新しいリンク先が競合した場合は、旧リンクを残して停止します。
+
+プロジェクト固有の指示は `AGENTS.md` に置けます。
+Claude Code [2.1.277以降](https://github.com/anthropics/claude-code/releases/tag/v2.1.277)では、
+既定では、プロジェクト側に `CLAUDE.md` がなければ `AGENTS.md` を読みます。
+祖先の `CLAUDE.md`、`.claude/CLAUDE.md`、`CLAUDE.local.md` も判定に影響します。
+ユーザー用rulesの読み込みとは別の仕組みです。
+
+公式のnative installを更新するには `claude update` を実行します。
+更新後に新規セッションで、ファイルを手動で読まずプロジェクト規約を答えられるか確認してください。
+更新直後の最初のセッションでは機能がまだ利用できない場合があります。
+プロバイダー、telemetry、hooks、組み込みpluginの設定によっても利用可否が変わります。
+対応を確認するまで、既存プロジェクトの指示ファイルは残してください。
+詳細は[公式のAGENTS.md仕様](https://code.claude.com/docs/en/memory#agentsmd)を参照してください。
+
+`claude-md-management` pluginは旧ファイルの作成・編集を避けるため無効にしています。
+既存のlocal settingsにはinstallerが変更を配布しません。
+[config-merge](common/skills/config-merge/SKILL.md)で対象pluginの無効化を取り込んでください。
+AGENTS.md用の追加設定は、既定のフォールバックが使える環境では不要です。
+
+## 実行環境との連携
 
 agent の完了イベントは `~/.local/bin/emit-turn-end.sh` を呼ぶ。`MOCA_URL` が
 設定されているときは、MOCA へイベントの通知を依頼する。成功した turn を

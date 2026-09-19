@@ -29,6 +29,30 @@ function local_config () {
   fi
 }
 
+# Publish the new entrance before removing links owned by this checkout.
+install_claude_rules() {
+  local source="$(pwd)/agent/common/rules/GLOBAL.md"
+  local destination="$HOME/.claude/rules/GLOBAL.md" old target
+  [ -f "$source" ] || return 1
+  mkdir -p "$HOME/.claude/rules" || return 1
+  if [ ! -e "$destination" ] && [ ! -L "$destination" ]; then
+    ln -s "$source" "$destination" || return 1
+  fi
+  if [ ! -L "$destination" ] || [ "$(readlink "$destination")" != "$source" ]; then
+    echo "Preserving existing Claude rules at $destination; old entrances were not removed." >&2
+    return 1
+  fi
+  for old in CLAUDE.md GLOBAL.md; do
+    case "$old" in
+      CLAUDE.md) target="$(pwd)/agent/claude/CLAUDE.md" ;;
+      GLOBAL.md) target="$source" ;;
+    esac
+    if [ -L "$HOME/.claude/$old" ] && [ "$(readlink "$HOME/.claude/$old")" = "$target" ]; then
+      unlink "$HOME/.claude/$old" || return 1
+    fi
+  done
+}
+
 link ".editorconfig"
 
 # 主 checkout で commit / merge したら bin/install を再実行する (hooks/run-install)。
@@ -47,13 +71,11 @@ link "config/nvim" "$HOME/.config"
 link "config/tmux" "$HOME/.config"
 
 mkdir -p "$HOME/.claude"
+install_claude_rules || exit 1
 link "agent/common/skills" "$HOME/.claude"
 link "agent/common/agents" "$HOME/.claude"
 link "agent/common/designs" "$HOME/.claude"
 link "agent/claude/hooks" "$HOME/.claude"
-link "agent/claude/CLAUDE.md" "$HOME/.claude"
-# CLAUDE.md imports the shared rules via @~/.claude/GLOBAL.md
-link "agent/common/rules/GLOBAL.md" "$HOME/.claude"
 local_config "$HOME/.claude/settings.json" "$(pwd)/agent/claude/settings.json"
 
 # herdr: ~/.config/herdr はランタイム実ディレクトリ (sock/log/session) のため

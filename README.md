@@ -48,6 +48,10 @@ A legacy link to the matching template is converted to a copy with its contents 
 Existing local settings are kept. Retired agent-talk peer MCP tables are removed.
 Use the [config-merge skill](agent/common/skills/config-merge/SKILL.md) to sync later template changes.
 
+Claude reads the shared rules through `~/.claude/rules/GLOBAL.md`.
+Managed legacy links are migrated.
+See [Claude instruction files](agent/README.md#claude-codeの指示ファイル) for `AGENTS.md` support and settings.
+
 Shell settings outside the managed block are preserved.
 Broken or duplicate block markers stop shell-file updates; correct them before retrying.
 Other installation steps may already have run when that error is reported.

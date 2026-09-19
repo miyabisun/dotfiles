@@ -88,8 +88,7 @@ managed_links="
 .claude/agents agent/common/agents
 .claude/designs agent/common/designs
 .claude/hooks agent/claude/hooks
-.claude/CLAUDE.md agent/claude/CLAUDE.md
-.claude/GLOBAL.md agent/common/rules/GLOBAL.md
+.claude/rules/GLOBAL.md agent/common/rules/GLOBAL.md
 .config/herdr/config.toml config/herdr/config.toml
 .local/bin/herdr-swap config/herdr/bin/herdr-swap
 .codex/hooks.json agent/codex/hooks.json
@@ -131,6 +130,11 @@ while read -r link_rel target_rel; do
   fi
 done <<<"$managed_links"
 
+# The shared rule is loaded directly; fresh installs do not create old wrappers.
+for old_rule in CLAUDE.md GLOBAL.md; do
+  test ! -e "$home1/.claude/$old_rule" && test ! -L "$home1/.claude/$old_rule"
+done
+
 # machine-local config は symlink ではなく独立した複製で置かれる。
 # harness (Claude Code / Codex / Grok) が live file へ書き戻す状態を dotfiles の
 # worktree へ漏らさないための境界であり、dotfiles への反映は config-merge が担う。
@@ -165,6 +169,8 @@ home_legacy="$test_root/home-legacy"
 seed_rc "$home_legacy"
 mkdir -p "$home_legacy/.claude"
 ln -s "$repo_copy/agent/claude/settings.json" "$home_legacy/.claude/settings.json"
+ln -s "$repo_copy/agent/claude/CLAUDE.md" "$home_legacy/.claude/CLAUDE.md"
+ln -s "$repo_copy/agent/common/rules/GLOBAL.md" "$home_legacy/.claude/GLOBAL.md"
 run_install "$home_legacy" >"$test_root/run-legacy.out"
 if [[ -L "$home_legacy/.claude/settings.json" ]]; then
   echo 'legacy .claude/settings.json symlink must be migrated to a copy' >&2
@@ -173,6 +179,65 @@ fi
 cmp -s "$home_legacy/.claude/settings.json" \
   "$repo_copy/agent/claude/settings.json" \
   || { echo 'migration must preserve the live settings contents' >&2; exit 1; }
+for old_rule in CLAUDE.md GLOBAL.md; do
+  test ! -e "$home_legacy/.claude/$old_rule" && test ! -L "$home_legacy/.claude/$old_rule"
+done
+test "$(readlink "$home_legacy/.claude/rules/GLOBAL.md")" = "$repo_copy/agent/common/rules/GLOBAL.md"
+
+# Unmanaged old instruction files and links stay intact, alongside other rules.
+for kind in file symlink; do
+  custom_home="$test_root/custom-$kind"
+  seed_rc "$custom_home"
+  mkdir -p "$custom_home/.claude/rules"
+  printf 'keep other rule\n' >"$custom_home/.claude/rules/custom.md"
+  printf 'keep target\n' >"$test_root/custom-target-$kind"
+  for old_rule in CLAUDE.md GLOBAL.md; do
+    if [[ "$kind" == file ]]; then
+      printf 'keep user rule\n' >"$custom_home/.claude/$old_rule"
+    else
+      ln -s "$test_root/custom-target-$kind" "$custom_home/.claude/$old_rule"
+    fi
+  done
+  run_install "$custom_home" >"$test_root/custom-$kind.out"
+  for old_rule in CLAUDE.md GLOBAL.md; do
+    if [[ "$kind" == file ]]; then
+      test ! -L "$custom_home/.claude/$old_rule"
+      test "$(cat "$custom_home/.claude/$old_rule")" = 'keep user rule'
+    else
+      test "$(readlink "$custom_home/.claude/$old_rule")" = "$test_root/custom-target-$kind"
+    fi
+  done
+  test "$(cat "$custom_home/.claude/rules/custom.md")" = 'keep other rule'
+  test "$(cat "$test_root/custom-target-$kind")" = 'keep target'
+done
+
+# A conflicting destination must not erase the existing managed entrance.
+for kind in file directory symlink parent; do
+  conflict_home="$test_root/conflict-$kind"
+  seed_rc "$conflict_home"
+  mkdir -p "$conflict_home/.claude"
+  ln -s "$repo_copy/agent/claude/CLAUDE.md" "$conflict_home/.claude/CLAUDE.md"
+  ln -s "$repo_copy/agent/common/rules/GLOBAL.md" "$conflict_home/.claude/GLOBAL.md"
+  if [[ "$kind" == parent ]]; then
+    printf 'keep rules file\n' >"$conflict_home/.claude/rules"
+  else
+    mkdir -p "$conflict_home/.claude/rules"
+    case "$kind" in
+      file) printf 'keep rule\n' >"$conflict_home/.claude/rules/GLOBAL.md" ;;
+      directory) mkdir "$conflict_home/.claude/rules/GLOBAL.md" ;;
+      symlink) ln -s "$test_root/missing-target" "$conflict_home/.claude/rules/GLOBAL.md" ;;
+    esac
+  fi
+  before_rules="$(snapshot_home "$conflict_home/.claude")"
+  if run_install "$conflict_home" >"$test_root/conflict-$kind.out" 2>&1; then
+    echo "conflicting Claude rule destination must fail: $kind" >&2
+    exit 1
+  fi
+  test "$(readlink "$conflict_home/.claude/CLAUDE.md")" = "$repo_copy/agent/claude/CLAUDE.md"
+  test "$(readlink "$conflict_home/.claude/GLOBAL.md")" = "$repo_copy/agent/common/rules/GLOBAL.md"
+  test "$(snapshot_home "$conflict_home/.claude")" = "$before_rules"
+done
+
 # 移行後は source から独立している (source を触っても live は動かない)。
 # copy には .git が無いので、戻すのは checkout ではなく取っておいた控えである
 # (`head -n -1` は GNU 拡張で、BSD head は負の行数を受け付けない)。
