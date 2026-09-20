@@ -7,7 +7,7 @@ description: >-
 # Web UIへ実装する
 
 入力は要求、製品DESIGN.md、既存のtoken/componentと実装経路。
-正本が未解決なら [design-context](../design-context/SKILL.md)を先に読む。
+適用するデザイン方針が未確認なら [design-context](../design-context/SKILL.md)を先に読む。
 操作・配置・テーマに今回必要な設計が欠けていれば、該当するui-flow/ui-layout/ui-themeで補う。
 設計責務の選択は [deliver](../deliver/SKILL.md)の条件に従い、全skillを一括で読まない。
 
@@ -20,5 +20,5 @@ description: >-
 
 出力は製品設計を反映した差分と、維持した操作、確認する状態。
 [web-ui-check](../web-ui-check/SKILL.md)へ実装と観測条件を渡す。
-表示や操作が未達なら担当が修正し、[ui-review](../ui-review/SKILL.md)へ証拠を渡す。
+表示や操作の未達箇所は担当が修正し、[ui-review](../ui-review/SKILL.md)へ証拠を渡す。
 commit/pushまでの依頼はdeliverへ戻して完走する。

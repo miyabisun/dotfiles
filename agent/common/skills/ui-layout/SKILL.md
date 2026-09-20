@@ -6,7 +6,7 @@ description: >-
 
 # 内容と操作を配置する
 
-入力は元の要求、実際の代表データ、既存画面、design-contextで解決した正本。
+入力は元の要求、実際の代表データ、既存画面、design-contextで特定したデザイン方針。
 未解決なら [design-context](../design-context/SKILL.md)を読む。操作が未確定なら [ui-flow](../ui-flow/SKILL.md)へ渡す。
 
 1. 最初の画面に見せる内容と主操作を定める。利用者が探す機器・項目を説明文より先に置く。

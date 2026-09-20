@@ -10,7 +10,7 @@ description: >-
 外側が実装レビューを所有する場合は [deliver/PROCESS.md](../deliver/PROCESS.md) に従い、localでは重ねない。
 
 実装レビューでは、主担当が先に導入済み `ponytail:ponytail-review` を読み、実差分を確認する。
-UI差分は [ui-review](../ui-review/SKILL.md) の結果と正本の関連本文を含める。
+UI差分は [ui-review](../ui-review/SKILL.md) の結果と適用するデザイン方針の関連本文を含める。
 事前判断では候補と原文を使い、実装後は実差分と検証結果を使う。同じ範囲の評価を重ねない。
 
 通常はJevへ、適用する観点をまとめて問い合わせる。各値を0〜1の小数のまま扱い、真偽へ丸めない。

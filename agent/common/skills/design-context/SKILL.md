@@ -4,7 +4,7 @@ description: >-
   UIの新規作成・表示・操作変更で、knowledgeのデザイン方針、共通原本、製品DESIGN.mdを照合する。Webとnative UIを含む。backendだけの変更には使わない。
 ---
 
-# デザインの正本を解決する
+# 適用するデザイン方針と参照文書を特定する
 
 入力は元の要求、対象repository、変更するUI、knowledge-readで解決したknowledge checkout。
 単独起動でcheckoutが未解決なら `$KNOWLEDGE_REPO` または今回明示された場所を使う。
@@ -21,7 +21,7 @@ description: >-
    採用済みの製品設計は製品が所有する。原本更新を理由に既存画面を一括上書きしない。
    ただし導入漏れを製品固有の合意と推測しない。今回の要求に必要な不足は担当が補う。
 
-出力は読んだ正本のpath/節、適用する規則、今回補う製品設計、実測条件。
+出力は確認したデザイン文書のpath/節、適用する規則、今回補う製品設計、実測条件。
 設計を具体化する責務は [ui-flow](../ui-flow/SKILL.md)、[ui-layout](../ui-layout/SKILL.md)、
 [ui-theme](../ui-theme/SKILL.md)。関係するものだけへ解決結果を渡す。
 製品DESIGN.mdは操作・数値・状態を製品内で判断できる形にする。外部必読や非公開pathを残さない。

@@ -6,8 +6,8 @@ description: >-
 
 # UI成果を要求と照合する
 
-入力は元の要求、design-contextで解決した正本の適用節、製品DESIGN.md、差分と
-web-ui-checkまたはandroid-ui-checkの実画像・操作結果。担当自身が読む。
+入力は元の要求、design-contextで特定した方針の適用節、製品DESIGN.md、差分。
+web-ui-checkまたはandroid-ui-checkの実画像・操作結果も担当自身が読む。
 
 - 元の要求に必要な主操作・配置・テーマが製品設計に落ちているか確認する。
   製品文書の条件自体が不足していれば、その条件への自己適合だけで合格にしない。
@@ -17,9 +17,10 @@ web-ui-checkまたはandroid-ui-checkの実画像・操作結果。担当自身�
   必要な証拠と照合する。fakeや自己申告を未実施の実画面・実機へ拡大しない。
 
 出力は条件に対応する確認結果と、失敗/未確認の根拠・戻し先。
-正本の不足はdesign-context、操作はui-flow、配置はui-layout、配色はui-theme、
-実装/実測の不足は対応platform skillへ戻し、担当が同じ依頼内で直す。
+デザイン方針の参照・確認の不足はdesign-contextへ戻す。
+操作はui-flow、配置はui-layout、配色はui-theme、実装/実測は対応platform skillへ戻す。
+担当が同じ依頼内で不足を直す。
 
 この結果を [change-review](../change-review/SKILL.md) の実装レビューへ一緒に渡す。
-Jevへは正本の関連本文・製品設計・実際の観測結果を含める。pathだけや「確認済み」の要約だけを渡さない。
+Jevへは適用するデザイン方針の関連本文・製品設計・実際の観測結果を含める。pathだけや「確認済み」の要約だけを渡さない。
 独立したUI承認、署名、全件への別担当レビューを追加しない。

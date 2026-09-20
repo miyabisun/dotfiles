@@ -19,13 +19,13 @@ description: >-
    bundle名が不明なら `projects/index.md` を使い、旧名の探索にだけcatalogを使う。
    横断事項は `library/index.md` の該当リンクへ進む。全区画や利用者profileを一括で読まない。
    公開範囲・認証・アクセス制御・アプリの責務を扱う実装やレビューでは、解決したknowledgeの
-   `library/policies/security-by-exposure.md` を正本として読む。
+   `library/policies/security-by-exposure.md` に定めた方針を読む。
    Web/native UIの新設・表示・操作変更なら [design-context](../design-context/SKILL.md) を実際に読み、
    解決したcheckoutを渡す。製品indexだけで共通デザインの適用まで確認済みとしない。
 4. 対象・読んだpath・今回の判断に必要な要点を会話内で把握し、同じ対象の既読情報は再利用する。
    更新の兆候や矛盾が出た文書だけ再確認する。新しいsessionではこの入口から解決する。
    委譲・レビューには解決済みcheckoutと関連文書のpath、適用する節、今回の構成・要件を渡し、
-   受け手が正本を読めるようにする。本文や方針を各skillへ複製しない。
+   受け手が参照先の文書を読めるようにする。本文や方針を各skillへ複製しない。
    全履歴や全knowledgeの転送、永続cacheの新設は要らない。
 
 適用する方針とテスト戦略が必要な範囲で分かったら実装へ進む。
