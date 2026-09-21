@@ -6,6 +6,8 @@ description: >-
 
 # 適用するデザイン方針と参照文書を特定する
 
+[実装方針の適用境界](../deliver/implementation-scope.md)を適用してから進める。
+
 入力は元の要求、対象repository、変更するUI、knowledge-readで解決したknowledge checkout。
 単独起動でcheckoutが未解決なら `$KNOWLEDGE_REPO` または今回明示された場所を使う。
 

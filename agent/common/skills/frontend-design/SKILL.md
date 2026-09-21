@@ -6,6 +6,8 @@ description: >-
 
 # Web UIへ実装する
 
+[実装方針の適用境界](../deliver/implementation-scope.md)を適用してから進める。
+
 入力は要求、製品DESIGN.md、既存のtoken/componentと実装経路。
 適用するデザイン方針が未確認なら [design-context](../design-context/SKILL.md)を先に読む。
 操作・配置・テーマに今回必要な設計が欠けていれば、該当するui-flow/ui-layout/ui-themeで補う。

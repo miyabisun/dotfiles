@@ -6,6 +6,8 @@ description: >-
 
 # Android UIへ実装する
 
+[実装方針の適用境界](../deliver/implementation-scope.md)を適用してから進める。
+
 入力は要求、製品DESIGN.md、既存のActivity/Service/ComposeまたはViewの経路。
 適用するデザイン方針が未確認なら [design-context](../design-context/SKILL.md)を先に読む。
 今回必要な操作・配置・テーマの不足だけをui-flow/ui-layout/ui-themeへ渡す。

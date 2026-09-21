@@ -10,7 +10,7 @@ description: >-
 依頼された後続まで進める。このskillはcommit・pushまでを授権する。同期と配達は [git](../git/SKILL.md)。
 
 1. [knowledge-read](../knowledge-read/SKILL.md)で関連判断・共有テスト戦略を読み、実装と照合する。
-   導入済み `ponytail:ponytail` の公式SKILL.mdを読み、設計・実装へfullを適用する。
+   [実装方針の適用境界](implementation-scope.md)を読み、今回の工程に適用する。
    [task-creater](../task-creater/SKILL.md)の元の要求と事前判断を引き継ぎ、未実施分だけ行う。
    直接開発の台帳登録は必須にせず、同じ範囲の判断を繰り返さない。
 2. 下の条件に該当するskillを実際に読み、成果を次へ渡す。既読で充足しているものは再利用する。
