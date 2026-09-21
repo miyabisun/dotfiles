@@ -50,6 +50,10 @@ agent/
 既存の通常ファイルは保持します。ただしCodex/Grokの廃止したpeer MCP登録は除去します。
 テンプレートの後続変更は[config-merge](common/skills/config-merge/SKILL.md)で同期します。
 
+OrcaServerで公開モデルをプレートへ保存したり、フィラメントの色・共通設定・AMS割当を操作したりする場合は、
+[MCP接続手順](orca-mcp.md)に従い、利用するマシンの接続先を登録します。
+操作は小さな[orca-plate](common/skills/orca-plate/SKILL.md)と[orca-material](common/skills/orca-material/SKILL.md)に分かれています。
+
 ## Claude Codeの指示ファイル
 
 共有規約は `~/.claude/rules/GLOBAL.md` から読み込みます。
@@ -67,7 +71,7 @@ Claude Code [2.1.277以降](https://github.com/anthropics/claude-code/releases/t
 
 公式のnative installを更新するには `claude update` を実行します。
 更新後に新規セッションで、ファイルを手動で読まずプロジェクト規約を答えられるか確認してください。
-更新直後の最初のセッションでは機能がまだ利用できない場合があります。
+更新直後の最初のセッションでは、まだ機能を利用できない場合があります。
 プロバイダー、telemetry、hooks、組み込みpluginの設定によっても利用可否が変わります。
 対応を確認するまで、既存プロジェクトの指示ファイルは残してください。
 詳細は[公式のAGENTS.md仕様](https://code.claude.com/docs/en/memory#agentsmd)を参照してください。
