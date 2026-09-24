@@ -22,21 +22,7 @@ enabled = true
 # one if a specific plugin is needed.
 [plugins]
 disabled = [
-  "claude-code-setup",
-  "claude-md-management",
   "code-review",
-  "code-simplifier",
-  "commit-commands",
-  "explanatory-output-style",
-  "feature-dev",
-  "frontend-design",
-  "hookify",
-  "learning-output-style",
-  "plugin-dev",
-  "pr-review-toolkit",
-  "ralph-loop",
-  "security-guidance",
-  "skill-creator",
 ]
 
 # Claude/Cursor compatibility hooks can double-fire general notifications.

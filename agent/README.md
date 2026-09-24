@@ -63,22 +63,20 @@ OrcaServerで公開モデルをプレートへ保存したり、フィラメン�
 利用者の実ファイル・別リンク・他のrulesは保持します。
 新しいリンク先が競合した場合は、旧リンクを残して停止します。
 
-プロジェクト固有の指示は `AGENTS.md` に置けます。
-Claude Code [2.1.277以降](https://github.com/anthropics/claude-code/releases/tag/v2.1.277)では、
-既定では、プロジェクト側に `CLAUDE.md` がなければ `AGENTS.md` を読みます。
-祖先の `CLAUDE.md`、`.claude/CLAUDE.md`、`CLAUDE.local.md` も判定に影響します。
-ユーザー用rulesの読み込みとは別の仕組みです。
+プロジェクト固有の指示は `AGENTS.md` だけに置き、Codex/Grokと共有します。
+Claude Code [2.1.277以降](https://github.com/anthropics/claude-code/releases/tag/v2.1.277)は、
+プロジェクト側に `CLAUDE.md` がなければ `AGENTS.md` を読みます。
+祖先を含め `CLAUDE.md`、`.claude/CLAUDE.md`、`CLAUDE.local.md` があると
+`AGENTS.md` は読まれないため、これらを作りません。
+既存の `CLAUDE.md` は内容を `AGENTS.md` へ移して削除します。
+ユーザー用rulesの読み込みとは別の仕組みで、`~/.claude/AGENTS.md` は読まれません。
 
 公式のnative installを更新するには `claude update` を実行します。
-更新後に新規セッションで、ファイルを手動で読まずプロジェクト規約を答えられるか確認してください。
 更新直後の最初のセッションでは、まだ機能を利用できない場合があります。
-プロバイダー、telemetry、hooks、組み込みpluginの設定によっても利用可否が変わります。
-対応を確認するまで、既存プロジェクトの指示ファイルは残してください。
+Bedrockやtelemetry無効などの一部セッションは2.1.281未満では読めません。
+新規セッションの `/memory` に `AGENTS.md` が出ることで確認できます。
 詳細は[公式のAGENTS.md仕様](https://code.claude.com/docs/en/memory#agentsmd)を参照してください。
 
-`claude-md-management` pluginは旧ファイルの作成・編集を避けるため無効にしています。
-既存のlocal settingsにはinstallerが変更を配布しません。
-[config-merge](common/skills/config-merge/SKILL.md)で対象pluginの無効化を取り込んでください。
 AGENTS.md用の追加設定は、既定のフォールバックが使える環境では不要です。
 
 ## 実行環境との連携

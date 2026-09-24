@@ -116,23 +116,9 @@
     ]
   },
   "enabledPlugins": {
-    "claude-code-setup@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": false,
     "code-review@claude-plugins-official": true,
-    "code-simplifier@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "explanatory-output-style@claude-plugins-official": false,
-    "feature-dev@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "learning-output-style@claude-plugins-official": false,
-    "plugin-dev@claude-plugins-official": true,
     "ponytail@ponytail": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
