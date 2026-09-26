@@ -1,0 +1,4 @@
+interface:
+  display_name: "Idea"
+  short_description: "思いつきをtask-serverのアイデアとして記録・調査・破棄・タスク化する"
+  default_prompt: "Use $idea for the relevant part of this task."
