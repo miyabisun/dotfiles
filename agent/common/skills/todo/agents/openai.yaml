@@ -1,0 +1,4 @@
+interface:
+  display_name: "Todo"
+  short_description: "userが手を動かすToDoをtodo-listへ追加する"
+  default_prompt: "Use $todo for the relevant part of this task."
