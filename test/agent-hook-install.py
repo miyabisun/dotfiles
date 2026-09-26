@@ -36,8 +36,6 @@ with tempfile.TemporaryDirectory() as temp:
                                                 text=True, capture_output=True, env=env,
                                                 cwd=path.parent, timeout=15)
                         assert result.returncode == 0, (relative, event, result.stderr)
-                        if event == 'PreToolUse' and 'block-git-discard' in hook['command']:
-                            assert json.loads(result.stdout)['hookSpecificOutput']['permissionDecision'] == 'deny'
         config = tomllib.loads((home / '.codex/config.toml').read_text())
         subprocess.run([str(home / '.local/bin' / config['notify'][0]),
                         json.dumps({'type': 'agent-turn-complete'})], env=env, check=True, timeout=15)

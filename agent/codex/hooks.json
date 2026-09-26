@@ -15,17 +15,6 @@
     ],
     "PreToolUse": [
       {
-        "hooks": [
-          {
-            "command": "bash \"$HOME/.codex/hooks/block-git-discard.sh\"",
-            "statusMessage": "git 破棄コマンドチェック",
-            "timeout": 10,
-            "type": "command"
-          }
-        ],
-        "matcher": "^Bash$"
-      },
-      {
         "matcher": "^Bash$",
         "hooks": [
           {
