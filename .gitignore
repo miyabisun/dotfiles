@@ -11,3 +11,6 @@ agent/claude/hooks/herdr-*.sh
 
 # local Python bytecode (herdr helpers and anything else)
 __pycache__/
+
+# Claude Code writes claude.ai account skills here through the ~/.claude/skills symlink.
+agent/common/skills/synced/
