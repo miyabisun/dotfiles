@@ -32,7 +32,7 @@
       "Edit(**/.env.production)",
       "Edit(**/.env.production.local)"
     ],
-    "defaultMode": "auto"
+    "defaultMode": "bypassPermissions"
   },
   "outputStyle": "Concise",
   "crossSessionInbound": "accept",
@@ -134,7 +134,6 @@
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized",
-  "skipAutoPermissionPrompt": true,
   "mcpServers": {
     "obscura": {
       "args": [
