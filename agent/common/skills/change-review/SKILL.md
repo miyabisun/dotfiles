@@ -14,7 +14,7 @@ UI差分は [ui-review](../ui-review/SKILL.md) の結果と適用するデザイ
 事前判断では候補と原文を使い、実装後は実差分と検証結果を使う。同じ範囲の評価を重ねない。
 
 通常はJevへ、適用する観点をまとめて問い合わせる。各値を0〜1の小数のまま扱い、真偽へ丸めない。
-Jevを利用できない場合は、同じ観点を別セッション・サブエージェントへ渡す。
+[Jevを利用できない](#jevへの問い合わせ)場合は、同じ観点を別セッション・サブエージェントへ渡す。
 代替した事実を明記し、担当の推定値をJevの応答とは扱わない。別モデルへの切替は必須にしない。
 
 ## 入力と対象選択
@@ -52,7 +52,10 @@ UIではDESIGN.mdと変更前後の画面の確認結果を添える。
 
 ## Jevへの問い合わせ
 
-導入済みの公式 `typesafe-ai` skillを読み、現在のAPI仕様に従う。
+公式 `typesafe-ai` skillを読み、現在のAPI仕様に従う。ローカルに無ければ当回は
+[公式本文](https://raw.githubusercontent.com/typesafe-ai/skills/main/skills/typesafe-ai/SKILL.md)を直接読み、
+導入は[dotfilesの手順](https://github.com/miyabisun/dotfiles/blob/master/docs/utilities.md#typesafe-credentials)に従う。
+公式skillや専用ツールが見つからないことは、Jevを利用できない理由にしない。
 APIキーは `TYPESAFE_API_KEY` を使う。sandboxでは `~/.config/typesafe/env`（mode600）から読む。
 Bitwardenの `Env Files` / `typesafe` との同期は初回・キー更新時だけとし、通常実行では `rbw` を呼ばない。
 非対話実行では、APIを呼ぶのと同じshellで次を実行する。キーの値は表示・記録しない。
@@ -69,6 +72,10 @@ ID自体はモデルへの指示にならないため、問いには意味と除
 `answers.<項目>.noul` を項目名とともに報告する。
 各回答が `type: "noul"` で、値が有限の数値かつ0〜1であることを確認する。
 欠落・不正値・API失敗は未確認として扱い、0点で埋めない。
+
+Jevを利用できないと判断するのは、キーを読めない認証不足、HTTP・通信の失敗、
+応答全体の不正を実際に確認した場合だけとする。キーが無いと分かればAPIは呼ばない。
+代替へ進むときは、確認した段階と失敗した段階を報告に残す。
 
 ## 値を受け取った後
 
