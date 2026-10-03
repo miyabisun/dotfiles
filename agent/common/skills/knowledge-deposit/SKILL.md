@@ -17,6 +17,9 @@ description: >-
   同じ知識を重ねず、到達に必要なindexだけ追従する。inboxへの二重保存は不要。
 - 一次sourceで確かめた事実、userの決定、agentの推論を分け、出典と日付を残す。
   userの決定は中立文と帰属で書き、逐語・秘密・非公開host・runtime座標を保存しない。
+  「userの決定」と書くのは原文の参照（task IDと日付）を示せるものだけとし、無ければ担当判断として書く。
+  担当の判断をuserの決定として、knowledge・DESIGN.md・AGENTS.md等の拘束文書へ記録しない。
+  後続はそれを覆せない要件として読み、利用者が求めていない制約を守り続けるからである。
 - 形式規範はknowledgeの `library/okf/spec.md`、機械検査は既存の
   `scripts/lint --enforce-scope <今回のpath>...` を使う。規則やschemaを作り直さない。
   lintは既知形式しか検出しないため、担当が秘密の混入、内容、出典、重複、参照を確認する。
