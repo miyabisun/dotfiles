@@ -15,7 +15,7 @@ description: >-
   実際の起動・外部への作用は必要な範囲で実行して確かめ、mockの保証範囲を広げない。
 - Markdownの字面、ライブラリの仕様、常に真の比較をテストしない。
   Markdownのみなら既存の形式lint/validatorと参照・内容の確認を行う。
-- 変更に合うformatter/linter/buildを通す。UI実測はWebならweb-ui-check、Androidならandroid-ui-checkへ渡す。
+- 変更に合うformatter/linter/buildを通す。UI実測はWebならfrontend-design、Androidならandroid-ui-checkへ渡す。
 
 対象repoで `agent-test run -- <既存テストコマンドと引数>` を実行する。
 stage・検証・commitは別コマンドにし、検証後に編集したら影響範囲を再検証する。

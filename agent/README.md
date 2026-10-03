@@ -158,8 +158,8 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 実行方法は [change-review](common/skills/change-review/SKILL.md) を参照する。
 
 開発の入口は [deliver](common/skills/deliver/SKILL.md)。変更する責務に応じて小さなskillを読み、成果を渡す。
-UIは `design-context` でknowledge・共通原本・製品設計を照合し、必要な `ui-flow` / `ui-layout` / `ui-theme` で具体化する。
-Webは `frontend-design` → `web-ui-check`、Androidは `android-ui` → `android-ui-check` で実装と実画面をつなぐ。
+UIは `design-context` でknowledge・共通原本・製品設計を照合し、流れ・配置・テーマを決める。
+Webは `frontend-design` で実装・画面の引き算・実測までつなぎ、Androidは `android-ui` → `android-ui-check` でつなぐ。
 `ui-review` が要求・設計・画像・操作結果を照合し、共通の `test-verify` / `change-review` と配達へ戻す。
 非UI変更ではUI skillを呼ばず、部分変更では関係する責務だけを使う。全件への多人数レビューや新しい承認段階は設けない。
 

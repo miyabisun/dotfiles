@@ -17,5 +17,5 @@
   必要な挙動を満たした上で、既存componentと標準機能を再利用する。
   操作削減が誤操作・データ損失を招く場合は、必要な確認・入力検証を保つ。
 
-UIの具体的な設計・実測・照合は既存のdesign-context、ui-flow、ui-layout、
+UIの具体的な設計・実測・照合は既存のdesign-context、
 platform別skill、ui-reviewが所有する。外部pluginの本文を改造・複製しない。

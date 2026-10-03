@@ -24,11 +24,8 @@ description: >-
 
 | 今回作る・変えるもの | 読むskill | 次へ渡すもの |
 | --- | --- | --- |
-| Web/nativeの表示・操作 | [design-context](../design-context/SKILL.md) | デザイン方針の適用節と製品設計の不足 |
-| 新規UI、主操作・遷移・通知・外部起動 | [ui-flow](../ui-flow/SKILL.md) | 利用前後の経路と状態・復帰 |
-| 新規UI、一覧・配置・部品・文字や余白 | [ui-layout](../ui-layout/SKILL.md) | 製品配置と代表データの観測条件 |
-| 新規UI、色・明暗・状態の配色 | [ui-theme](../ui-theme/SKILL.md) | 製品tokenと両テーマの仕様 |
-| ブラウザUIの実装 | [frontend-design](../frontend-design/SKILL.md) | 差分 → [web-ui-check](../web-ui-check/SKILL.md)の実画像・操作 |
+| Web/nativeの表示・操作・配置・配色 | [design-context](../design-context/SKILL.md) | 適用する方針、流れ・配置・テーマの決定 |
+| ブラウザUIの実装 | [frontend-design](../frontend-design/SKILL.md) | 差分、引き算のbefore/after、実画像・操作 |
 | Android UI・通知・起動経路の実装 | [android-ui](../android-ui/SKILL.md) | 差分 → [android-ui-check](../android-ui-check/SKILL.md)の実画像・操作 |
 
 配色だけなら操作・配置の設計をやり直さず、配置だけならテーマを再設計しない。

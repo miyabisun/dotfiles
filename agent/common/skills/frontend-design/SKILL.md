@@ -1,26 +1,53 @@
 ---
 name: frontend-design
 description: >-
-  HTML・CSS・JavaScript・SvelteなどブラウザUIの表示・操作を実装するときに使う。native UI、backend、文書だけの変更には使わない。
+  HTML・CSS・JavaScript・SvelteなどブラウザUIを作る・直すときに使う。画面の引き算（初期表示の削減・アイコン化・開閉）と、ChromiumとPlaywrightでの実測まで行う。native UI、backend、文書だけの変更には使わない。
 ---
 
-# Web UIへ実装する
+# Web UIを作り、削り、実測する
 
 [実装方針の適用境界](../deliver/implementation-scope.md)を適用してから進める。
 
-入力は要求、製品DESIGN.md、既存のtoken/componentと実装経路。
-適用するデザイン方針が未確認なら [design-context](../design-context/SKILL.md)を先に読む。
-操作・配置・テーマに今回必要な設計が欠けていれば、該当するui-flow/ui-layout/ui-themeで補う。
-設計責務の選択は [deliver](../deliver/SKILL.md)の条件に従い、全skillを一括で読まない。
+入力は要求、[design-context](../design-context/SKILL.md)の結果、製品DESIGN.md、既存のtoken/componentと実装経路。
+適用するデザイン方針が未確認ならdesign-contextを先に読む。
 
-1. 既存component、token、semantic HTMLとCSSの標準機能を使って製品設計を実装する。
+## 実装
+
+1. 既存component、token、semantic HTMLとCSSの標準機能を使う。
    見た目だけでなく、文言・状態・URL・keyboard・focus・ARIAも変更の影響に含める。
-2. 主情報の表示領域を守り、共通tokenを使っただけで適合としない。
-   状態と選択を属性・文字でも伝え、可視focus、操作領域、reduced motionを保つ。
-3. SVG・画像は既存資産を再利用する。必要のない依存や独自widgetを足さない。
+2. SVGは製品のアイコン辞書を再利用する。不要な依存や独自widgetを足さない。
    新規/変更する純粋な判断は [test-verify](../test-verify/SKILL.md)のTDDに従う。
 
-出力は製品設計を反映した差分と、維持した操作、確認する状態。
-[web-ui-check](../web-ui-check/SKILL.md)へ実装と観測条件を渡す。
-表示や操作の未達箇所は担当が修正し、[ui-review](../ui-review/SKILL.md)へ証拠を渡す。
-commit/pushまでの依頼はdeliverへ戻して完走する。
+## 画面の引き算
+
+作った画面・触った画面のすべてに、担当が自分から適用する。
+ユーザーが部品ごとに削除を指示するのを待たない。DESIGN.mdや形式lintへの適合だけで完了にしない。
+減らすのは読む量と操作の手間である。利用者が探す対象名・材料名・数値・状態は消さない。
+
+1. 代表データで、初期表示の要素（見出し・文・ボタン・リンク・バッジ・入力）を列挙する。
+2. 各要素を、対象（何を）・状態（今どうか）・主操作（次に何をするか）に分ける。
+   どれにも当たらない説明・注意書き・補助操作は初期表示から外す。
+   同じ値（コード・件数・状態）を2か所に出さない。
+3. 残す補足・詳細・長い原因は、既定で閉じた開閉（`<details>` など）へ入れる。不要なものは削除する。
+4. 定型操作（編集・削除・複製・更新・設定・外部リンクなど）は既存SVGアイコンのボタンにする。
+   accessible name、keyboard操作、可視focusを付ける。主操作は短い動詞のラベルにする。
+   ボタンの文言で手順や理由を説明しない。
+5. アイコンへの常設ラベルや説明は、配置とアイコンだけでは識別できない操作に限る。
+6. 色だけで状態を伝えないために足すのは、短い状態名やコードまでとする。説明は開閉へ入れる。
+   エラーのコード・短い意味・復帰操作は初期表示に残す。
+7. 同じデータとviewportで、初期表示の文字数と、目的達成までの操作回数をbefore/afterで測る。
+   減っていなければ手順2へ戻る。
+
+## 実測
+
+1. 対象repoのbuild・起動・E2E設定を使い、ChromiumとPlaywrightで実行する。
+   Obscuraはアサーション駆動E2Eの代わりにしない。
+2. 同じデータとviewportで変更前後の全体を表示し、画像と実際の操作を確認する。
+   主情報の面積、見える件数、重複、アクセントの強さも比べる。
+3. 新規UIは明暗・狭幅・長文・空/失敗・keyboard/focusを通す。部分変更は影響する条件だけを選ぶ。
+   CSS値や文字列の存在だけで外観・使いやすさを合格にしない。
+4. 必要な挙動の回帰テストは対象repoへ残す。散文やライブラリそのものを再テストしない。
+   自分のプロセスと隔離データだけを片付ける。
+
+出力は差分、引き算のbefore/after（文字数・操作回数）、条件ごとの観測・画像と未確認。
+未達は担当が直し、[ui-review](../ui-review/SKILL.md)へ渡す。commit/pushまでの依頼は[deliver](../deliver/SKILL.md)へ戻して完走する。

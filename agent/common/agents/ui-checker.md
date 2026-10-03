@@ -12,7 +12,7 @@ description: WebまたはAndroidの実画面で表示と操作を測り、条件
 # 実行
 
 1. 製品の設定からbuild・起動・既存E2Eのコマンドを確認する。
-2. Webは [web-ui-check](../skills/web-ui-check/SKILL.md)、Androidは [android-ui-check](../skills/android-ui-check/SKILL.md)を読み、
+2. Webは [frontend-design](../skills/frontend-design/SKILL.md)の「実測」、Androidは [android-ui-check](../skills/android-ui-check/SKILL.md)を読み、
    必要なbuildと起動を済ませ、その環境で表示と操作を測る。
    同じデータと画面サイズを使い、変更に関係する状態を実際に作る。
 3. 観測値、画像、操作結果、必要な既存テストの結果を条件へ対応付ける。

@@ -9,8 +9,8 @@ description: >-
 [実装方針の適用境界](../deliver/implementation-scope.md)を適用してから進める。
 
 入力は要求、製品DESIGN.md、既存のActivity/Service/ComposeまたはViewの経路。
-適用するデザイン方針が未確認なら [design-context](../design-context/SKILL.md)を先に読む。
-今回必要な操作・配置・テーマの不足だけをui-flow/ui-layout/ui-themeへ渡す。
+適用するデザイン方針と今回の操作・配置・テーマは [design-context](../design-context/SKILL.md)で決める。
+初期表示は [frontend-design](../frontend-design/SKILL.md)の「画面の引き算」をnative部品で適用する。
 設計責務の選択は [deliver](../deliver/SKILL.md)に従う。既存のUI方式は不用意に移行しない。
 
 1. 既存部品とAndroidのresource/theme、platform部品を使う。製品tokenをresource等の
