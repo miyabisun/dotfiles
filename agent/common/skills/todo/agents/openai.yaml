@@ -1,4 +1,4 @@
 interface:
   display_name: "Todo"
-  short_description: "userが手を動かすToDoをtodo-listへ追加する"
+  short_description: "userが手を動かすToDoをtodo-listで追加・確認・完了する"
   default_prompt: "Use $todo for the relevant part of this task."
