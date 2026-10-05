@@ -18,6 +18,51 @@ Banner-only v0.1.0/v0.1.1 releases are rejected as new download artifacts.
 Failures preserve the existing binary. Fix the release or connection, then retry.
 Unrecognized targets are refused.
 
+## Checkout sync
+
+`sync-checkouts` keeps long-lived checkouts on their upstream branch, like a Git watchtower.
+A machine opts in by creating `~/.config/sync-checkouts.list`.
+Each line is `<dir><TAB><activation>`. A leading `~/` means `$HOME`.
+The activation runs with `sh -c` inside `<dir>` after the checkout moves; `-` means none.
+
+```text
+~/projects/miyabisun/dotfiles/master	./bin/install
+~/projects/household/knowledge/main	-
+```
+
+With the list present, `bin/install` links `sync-checkouts.service` and `.timer` into
+`~/.config/systemd/user` and enables the timer. It runs every four minutes.
+Without the list, only the `sync-checkouts` command is linked.
+
+Each entry is fetched and fast-forwarded only. Modified tracked files, a detached HEAD,
+a missing upstream or a diverged branch skip the entry and leave it untouched.
+Untracked files do not block a fast-forward. Git refuses one that would overwrite them.
+A failed activation is retried on the next run. Results go to the journal:
+
+```bash
+journalctl --user -u sync-checkouts.service -n 20
+```
+
+## Rust toolchain
+
+Install development Rust with rustup in the user area (`~/.rustup`, `~/.cargo/bin`).
+Each repository's `rust-toolchain.toml` selects its pinned version and components inside it.
+Elsewhere the default stable toolchain is used.
+The shell settings source `~/.cargo/env`, which puts `~/.cargo/bin` before `/usr/bin`.
+rustup's cargo then wins over a system `rust` package.
+Leave the system package in place; sudo is not needed.
+
+```bash
+curl -sSf https://sh.rustup.rs -o /tmp/rustup-init.sh
+sh /tmp/rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain stable -c clippy -c rustfmt
+rm /tmp/rustup-init.sh
+# Install a pinned version per repository first; concurrent auto-install during a build can break it.
+(cd <repository> && rustup toolchain install)
+cargo --version   # pinned inside the repository, stable elsewhere
+```
+
+If a build fails with `can't find crate for std`, run `rustup toolchain uninstall <version>` and install it again.
+
 ## Bitwarden commands
 
 Commands in `bin/bw/` use `rbw` and `jq` to manage secrets and keys.

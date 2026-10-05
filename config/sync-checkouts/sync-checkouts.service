@@ -1,0 +1,8 @@
+# 常設 checkout を origin へ追従させる 1 回分 (timer から呼ぶ)。
+[Unit]
+Description=sync persistent checkouts to origin and activate on change
+ConditionPathExists=%h/.config/sync-checkouts.list
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/sync-checkouts %h/.config/sync-checkouts.list

@@ -41,6 +41,7 @@ Keep the checkout in place while using its linked settings.
 | Bash and Zsh | A `DOTFILES_START` / `DOTFILES_END` block loads settings from this checkout |
 | Coding agents | Shared skills, rules, roles, and hooks; see [agent configuration](agent/README.md) |
 | Local commands | Helpers are installed under `~/.local/bin`; see below |
+| Checkout sync | With `~/.config/sync-checkouts.list`, a user timer fast-forwards the listed checkouts; see [Checkout sync](docs/utilities.md#checkout-sync) |
 
 Claude's `settings.json`, Codex's `config.toml`, and Grok's `config.toml` are local copies.
 They are seeded from `agent/` only when absent.
@@ -80,6 +81,7 @@ If an update fails, keep existing data and inspect the reported conflict before 
 | Coding-agent setup and skills | [agent/README.md](agent/README.md) |
 | Neovim bookmark spaces and navigation | [config/nvim/README.md](config/nvim/README.md) |
 | Optional CLI installers, including pen | [Tools and secrets](docs/utilities.md) |
+| Rust toolchain through rustup | [Rust toolchain](docs/utilities.md#rust-toolchain) |
 | Bitwarden-backed secrets, SSH keys, and env files | [Bitwarden commands](docs/utilities.md#bitwarden-commands) |
 | TypeSafe credentials on another machine | [TypeSafe setup](docs/utilities.md#typesafe-credentials) |
 

@@ -150,6 +150,15 @@ link "agent/common/bin/meiseki-rewrite" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-session-picker" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-mux" "$HOME/.local/bin"
 
+# 常設 checkout の origin 追従。対象の list を置いたマシンだけ timer を動かす
+link "config/sync-checkouts/sync-checkouts" "$HOME/.local/bin"
+if [ -f "$HOME/.config/sync-checkouts.list" ]; then
+  mkdir -p "$HOME/.config/systemd/user"
+  link "config/sync-checkouts/sync-checkouts.service" "$HOME/.config/systemd/user"
+  link "config/sync-checkouts/sync-checkouts.timer" "$HOME/.config/systemd/user"
+  systemctl --user daemon-reload && systemctl --user enable --now sync-checkouts.timer || exit 1
+fi
+
 mkdir -p "$HOME/.config/sheldon"
 link "config/zsh/plugins.toml" "$HOME/.config/sheldon"
 command -v sheldon > /dev/null && sheldon lock

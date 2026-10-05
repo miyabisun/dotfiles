@@ -1,0 +1,63 @@
+#!/bin/sh
+# 常設 checkout を origin の先端へ ff で追従させ、未適用の SHA の有効化を呼ぶ。
+#
+# merge worker は origin の default branch へ push するが、稼働中の checkout
+# (dotfiles/master、knowledge/main、…) は何もしなければ古いまま残る。
+# この script はその差を埋める git 版 watchtower で、systemd timer から呼ばれる。
+#
+# usage: sync-checkouts <list>
+#   list は 1 行 1 entry、tab 区切りで `<dir>\t<activation>`。
+#   dir の先頭 `~/` は $HOME へ展開する。activation は dir を cwd に `sh -c` で
+#   走らせる shell 文字列で、`-` なら何もしない。
+#
+# 安全側に倒す条件 (いずれも skip して次の entry へ進む):
+#   dir が無い / git checkout でない / 追跡 file の変更 / detached / upstream 無し / ff できない
+# 未追跡 file だけなら止めない。それを上書きする ff は git が拒むので not-ff になる。
+# 1 entry の失敗は他を止めない。activation 失敗は次回に再試行する。
+set -u
+
+state="$HOME/.local/state/sync-checkouts"
+mkdir -p "$state"
+exec 9> "$state/lock"
+flock -n 9 || { echo "sync: another sync is running" >&2; exit 1; }
+
+list=${1:-}
+[ -n "$list" ] && [ -r "$list" ] || { echo "usage: sync-checkouts <list>" >&2; exit 2; }
+
+log() { # <dir> <status> [detail]
+	printf 'sync: %s %s%s\n' "$1" "$2" "${3:+ $3}"
+}
+
+sync_one() { # <dir> <activation>
+	dir=$1; act=$2
+	# list に書かれた literal の ~/ を $HOME へ (shell の展開は通っていない)
+	# shellcheck disable=SC2088
+	case $dir in "~/"*) dir="$HOME/${dir#"~/"}" ;; esac
+
+	[ -d "$dir" ] || { log "$dir" missing; return; }
+	git -C "$dir" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { log "$dir" not-a-checkout; return; }
+	[ -z "$(git -C "$dir" status --porcelain --untracked-files=no 2>/dev/null)" ] || { log "$dir" skip dirty; return; }
+	branch=$(git -C "$dir" symbolic-ref --short -q HEAD) || { log "$dir" skip detached; return; }
+	upstream=$(git -C "$dir" rev-parse --abbrev-ref -q "$branch@{u}" 2>/dev/null) || { log "$dir" skip no-upstream; return; }
+
+	if ! timeout 60 git -C "$dir" fetch -q 2>/dev/null; then log "$dir" skip fetch-failed; return; fi
+	before=$(git -C "$dir" rev-parse HEAD)
+	if ! git -C "$dir" merge -q --ff-only "$upstream" >/dev/null 2>&1; then log "$dir" skip not-ff; return; fi
+	after=$(git -C "$dir" rev-parse HEAD)
+
+	key=$(printf '%s\n%s' "$dir" "$act" | sha256sum)
+	stamp="$state/${key%% *}"
+	if [ "$(cat "$stamp" 2>/dev/null)" = "$after" ]; then log "$dir" current "$after"; return; fi
+	if [ "$act" = "-" ]; then printf '%s\n' "$after" > "$stamp"; log "$dir" updated "$(printf %.7s "$before")..$(printf %.7s "$after")"; return; fi
+	if ( cd "$dir" && sh -c "$act" ); then
+		printf '%s\n' "$after" > "$stamp.tmp" && mv "$stamp.tmp" "$stamp"
+		log "$dir" updated "$after activated"
+	else
+		log "$dir" updated "$(printf %.7s "$before")..$(printf %.7s "$after") activation-failed"
+	fi
+}
+
+while IFS="$(printf '\t')" read -r dir act || [ -n "$dir" ]; do
+	case $dir in ""|"#"*) continue ;; esac
+	sync_one "$dir" "${act:--}"
+done < "$list"
