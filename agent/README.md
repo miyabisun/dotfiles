@@ -147,6 +147,8 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 - `task-work` — task-serverの全件処理。homeserverが配車係となり、各タスクを実行先のherdr上の
   workerへ1件ずつ渡す（deliver → merge → patchリリース）。
   homeserverで `/goal task-serverのタスクを全て完了させてください` と打って起動する
+- `herdr-worker` — homeserverからherdrでsandbox等にagentを起動して作業を渡し、
+  終わるまで見届ける。task-workの配車もこの経路を使う
 - `git` — commit message とブランチフローの house rule
 - `bump-tag` — semver の bump、tag、push
 - `knowledge-deposit` — 再利用できる knowledge を預け、形式lintと担当の内容確認を経て

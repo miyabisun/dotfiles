@@ -20,14 +20,8 @@ task_idを指定して起動されたworkerは、[引き取る](#引き取る)�
 ## 配車
 
 homeserverで動かす。配車係は台帳を読み、自分ではclaimせず、workerを全体で同時に1本だけ動かす。
-userを承認ゲートにしない。workerの質問・入力待ちには配車係が答える。
-
-| 実行先 | worker の起動先 | worker の cwd |
-| --- | --- | --- |
-| homeserver | ローカルのherdr | `~/projects/household/workers` |
-| sandbox | `herdr --machine sandbox` | `~/projects/household/workers/main` |
-
-`miyabi`（userの作業）と表にない実行先は配車しない。
+workerの起動・依頼・見届け・片付けは [herdr-worker](../herdr-worker/SKILL.md) に従う。
+配車するのは、実行先がherdr-workerの表にあるタスクだけ。`miyabi`（userの作業）と表にない実行先は残件にする。
 
 1. `knowledge-read` を読む。MCPで対象のタスクを一覧する。next_offsetがnullになるまで取得し、
    通常タスクのdraft・ready・再開できるblockedを対象にする。closedとarchivedは除く。
@@ -35,18 +29,14 @@ userを承認ゲートにしない。workerの質問・入力待ちには配車�
    後から追加されたタスクも同じ全件依頼の範囲なら取り込む。対象を狭めた依頼では範囲外を実行しない。
 2. 再開できるタスクをreadyにし、依存がdone・releasedで、実行先が表にある1件を優先度順に選ぶ。
    blockedの原因が変わっていないものは同じ実行を反復しない。
-3. 選んだタスクの実行先で、workerを起動して渡す（sandboxでは各コマンドに `--machine sandbox` を付ける）。
-   `herdr workspace create --label task-<id先頭8桁> --cwd <表のcwd> --no-focus` の
-   `.result.root_pane.pane_id` で `herdr agent start task-<id8> --kind <自分と同じruntime> --pane <pane>` を行う。
-   続けて `herdr agent prompt task-<id8> "<依頼>" --wait` を背景で実行する。依頼は次のとおり。
+3. 選んだタスクの実行先で、herdr-workerに従いworkerを `task-<id先頭8桁>` の名前で起動して、次の依頼を渡す。
    `/goal task-workの1件モードでtask_id=<id>を完走し、doneかblockedをreportする。userには質問せず、判断できない点はblockedの理由に書く。`
 4. 待機が戻ったら台帳のstatusを読む。
    - done: report（`run_get`）をタスクの完了条件と照合する。不足があれば本文へ追記してreadyに戻し、3へ戻る。
    - blocked: 配車係が判断・情報で解けるなら本文へ追記してreadyに戻す。物理操作・userの持ち物が要るものは残件にする。
-   - claimされたまま: `herdr agent read task-<id8> --source recent-unwrapped` で画面を読む。
-     質問には答え、止まっていれば続行を促して再び待つ。workerが終了してreportが無いときは、
+   - claimされたまま: herdr-workerに従って画面を読み、答えるか続行を促して待つ。workerが終了してreportが無いときは、
      lease満了後に1回だけ配車し直す。2回目もreportが無ければblockedにする。
-5. 終わったworkerのworkspaceを `herdr workspace close` で閉じ、2へ戻る。
+5. workerを片付けて2へ戻る。
 6. 表の実行先に配車できるタスクが無くなったら終わる。完了件数、release、
    残件（`miyabi`、物理操作待ちのblocked、表にない実行先）と実際に必要な対応だけを返す。
 
