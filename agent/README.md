@@ -109,7 +109,6 @@ CLI 会話履歴に残るため、別の journal や mailbox への転記は要�
 daemon は homeserver だけで動かす。binary・user service・更新 timer は
 [home-server](https://github.com/miyabisun/home-server) の `systemd/agent-talk/` が所有する。
 HTTP の待受 (:5002) と Tailscale HTTPS の入口 (8443) も home-server が設定する。
-sandbox の agent-talk は 2026-10-05 に sandbox-server とともに撤去した。
 sandbox のセッションは homeserver の Herdr に足した sandbox machine から見る。
 dotfiles は daemon のコピーや MCP adapter を配置しない。
 

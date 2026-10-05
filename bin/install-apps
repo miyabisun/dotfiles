@@ -352,11 +352,8 @@ install_obscura() {
   if ! command -v cargo >/dev/null 2>&1; then
     cat <<'MSG'
 Rust toolchain (cargo) is required but not found.
-Install via rustup (Linux / macOS):
-
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-Then restart your shell and re-run this script.
+Install it with rustup as described in docs/utilities.md#rust-toolchain,
+then restart your shell and re-run this script.
 MSG
     exit 1
   fi

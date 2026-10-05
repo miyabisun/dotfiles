@@ -150,9 +150,9 @@ link "agent/common/bin/meiseki-rewrite" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-session-picker" "$HOME/.local/bin"
 link "config/tmux/bin/tmux-mux" "$HOME/.local/bin"
 
-# 常設 checkout の origin 追従。対象の list を置いたマシンだけ timer を動かす
-link "config/sync-checkouts/sync-checkouts" "$HOME/.local/bin"
+# 常設 checkout の origin 追従。対象の list を置いたマシンだけ配線する
 if [ -f "$HOME/.config/sync-checkouts.list" ]; then
+  link "config/sync-checkouts/sync-checkouts" "$HOME/.local/bin"
   mkdir -p "$HOME/.config/systemd/user"
   link "config/sync-checkouts/sync-checkouts.service" "$HOME/.config/systemd/user"
   link "config/sync-checkouts/sync-checkouts.timer" "$HOME/.config/systemd/user"

@@ -2,6 +2,7 @@
 
 Run these commands from the dotfiles checkout after [installation](../README.md).
 Application downloads and vault access are separate from `bin/install`.
+Checkout sync is the exception: `bin/install` wires it on machines that opt in.
 
 ## pen CLI updates
 
@@ -30,9 +31,10 @@ The activation runs with `sh -c` inside `<dir>` after the checkout moves; `-` me
 ~/projects/household/knowledge/main	-
 ```
 
-With the list present, `bin/install` links `sync-checkouts.service` and `.timer` into
-`~/.config/systemd/user` and enables the timer. It runs every four minutes.
-Without the list, only the `sync-checkouts` command is linked.
+With the list present, `bin/install` links the `sync-checkouts` command into `~/.local/bin`,
+links `sync-checkouts.service` and `.timer` into `~/.config/systemd/user`, and enables the timer.
+It runs every four minutes. Without the list, nothing is installed.
+To pause syncing, move the list away; `bin/install` would re-enable a merely stopped timer.
 
 Each entry is fetched and fast-forwarded only. Modified tracked files, a detached HEAD,
 a missing upstream or a diverged branch skip the entry and leave it untouched.
