@@ -8,31 +8,59 @@ description: >-
 # task-work
 
 担当は台帳と次の工程を持ち、各タスクを成果まで進める。
-`/goal $task-work を使ってtask-serverのタスクを全てこなして` が入口。
+入口はhomeserverでの `/goal task-serverのタスクを全て完了させてください`。
+Codexでは `/goal $task-work を使ってtask-serverのタスクを全てこなして` と書く。
 userによる実行依頼は、対象タスクのcommit・push・mergeを含む。
 リリース対象productでは `$bump-tag patch` まで実行する。 スキルの作成・説明依頼では実行しない。
 タスクに明示されたrelease水準やuserの制限は優先する。
 
+全件・範囲の依頼は [配車](#配車) で受け、各タスクをその実行先のworkerへ渡す。
+task_idを指定して起動されたworkerは、[引き取る](#引き取る)以降でその1件だけを完走する。
+
+## 配車
+
+homeserverで動かす。配車係は台帳を読み、自分ではclaimせず、workerを全体で同時に1本だけ動かす。
+userを承認ゲートにしない。workerの質問・入力待ちには配車係が答える。
+
+| 実行先 | worker の起動先 | worker の cwd |
+| --- | --- | --- |
+| homeserver | ローカルのherdr | `~/projects/household/workers` |
+| sandbox | `herdr --machine sandbox` | `~/projects/household/workers/main` |
+
+`miyabi`（userの作業）と表にない実行先は配車しない。
+
+1. `knowledge-read` を読む。MCPで対象のタスクを一覧する。next_offsetがnullになるまで取得し、
+   通常タスクのdraft・ready・再開できるblockedを対象にする。closedとarchivedは除く。
+   再開時は、名前が `task-` で始まる両machineのworkspaceに残ったworkerを先に待つ。
+   後から追加されたタスクも同じ全件依頼の範囲なら取り込む。対象を狭めた依頼では範囲外を実行しない。
+2. 再開できるタスクをreadyにし、依存がdone・releasedで、実行先が表にある1件を優先度順に選ぶ。
+   blockedの原因が変わっていないものは同じ実行を反復しない。
+3. 選んだタスクの実行先で、workerを起動して渡す（sandboxでは各コマンドに `--machine sandbox` を付ける）。
+   `herdr workspace create --label task-<id先頭8桁> --cwd <表のcwd> --no-focus` の
+   `.result.root_pane.pane_id` で `herdr agent start task-<id8> --kind <自分と同じruntime> --pane <pane>` を行う。
+   続けて `herdr agent prompt task-<id8> "<依頼>" --wait` を背景で実行する。依頼は次のとおり。
+   `/goal task-workの1件モードでtask_id=<id>を完走し、doneかblockedをreportする。userには質問せず、判断できない点はblockedの理由に書く。`
+4. 待機が戻ったら台帳のstatusを読む。
+   - done: report（`run_get`）をタスクの完了条件と照合する。不足があれば本文へ追記してreadyに戻し、3へ戻る。
+   - blocked: 配車係が判断・情報で解けるなら本文へ追記してreadyに戻す。物理操作・userの持ち物が要るものは残件にする。
+   - claimされたまま: `herdr agent read task-<id8> --source recent-unwrapped` で画面を読む。
+     質問には答え、止まっていれば続行を促して再び待つ。workerが終了してreportが無いときは、
+     lease満了後に1回だけ配車し直す。2回目もreportが無ければblockedにする。
+5. 終わったworkerのworkspaceを `herdr workspace close` で閉じ、2へ戻る。
+6. 表の実行先に配車できるタスクが無くなったら終わる。完了件数、release、
+   残件（`miyabi`、物理操作待ちのblocked、表にない実行先）と実際に必要な対応だけを返す。
+
 ## 引き取る
 
-1. `knowledge-read` と `git` を読む。実行先は呼び出し元の設定・userの指定に従い、
-   指定がなければ現行運用の `sandbox` とする。`homeserver` は明示された場合だけ選ぶ。
-   MCPでタスク一覧とproduct情報を取得し、今回の実行先に一致するタスクを対象にする。
-   タスク本文から実行先を推測したり、取得のために実行先を変更したりしない。
+1. `knowledge-read` と `git` を読む。実行先は、指定されたタスクのexecution_targetを使う。
    着手する製品は`product_get({id})`でrepository・local_path・releasesを読む。
    未設定のrepository・releasesは実在と運用設定を確認して`product_update`で補う。releasesの未設定とfalseを混同しない。
-   一覧はnext_offsetがnullになるまでページを取得し、最初のページだけで全件完了にしない。
    本文はtask_get、報告原文はrun_get、証拠履歴はtask_history、再開情報はtask_checkpoint_getで
    必要なものだけ取得する。一覧や更新応答に詳細が埋め込まれる前提を置かない。
-   全件は通常タスクのdraft・ready・再開対象blocked。closedとarchivedは除く。
-   詳細は着手する1件だけ取得してfileへ保存する。進捗の一覧には
-   ID・product・状態・短い成果を残し、本文・legacy・ログ全文を毎回展開しない。
-   依存順に進め、後から追加されたタスクも
-   同じ全件依頼の範囲なら取り込む。対象を狭めた依頼では範囲外を実行しない。
-2. [台帳との接続](references/queue.md) に従い既存executorと競合しない状態にし、
-   担当がclaim・heartbeat・reportを所有する。委譲先や別のloopへ二重に引き取らせない。
-3. 再開できるタスクをreadyにし、1件claimする。blockedの原因が変わっていない
-   ものは同じ実行を反復せず、独立したタスクへ進む。204だけで全件完了にしない。
+   詳細はfileへ保存し、本文・legacy・ログ全文を毎回展開しない。
+2. [台帳との接続](references/queue.md) に従い、担当がclaim・heartbeat・reportを所有する。
+   委譲先や別のloopへ二重に引き取らせない。
+3. task_idを指定して1件claimする。依存未完了・実行先不一致の204は待機であり、blockedにしない。
 
 ## 1件を完走する
 
@@ -57,7 +85,7 @@ userによる実行依頼は、対象タスクのcommit・push・mergeを含む�
    確認し、空のreleaseを作らない。配備・実機確認は、その作業を含むhomeserver向けタスクで実施する。
 6. 要求された成果がそろってから、doneと結果の原文を一度reportする（haystackにも保存される）。
    merge済みcommitをtaskの対象SHAとし、release tag・artifact・CI URLも証拠に残す。
-   次のタスクへ進む。commit・pushやCIの起動で依頼全体を終えない。
+   commit・pushやCIの起動で依頼を終えない。
 
 ## 開発と実機作業の引き継ぎ
 
@@ -77,7 +105,4 @@ repository外へ保管し、その参照先を残す。待機中もleaseを更�
 CI失敗は原因を修正して再確認する。公開済みtagは動かさず、追加releaseが必要なら
 同じ依頼の範囲でbump-tagを使う。失敗を理由に最初からdeliverやbumpを繰り返さない。
 
-進められない1件は理由・保存先・残工程をblockedのreportに残し、他のタスクを続ける。
-最後に両実行先の一覧を再確認し、依頼範囲に別実行先の残件があればその待機先を報告する。
-残件があれば全件完了とは報告しない。元のexecutorを復元し、
-完了件数、release、未完了と実際に必要な対応だけを返す。
+進められない1件は理由・保存先・残工程をblockedのreportに残す。

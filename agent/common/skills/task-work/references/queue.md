@@ -6,13 +6,9 @@ HTTPはleaseと結果記録を担う。現行MCPにclaim/heartbeat/reportツー�
 
 ## 実行者
 
-同じ台帳・実行先を処理する既存executorを確認する。ローカルの `task-loop.service` が
-動いている場合は、実行中のタスクを奪わず完了を待ち、idleになってから停止する。
-停止後にclaimが残っていないか再確認する。同じ実行先の外部claimは完了を待ち、孤児は
-期限切れ後に再開する。開始前の稼働状態をメモし、終了時に復元する。
-同じ実行先の別の手動実行者も同時に起動しない。別実行先のexecutorは止めず、
-サーバーの原子的な選別に任せる。既存claimを持つloopから呼ばれた場合は全件取得せず、
-その1件だけを処理し、claim/reportは呼び出し元へ返す。
+配車係はclaimせず、同時に動かすworkerは1本だけにする。workerは渡されたtask_idの1件だけを
+claimし、heartbeatとreportまで所有する。同じタスクの外部claimは完了を待ち、孤児は
+期限切れ後に再開する。
 
 ## HTTP契約
 
@@ -20,21 +16,19 @@ HTTPはleaseと結果記録を担う。現行MCPにclaim/heartbeat/reportツー�
 
 | path | 入力 / 応答 |
 | --- | --- |
-| `/worker/claim` | `{"worker":"task-work:<run-id>","execution_target":"sandbox","task_id":"…"}` → `task_id`は限定取得時だけ指定。204、または `{claim_id,lease_expires_at,task}` |
+| `/worker/claim` | `{"worker":"task-work:<run-id>","execution_target":"<タスクの実行先>","task_id":"…"}` → workerは`task_id`を必ず指定する。204、または `{claim_id,lease_expires_at,task}` |
 | `/worker/heartbeat` | `{"claim_id":"…"}` → 更新された期限。応答期限の半分以内、最大30秒間隔で更新 |
 | `/worker/report` | `{claim_id,outcome:"done"または"blocked",report_markdown,commit_sha?,checks?,milestones?,run:{worker:"task-work"}}` → `report_id`を含むtask（`?`は省略可） |
 
 claimは `execution_target` に一致し、依存がdoneのreadyから選ぶ。実行先は
 運用側の外部設定から注入された任意名を1つ指定する。製品は名称を固定しない。
-個人運用で `sandbox` を選ぶ方針は、製品が許容する名前の制限とは別である。
 定義と任意の既定値は `EXECUTION_TARGETS_FILE` が指す外部YAMLに置く。
 MCP `execution_targets_get` または `GET /api/execution-targets` で読める。
 タスク・旧claimの未指定を補えるのは、この外部既定値がある場合だけ。
 既定値なしのclaimは400となり、別キューへは配送されない。新しい呼び出しは実行先を明示する。
-対象を限定した依頼では `task_id` も指定し、返されたIDと実行先を確認する。
+返されたIDと実行先を確認する。
 実行先不一致・依存未完了はID指定時も204で待機し、それだけでblockedにしない。
 400/404/409は理由を確認し、IDや実行先を外した再取得で代用しない。
-204だけで全件完了にせず、一覧で依存待ち・別実行先の残件を確認する。
 claim中はMCPからtaskを更新できない。heartbeatで期限切れ・claim喪失を確認したら
 担当と委譲先の作業を止めて成果を保全し、台帳を読み直す。reportの内容不一致409とは区別する。
 古いclaimで未受理のreportを押し通さない。
