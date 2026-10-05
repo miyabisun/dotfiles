@@ -83,12 +83,12 @@ out=$("$sync" "$tmp/list" 2>&1) || fail "sync-checkouts が非 0 で終わった
 [ "$(git -C "$tmp/collide" rev-parse HEAD)" = "$old" ] || fail "未追跡 file を上書きする ff が進んだ"
 [ "$(cat "$tmp/collide/incoming")" = "mine" ] || fail "同名の未追跡 file が上書きされた"
 
-# 2. 有効化は「変わったとき」だけ、その directory で 1 回
+# 2. 有効化は未適用の SHA ごとに、その directory で 1 回 (follow と、stamp の無い current)
 [ -f "$tmp/act.log" ] || fail "有効化が呼ばれていない"
-[ "$(wc -l < "$tmp/act.log")" -eq 2 ] || fail "有効化の回数が 1 ではない: $(cat "$tmp/act.log")"
+[ "$(wc -l < "$tmp/act.log")" -eq 2 ] || fail "有効化の回数が 2 ではない: $(cat "$tmp/act.log")"
 grep -qx "$tmp/follow" "$tmp/act.log" || fail "有効化が follow 以外で呼ばれた: $(cat "$tmp/act.log")"
 
-# 3. 既に最新 (~ 展開経由) は追従せず、有効化も呼ばれない (act.log に無い)
+# 3. 既に最新 (~ 展開経由) の checkout は HEAD が動かない
 [ "$(git -C "$tmp/current" rev-parse HEAD)" = "$new" ] || fail "current が最新になっていない"
 
 # 4. 2 回目は何も変わらず、有効化も増えない
