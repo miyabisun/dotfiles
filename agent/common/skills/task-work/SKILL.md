@@ -21,7 +21,8 @@ task_idを指定して起動されたworkerは、[引き取る](#引き取る)�
 
 homeserverで動かす。配車係は台帳を読み、自分ではclaimせず、workerを全体で同時に1本だけ動かす。
 workerの起動・依頼・見届け・片付けは [herdr-worker](../herdr-worker/SKILL.md) に従う。
-配車するのは、実行先がherdr-workerの表にあるタスクだけ。`miyabi`（userの作業）と表にない実行先は残件にする。
+配車するのは、実行先がherdr-workerの表にあるタスクだけ。表にない実行先は残件にする。
+task-serverはエージェントの台帳であり、userが手を動かす作業は載せない。それは `todo` でToDoへ追加する。
 
 1. `knowledge-read` を読む。MCPで対象のタスクを一覧する。next_offsetがnullになるまで取得し、
    通常タスクのdraft・ready・再開できるblockedを対象にする。closedとarchivedは除く。
@@ -38,7 +39,7 @@ workerの起動・依頼・見届け・片付けは [herdr-worker](../herdr-work
      lease満了後に1回だけ配車し直す。2回目もreportが無ければblockedにする。
 5. workerを片付けて2へ戻る。
 6. 表の実行先に配車できるタスクが無くなったら終わる。完了件数、release、
-   残件（`miyabi`、物理操作待ちのblocked、表にない実行先）と実際に必要な対応だけを返す。
+   残件（物理操作待ちのblocked、表にない実行先）と実際に必要な対応だけを返す。
 
 ## 引き取る
 
