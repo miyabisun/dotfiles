@@ -1,6 +1,6 @@
 # OrcaServerへ接続する
 
-OrcaServer v0.1.22以降のStreamable HTTP MCPを使い、
+OrcaServer v0.2.0以降のStreamable HTTP MCPを使い、
 [プレート保存](common/skills/orca-plate/SKILL.md)と[材料管理](common/skills/orca-material/SKILL.md)を行えます。
 SCADモデルの参照にはサーバー側の`SCAD_LIVE_URL`設定も必要です。
 APIと利用例は[OrcaServerのMCPガイド](https://github.com/miyabi-sunny-side/orca-server/blob/main/docs/mcp.md)を参照してください。
