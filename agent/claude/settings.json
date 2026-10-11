@@ -97,6 +97,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 -X utf8 \"$HOME/.claude/hooks/japanese-guard.py\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "python3 \"$HOME/.local/bin/agent-test\" hook",
             "timeout": 30
           }
