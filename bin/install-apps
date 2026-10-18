@@ -422,6 +422,65 @@ install_meiseki() (
 )
 
 # ---------------------------------------------------------------------------
+# yomiyasu — AI が書いた日本語を推敲する Agent Skill (MIT)
+# 上流のコミットに固定した skill 一式を machine-local に置き、各 runtime が
+# 共通で読む ~/.agents/skills (repo の agent/common/skills) からリンクする。
+# repo にはコピーしない。版を上げるときは version と commit を書き換える。
+# 置き場の版が違えば置き換える。
+# ---------------------------------------------------------------------------
+install_yomiyasu() (
+  version="2.0.1"
+  commit="1bc21f9c8e6a55fc4ccd5a2c7dfe78a7b0d814c5"
+  dest="$HOME/.local/share/yomiyasu"
+  skills="$HOME/.agents/skills"
+  # yomiyasu の SKILL.md が名乗る版 (yomiyasu の skill でなければ空)
+  version_of() {
+    { grep -qx 'name: yomiyasu' "$1/SKILL.md" \
+      && sed -n 's/^  version: "\(.*\)"$/\1/p' "$1/SKILL.md"; } 2>/dev/null || true
+  }
+
+  installed="$(version_of "$dest")"
+  if [ "$installed" = "$version" ]; then
+    echo "==> yomiyasu $version already installed ($dest)"
+  else
+    if [ -z "$installed" ] && { [ -e "$dest" ] || [ -L "$dest" ]; }; then
+      echo "==> Refusing to replace unrecognized yomiyasu target: $dest" >&2
+      return 1
+    fi
+
+    tmpdir="$(mktemp -d)"
+    # 下の trap EXIT から呼ぶ (shellcheck は間接呼び出しを追えない)
+    # shellcheck disable=SC2329
+    cleanup() {
+      rm -rf "$tmpdir"
+    }
+    trap cleanup EXIT
+
+    echo "==> Installing yomiyasu $version..."
+    curl -fsSL -o "$tmpdir/yomiyasu.tar.gz"       "https://github.com/nanaism/yomiyasu/archive/$commit.tar.gz"
+    tar -xzf "$tmpdir/yomiyasu.tar.gz" -C "$tmpdir"
+    skill="$tmpdir/yomiyasu-$commit/skills/yomiyasu"
+    if [ "$(version_of "$skill")" != "$version" ]; then
+      echo "==> Downloaded skill is not yomiyasu $version" >&2
+      return 1
+    fi
+
+    mkdir -p "$(dirname "$dest")"
+    rm -rf "$dest"
+    mv "$skill" "$dest"
+    echo "==> yomiyasu $version installed ($dest)"
+  fi
+
+  if [ -d "$skills" ]; then
+    if [ -e "$skills/yomiyasu" ] && [ ! -L "$skills/yomiyasu" ]; then
+      echo "==> Refusing to replace unrecognized skill: $skills/yomiyasu" >&2
+      return 1
+    fi
+    ln -sfn "$dest" "$skills/yomiyasu"
+  fi
+)
+
+# ---------------------------------------------------------------------------
 
 # 子プロセス起動用の入口。step を 1 つ実行して終わる (下の runner が使う)
 if [ "${1:-}" = "--run-step" ]; then
@@ -435,7 +494,7 @@ fi
 # installer 内部の fail-fast がそのまま生きる。
 failed=""
 for step in install_agent_clis install_mux install_pen install_delta \
-  install_rbw install_obscura install_meiseki; do
+  install_rbw install_obscura install_meiseki install_yomiyasu; do
   if ! bash "$0" --run-step "$step"; then
     failed="$failed $step"
   fi

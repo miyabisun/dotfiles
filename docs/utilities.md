@@ -19,6 +19,22 @@ Banner-only v0.1.0/v0.1.1 releases are rejected as new download artifacts.
 Failures preserve the existing binary. Fix the release or connection, then retry.
 Unrecognized targets are refused.
 
+## yomiyasu skill
+
+[yomiyasu](https://github.com/nanaism/yomiyasu) is an Agent Skill that refines Japanese prose.
+From the checkout, install it or move to the pinned version:
+
+```bash
+bash bin/install-apps --run-step install_yomiyasu
+```
+
+`install_yomiyasu` pins an upstream commit and the version its skill states (now 2.0.1).
+It places the skill in `~/.local/share/yomiyasu` and links it from `~/.agents/skills`,
+which the agents read as `agent/common/skills`; Git ignores the link there.
+To follow a new release, change `version` and `commit` in `install_yomiyasu`.
+An installed copy of another version is replaced; a download of another version is refused.
+Unrecognized targets are refused.
+
 ## Checkout sync
 
 `sync-checkouts` keeps long-lived checkouts on their upstream branch, like a Git watchtower.

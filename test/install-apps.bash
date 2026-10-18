@@ -199,6 +199,20 @@ PEN
     printf '%s  %s\n' "$digest" "$archive_name" >"$output"
     exit 0
     ;;
+  https://github.com/nanaism/yomiyasu/archive/*.tar.gz)
+    # 上流の archive と同じ形: yomiyasu-<commit>/skills/yomiyasu/ に skill 一式
+    commit="$(basename "$url" .tar.gz)"
+    archive_root="${output}.root"
+    skill="$archive_root/yomiyasu-$commit/skills/yomiyasu"
+    mkdir -p "$skill/scripts"
+    printf '%s
+' '---' 'name: yomiyasu' 'metadata:'       "  version: \"${INSTALL_APPS_TEST_YOMIYASU_VERSION:-2.0.1}\"" '---' >"$skill/SKILL.md"
+    printf '%s
+' '# check' >"$skill/scripts/yomiyasu_check.py"
+    tar -czf "$output" -C "$archive_root" "yomiyasu-$commit"
+    rm -rf "$archive_root"
+    exit 0
+    ;;
   *) exit 64 ;;
 esac
 
@@ -739,5 +753,70 @@ grep -F "meiseki already installed ($meiseki_dest)" "$test_root/meiseki-2.out" >
 test "$(grep -Fxc clone "$meiseki_git_log")" -eq 1
 test -f "$meiseki_dest/.agents/skills/meiseki/SKILL.md"
 test -z "$(find "$meiseki_tmp" -mindepth 1 -print -quit)"
+
+# yomiyasu — 上流のコミットに固定した skill を ~/.local/share/yomiyasu へ置き、
+# 共通の skills (~/.agents/skills) へリンクする。同じ版は取り直さず、古い版は
+# 置き換え、版の違う中身と見知らぬ置き場は拒む。
+yomiyasu_home="$test_root/yomiyasu-home"
+yomiyasu_tmp="$test_root/yomiyasu-tmp"
+yomiyasu_dest="$yomiyasu_home/.local/share/yomiyasu"
+yomiyasu_log="$test_root/yomiyasu-curl.log"
+mkdir -p "$yomiyasu_home/.agents/skills" "$yomiyasu_tmp"
+run_yomiyasu() { # [版] 取ってきた archive の skill が名乗る版
+  env PATH="$fake_bin:/usr/bin:/bin" HOME="$yomiyasu_home"     INSTALL_APPS_TEST_LOG="$yomiyasu_log"     INSTALL_APPS_TEST_ARGS_LOG="$test_root/yomiyasu-curl-args.log"     INSTALL_APPS_TEST_YOMIYASU_VERSION="${1:-2.0.1}"     TMPDIR="$yomiyasu_tmp"     bash "$repo_root/bin/install-apps" --run-step install_yomiyasu
+}
+yomiyasu_fetches() {
+  grep -Fc 'https://github.com/nanaism/yomiyasu/archive/' "$yomiyasu_log" || true
+}
+yomiyasu_skill() { # <版> [名前] 置き場の SKILL.md をその skill のその版のものにする
+  printf '%s\n' '---' "name: ${2:-yomiyasu}" 'metadata:' "  version: \"$1\"" '---' >"$yomiyasu_dest/SKILL.md"
+}
+
+run_yomiyasu >"$test_root/yomiyasu-1.out"
+grep -F "yomiyasu 2.0.1 installed ($yomiyasu_dest)" "$test_root/yomiyasu-1.out" >/dev/null
+grep -Fx '  version: "2.0.1"' "$yomiyasu_dest/SKILL.md" >/dev/null
+test -f "$yomiyasu_dest/scripts/yomiyasu_check.py"
+test "$(readlink "$yomiyasu_home/.agents/skills/yomiyasu")" = "$yomiyasu_dest"
+test "$(yomiyasu_fetches)" -eq 1
+test -z "$(find "$yomiyasu_tmp" -mindepth 1 -print -quit)"
+
+run_yomiyasu >"$test_root/yomiyasu-2.out"
+grep -F "yomiyasu 2.0.1 already installed ($yomiyasu_dest)" "$test_root/yomiyasu-2.out" >/dev/null
+test "$(yomiyasu_fetches)" -eq 1
+
+yomiyasu_skill 2.0.0
+run_yomiyasu >"$test_root/yomiyasu-3.out"
+grep -F "yomiyasu 2.0.1 installed ($yomiyasu_dest)" "$test_root/yomiyasu-3.out" >/dev/null
+grep -Fx '  version: "2.0.1"' "$yomiyasu_dest/SKILL.md" >/dev/null
+test "$(yomiyasu_fetches)" -eq 2
+
+yomiyasu_skill 2.0.0
+if run_yomiyasu 9.9.9 >"$test_root/yomiyasu-4.out" 2>&1; then
+  echo "install-apps must refuse a yomiyasu archive of another version" >&2
+  exit 1
+fi
+grep -F "is not yomiyasu 2.0.1" "$test_root/yomiyasu-4.out" >/dev/null
+grep -Fx '  version: "2.0.0"' "$yomiyasu_dest/SKILL.md" >/dev/null
+test -z "$(find "$yomiyasu_tmp" -mindepth 1 -print -quit)"
+
+rm -rf "$yomiyasu_dest"
+mkdir -p "$yomiyasu_dest"
+printf '%s
+' other >"$yomiyasu_dest/notes.txt"
+if run_yomiyasu >"$test_root/yomiyasu-5.out" 2>&1; then
+  echo "install-apps must refuse an unrecognized yomiyasu target" >&2
+  exit 1
+fi
+grep -F "Refusing to replace unrecognized yomiyasu target" "$test_root/yomiyasu-5.out" >/dev/null
+test -f "$yomiyasu_dest/notes.txt"
+# 版を名乗っていても、ほかの skill なら置き換えない
+yomiyasu_skill 2.0.0 meiseki
+if run_yomiyasu >"$test_root/yomiyasu-6.out" 2>&1; then
+  echo "install-apps must refuse another skill in the yomiyasu target" >&2
+  exit 1
+fi
+grep -F "Refusing to replace unrecognized yomiyasu target" "$test_root/yomiyasu-6.out" >/dev/null
+grep -Fx 'name: meiseki' "$yomiyasu_dest/SKILL.md" >/dev/null
+test "$(yomiyasu_fetches)" -eq 3
 
 echo "install-apps Linux/macOS agent CLI test: pass"
