@@ -94,7 +94,8 @@ Each command takes a subcommand. Run it without arguments to see usage.
 | `bw-age` | Age Keys | `create [name]` / `save [name] [file]` / `identity [name]` / `recipient [name]` / `list` / `remove <name>` |
 | `bw-env` | Env Files | `save <name> [file]` / `load <name> [file]` / `diff <name> [file]` / `get <name> <var>` / `keys <name>` / `list` / `remove <name>` |
 
-- `bw-secret load` writes secrets to `~/.config/.secrets` as `export KEY="VALUE"` lines.
+- `bw-secret load` runs `rbw sync` first.
+  It then writes secrets to `~/.config/.secrets` as `export KEY="VALUE"` lines.
   `save` and `remove` refresh the file automatically.
 - `bw-age create` generates a key with `age-keygen` and stores it in Bitwarden.
   It does not write the key to disk. For a stored key named `personal`, use Bash or Zsh:
