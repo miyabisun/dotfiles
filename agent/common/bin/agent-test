@@ -103,6 +103,10 @@ def commands(command, cwd):
                 rest = rest[2:]
             if rest[:1] == ["commit"]:
                 yield "commit", root_at(target), mutations
+            elif rest[:2] == ["worktree", "remove"]:
+                paths = [arg for arg in rest[2:] if not arg.startswith("-")]
+                if paths:
+                    yield "remove", Path(os.path.realpath(target / os.path.expanduser(paths[0]))), mutations
         mutations = True
 
 
@@ -116,8 +120,13 @@ def hook(event):
                 saved = json.loads(path.read_text())
                 if session and saved.get("session_id") == session and saved.get("status") != "paused":
                     root = Path(saved["root"])
-                    if saved.get("status") == "finished" and not root.exists():
-                        continue
+                    if not root.exists():
+                        if saved.get("status") == "finished":
+                            continue
+                        reason = (f"{root}: agent-test finish の前にworktreeが削除されました。"
+                                  f"検証して統合したcommitで git worktree add --detach {root} <commit> と作り直し、"
+                                  "その中で agent-test finish してから削除してください。記録を手で書き換えないでください。")
+                        break
                     reason = problem(root)
                     if reason:
                         break
@@ -126,6 +135,11 @@ def hook(event):
             for action, root, compound in commands(data.get("command", ""), data.get("workdir") or event.get("cwd") or os.getcwd()):
                 if action == "run":
                     write(root, {"session_id": session, "status": "pending"})
+                elif action == "remove":
+                    saved = read(root)
+                    if session and saved.get("session_id") == session and saved.get("status") not in ("finished", "paused"):
+                        reason = f"{root}: そのworktreeで agent-test finish を実行してから削除してください。"
+                        break
                 else:
                     reason = "stage・検証・commitは別コマンドで実行してください。" if compound else problem(root, True)
                     if reason:

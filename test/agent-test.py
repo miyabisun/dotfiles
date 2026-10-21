@@ -153,7 +153,37 @@ class AgentTest(unittest.TestCase):
         self.assertEqual(self.run_tests().returncode, 0)
         self.repo = main
         self.git("worktree", "remove", str(feature))
-        self.assertEqual(self.hook(stop=True)["decision"], "block")
+        result = self.hook(stop=True)
+        self.assertEqual(result["decision"], "block")
+        self.assertIn("agent-test finish", result["reason"])
+        self.assertIn("git worktree add --detach", result["reason"])
+        self.assertNotIn("exit status", result["reason"])
+
+    def test_removing_unfinished_worktree_is_denied(self):
+        main = self.repo
+        feature = self.root / "feature"
+        self.git("worktree", "add", "-b", "feature", str(feature))
+        self.repo = feature
+        self.assertEqual(self.run_tests().returncode, 0)
+        self.repo = main
+        for command in (f'git worktree remove "{feature}"', f'git -C "{main}" worktree remove ../feature',
+                        f'cd "{self.root}" && git -C repo worktree remove --force ../feature'):
+            result = self.hook(command)["hookSpecificOutput"]
+            self.assertEqual(result["permissionDecision"], "deny", command)
+            self.assertIn("agent-test finish", result["permissionDecisionReason"])
+        self.assertEqual(self.hook(f'git worktree remove "{feature}"', session="other"), {})
+
+    def test_finished_paused_and_unrecorded_worktrees_can_be_removed(self):
+        main = self.repo
+        for name, close in (("finished", "finish"), ("paused", "pause"), ("unrecorded", None)):
+            worktree = self.root / name
+            self.git("worktree", "add", "-b", name, str(worktree))
+            if close:
+                self.repo = worktree
+                self.assertEqual(self.run_tests().returncode, 0)
+                self.assertEqual(self.invoke(close).returncode, 0)
+                self.repo = main
+            self.assertEqual(self.hook(f'git worktree remove "{worktree}"'), {}, name)
 
     def test_git_c_and_cd_resolve_the_actual_repository(self):
         other = self.root / "other repo"

@@ -189,7 +189,11 @@ Stopは同じsessionで始めた検証を確認する。未完了の報告が必
 検証・commit・統合を終えたworktreeは、削除の直前にその中で `agent-test finish` を実行する。
 現在の内容と合格記録が一致し、HEADが存在し、未commitの変更がない場合だけ記録を閉じる。
 finish後もworktreeが存在する間は内容の変化をStopで検出する。削除後は閉じた記録だけを検査対象から外す。
-未完了の欠損pathやGit例外は引き続き拒否する。閉じた記録で新しいcommitはできず、再開時は検証を通し直す。
+同じsessionの記録がfinish・pauseのいずれでもないworktreeでは、直接の `git worktree remove` をPreToolUseで拒否する。
+拒否の理由には、そのworktreeでfinishしてから削除する手順を示す。
+未完了の欠損pathやGit例外は引き続き拒否する。finish前に削除した欠損pathでは、Stopが復旧手順を示す。
+検証して統合したcommitで `git worktree add --detach <path> <commit>` と作り直し、その中でfinishしてから削除する。
+state directoryの記録は手で書き換えない。閉じた記録で新しいcommitはできず、再開時は検証を通し直す。
 finishはpushや統合の成功、削除後の内容を証明しない。それらはmerge手順で確認し、強制削除は使わない。
 
 これは通常の直接コマンドに対する作業ミス防止で、任意script内のcommitや別の実行経路を封じる境界ではない。
