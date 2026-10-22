@@ -19,6 +19,8 @@ description: >-
 構成の違いを挙げ、受入ケースに入れる。
 [実装方針の適用境界](../deliver/implementation-scope.md)を要求整理から適用する。
 [knowledge-read](../knowledge-read/SKILL.md)、現在の実装、product情報、既存タスクを必要な範囲で確認する。
+CI・検証の門・ブランチ・release/配備の経路・実行先・repo構成に触れる部分は、
+[project-architecture](../project-architecture/SKILL.md)で前提を確かめてから書く。
 利用者・利用環境、公開後に取り込む先、配備や設定変更の要否、完了を観測する操作と環境を埋める。
 既知の情報は聞き直さず、結果を変える不足だけ最低限質問する。依存しない調査と候補作成は進める。
 

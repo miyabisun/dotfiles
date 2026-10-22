@@ -27,6 +27,7 @@ description: >-
 | Web/nativeの表示・操作・配置・配色 | [design-context](../design-context/SKILL.md) | 適用する方針、流れ・配置・テーマの決定 |
 | ブラウザUIの実装 | [frontend-design](../frontend-design/SKILL.md) | 差分、引き算のbefore/after、実画像・操作 |
 | Android UI・通知・起動経路の実装 | [android-ui](../android-ui/SKILL.md) | 差分 → [android-ui-check](../android-ui-check/SKILL.md)の実画像・操作 |
+| CI・検証の門・ブランチ・release/配備・repo構成 | [project-architecture](../project-architecture/SKILL.md) | 前提と食い違う指示・既存設定 |
 
 配色だけなら操作・配置の設計をやり直さず、配置だけならテーマを再設計しない。
 既存の契約の不足が今回の成果に影響するときは対応skillで補う。原本や製品仕様を読んだ宣言だけで適用済みにしない。
