@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>動く構成図</title>
+<style>
+  /* 色は Sumi (暗) を既定にし、OS が明るい設定なら Kinari にする */
+  :root {
+    color-scheme: dark;
+    --surface: #191919;
+    --surface-raised: #232323;
+    --on-surface: #e6e6e6;
+    --muted: #9a9a9a;
+    --border: #333333;
+    --accent: #e0a800;
+    --hover-1: #333333;
+    --hover-2: #3d3d3d;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+      --surface: #faf6ef;
+      --surface-raised: #fffdf8;
+      --on-surface: #3a2f28;
+      --muted: #6f6257;
+      --border: #e3d9c9;
+      --accent: #9a6a00;
+      --hover-1: rgba(154, 106, 0, 0.10);
+      --hover-2: rgba(154, 106, 0, 0.16);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--on-surface);
+    font: 400 16px/1.6 system-ui, sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 16px 12px; }
+  @media (min-width: 768px) { main { padding: 24px 12px; } }
+  h1 { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.3; }
+  .subtitle { margin: 4px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .player {
+    margin: 12px 0 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-raised);
+    overflow: hidden;
+  }
+  .player > svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--surface); cursor: pointer; }
+  .caption { padding: 8px 12px 0; opacity: var(--fade, 1); }
+  .kicker { display: block; min-height: 1.4em; color: var(--muted); font-size: 12px; line-height: 1.4; letter-spacing: 0.08em; white-space: pre; }
+  .text { display: block; min-height: 3.2em; }
+  .controls { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border); }
+  .controls button {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--on-surface);
+    cursor: pointer;
+  }
+  .controls [hidden] { display: none; }
+  .controls button:hover { background: var(--hover-1); }
+  .controls button:active { background: var(--hover-2); }
+  .controls .toggle { background: var(--accent); color: var(--surface-raised); }
+  .controls .toggle:hover, .controls .toggle:active { background: var(--accent); filter: brightness(1.1); }
+  .controls svg { width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .player[data-state="playing"] .icon-play, .player:not([data-state="playing"]) .icon-pause { display: none; }
+  .seek { flex: 1; min-width: 0; margin: 0; accent-color: var(--accent); }
+  .time { flex: none; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  /* 全画面では図を画面の高さに合わせ、字幕を読みやすい大きさにする */
+  .player:fullscreen { display: flex; flex-direction: column; border: 0; border-radius: 0; }
+  .player:fullscreen > svg { flex: 1; min-height: 0; aspect-ratio: auto; }
+  .player:fullscreen .text { font-size: 24px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* 図の中の部品。ノードと吹き出しの枠の色は spec の color から付く */
+  .edge { fill: none; stroke: var(--muted); stroke-width: 3; }
+  .card { fill: var(--surface-raised); stroke-width: 4; }
+  .pulse { fill: none; stroke-width: 6; }
+  .label { fill: var(--on-surface); font-weight: 700; text-anchor: middle; }
+  .sub { fill: var(--muted); text-anchor: middle; font-family: ui-monospace, monospace; }
+  .token rect { fill: var(--surface-raised); stroke-width: 3; }
+  .token-text { fill: var(--on-surface); font-weight: 700; text-anchor: middle; }
+  .note rect { fill: var(--surface-raised); stroke-width: 3; }
+  .note-line { fill: var(--on-surface); }
+</style>
+</head>
+<body>
+<main>
+  <h1></h1>
+  <p class="subtitle"></p>
+  <figure class="player">
+    <svg role="img" aria-label="動く構成図。クリックで再生と一時停止"></svg>
+    <figcaption class="caption"><span class="kicker"></span><span class="text"></span></figcaption>
+    <div class="controls">
+      <button type="button" class="prev" aria-label="前のステップ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="19 20 9 12 19 4 19 20" /><line x1="5" y1="19" x2="5" y2="5" /></svg>
+      </button>
+      <button type="button" class="toggle" aria-label="再生">
+        <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+        <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+      </button>
+      <button type="button" class="next" aria-label="次のステップ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4" /><line x1="19" y1="5" x2="19" y2="19" /></svg>
+      </button>
+      <input type="range" class="seek" min="0" step="0.01" value="0" aria-label="再生位置">
+      <output class="time">0:00 / 0:00</output>
+      <button type="button" class="full" aria-label="全画面">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>
+      </button>
+    </div>
+  </figure>
+</main>
+<script src="spec.js"></script>
+<script src="arch.js"></script>
+</body>
+</html>

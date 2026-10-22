@@ -1,0 +1,4 @@
+interface:
+  display_name: "Animated Arch Diagram"
+  short_description: "仕組みを動く構成図にし、GitHub Pagesの小窓で再生する"
+  default_prompt: "Use $animated-arch-diagram to explain how this project works as an animated diagram on GitHub Pages."
