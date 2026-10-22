@@ -118,17 +118,34 @@
     );
   }
 
-  // 同じ行なら向かい合う辺を直線で、違う行なら上下の辺を S 字で結ぶ
+  // 横に離れたノードは向かい合う左右の辺を、縦に離れたノードは上下の辺を、S 字で結ぶ
   function edgePath(a, b) {
-    if (Math.abs(a.cy - b.cy) < 1) {
-      const dir = Math.sign(b.cx - a.cx);
-      return `M ${a.cx + (dir * a.w) / 2} ${a.cy} L ${b.cx - (dir * b.w) / 2} ${b.cy}`;
+    const dx = b.cx - a.cx;
+    const dy = b.cy - a.cy;
+    if (Math.abs(dx) - (a.w + b.w) / 2 > Math.abs(dy) - (a.h + b.h) / 2) {
+      const s = Math.sign(dx);
+      const x1 = a.cx + (s * a.w) / 2;
+      const x2 = b.cx - (s * b.w) / 2;
+      const mx = (x1 + x2) / 2;
+      return `M ${x1} ${a.cy} C ${mx} ${a.cy}, ${mx} ${b.cy}, ${x2} ${b.cy}`;
     }
-    const dir = Math.sign(b.cy - a.cy);
-    const y1 = a.cy + (dir * a.h) / 2;
-    const y2 = b.cy - (dir * b.h) / 2;
+    const s = Math.sign(dy);
+    const y1 = a.cy + (s * a.h) / 2;
+    const y2 = b.cy - (s * b.h) / 2;
     const my = (y1 + y2) / 2;
     return `M ${a.cx} ${y1} C ${a.cx} ${my}, ${b.cx} ${my}, ${b.cx} ${y2}`;
+  }
+
+  // 吹き出しの左上の位置。既定は上半分のノードなら下、下半分なら上に出し、画面の中に収める
+  function notePos(b, w, h, side = b.cy < H / 2 ? 'below' : 'above') {
+    const gap = 24;
+    const [x, y] = {
+      below: [b.cx - w / 2, b.y + b.h + gap],
+      above: [b.cx - w / 2, b.y - gap - h],
+      left: [b.x - gap - w, b.cy - h / 2],
+      right: [b.x + b.w + gap, b.cy - h / 2],
+    }[side];
+    return { x: Math.min(W - 20 - w, Math.max(20, x)), y: Math.min(H - 20 - h, Math.max(20, y)) };
   }
 
   function mount(svg, spec) {
@@ -195,9 +212,7 @@
       });
       const w = Math.min(W - 40, Math.max(...lines.map((t) => t.getComputedTextLength())) + 48);
       const h = lines.length * 50 + 34;
-      const side = step.note.side ?? (b.cy < H / 2 ? 'below' : 'above');
-      const x = Math.min(W - 20 - w, Math.max(20, b.cx - w / 2));
-      const y = side === 'below' ? b.y + b.h + 24 : b.y - 24 - h;
+      const { x, y } = notePos(b, w, h, step.note.side);
       rect.setAttribute('width', w);
       rect.setAttribute('height', h);
       lines.forEach((t) => t.setAttribute('x', 24));
@@ -306,7 +321,7 @@
     return { render, tl };
   }
 
-  // 小窓の再生操作。ボタン、シークバー、Space と ←/→、?t=秒 で止めて開く
+  // 小窓の再生操作。ボタン、シークバー、?t=秒 で止めて開く。Space と ←/→ はプレイヤーを選んでいるときだけ効く
   function play(figure, spec) {
     const svg = figure.querySelector('svg');
     const kicker = figure.querySelector('.kicker');
@@ -364,7 +379,8 @@
     document.addEventListener('fullscreenchange', () =>
       full.setAttribute('aria-label', document.fullscreenElement ? '全画面を終える' : '全画面'));
     seek.addEventListener('input', () => jump(Number(seek.value)));
-    document.addEventListener('keydown', (e) => {
+    figure.tabIndex = 0;
+    figure.addEventListener('keydown', (e) => {
       if (e.target.closest('button, input, textarea, select, a')) return;
       if (e.key === ' ') {
         e.preventDefault();
@@ -383,16 +399,22 @@
     setPlaying(!Number.isFinite(at) && !still);
   }
 
-  const api = { timeline, sceneAt, appearAt, drawAt, tokenAt, typedAt, lineAt, nextStart, prevStart, fadeAt, mount, play };
+  const api = { timeline, sceneAt, appearAt, drawAt, tokenAt, typedAt, lineAt, nextStart, prevStart, fadeAt, edgePath, notePos, mount, play };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.ARCH = api;
 
   if (typeof document !== 'undefined' && root.SPEC) {
-    document.title = root.SPEC.title ?? document.title;
-    document.querySelector('h1').textContent = root.SPEC.title ?? '';
-    const subtitle = document.querySelector('.subtitle');
-    subtitle.textContent = root.SPEC.subtitle ?? '';
-    subtitle.hidden = !root.SPEC.subtitle;
+    // 見出しは印を付けた要素にだけ入れる。ほかのページに埋め込んだときは、そのページの見出しを残す
+    const title = document.querySelector('[data-spec-title]');
+    if (title) {
+      title.textContent = root.SPEC.title ?? '';
+      document.title = root.SPEC.title ?? document.title;
+    }
+    const subtitle = document.querySelector('[data-spec-subtitle]');
+    if (subtitle) {
+      subtitle.textContent = root.SPEC.subtitle ?? '';
+      subtitle.hidden = !root.SPEC.subtitle;
+    }
     play(document.querySelector('.player'), root.SPEC);
   }
 })(typeof window !== 'undefined' ? window : globalThis);

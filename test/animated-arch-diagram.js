@@ -114,6 +114,44 @@ test('既定の長さの締めは、字幕が出そろって 1 秒たつまで�
   assert.equal(ARCH.fadeAt(tl, typed + 1), 1);
 });
 
+const box = (cx, cy, w = 200, h = 100) => ({ cx, cy, w, h, x: cx - w / 2, y: cy - h / 2 });
+const ends = (d) => {
+  const n = d.match(/-?[\d.]+/g).map(Number);
+  return { start: n.slice(0, 2), end: n.slice(-2) };
+};
+
+test('横に並ぶノードは向かい合う左右の辺を、縦に並ぶノードは上下の辺を結ぶ', () => {
+  // 行がずれていても、横に離れていれば左右の辺から出る
+  const side = ends(ARCH.edgePath(box(300, 200), box(800, 330)));
+  assert.deepEqual(side.start, [400, 200]);
+  assert.deepEqual(side.end, [700, 330]);
+  const back = ends(ARCH.edgePath(box(800, 330), box(300, 200)));
+  assert.deepEqual(back.start, [700, 330]);
+  const down = ends(ARCH.edgePath(box(300, 200), box(360, 600)));
+  assert.deepEqual(down.start, [300, 250]);
+  assert.deepEqual(down.end, [360, 550]);
+});
+
+test('吹き出しはノードの指定した側に出て、画面の外へはみ出さない', () => {
+  const b = box(800, 450);
+  const [W, H] = [1600, 900];
+  const inside = ({ x, y }, w, h) => x >= 0 && y >= 0 && x + w <= W && y + h <= H;
+  const below = ARCH.notePos(b, 300, 120, 'below');
+  assert.ok(below.y >= b.y + b.h);
+  assert.ok(ARCH.notePos(b, 300, 120, 'above').y + 120 <= b.y);
+  assert.ok(ARCH.notePos(b, 300, 120, 'left').x + 300 <= b.x);
+  assert.ok(ARCH.notePos(b, 300, 120, 'right').x >= b.x + b.w);
+  // 端のノードでも画面の中に収める
+  for (const side of ['below', 'above', 'left', 'right']) {
+    for (const c of [box(100, 80), box(1500, 820)]) {
+      assert.ok(inside(ARCH.notePos(c, 300, 120, side), 300, 120), `${side} ${c.cx}`);
+    }
+  }
+  // 既定は、上半分のノードなら下、下半分なら上
+  assert.ok(ARCH.notePos(box(800, 200), 300, 120).y > 200);
+  assert.ok(ARCH.notePos(box(800, 700), 300, 120).y < 700);
+});
+
 test('最後は消えて終わり、頭に戻ってもつなぎ目が出ない', () => {
   const tl = ARCH.timeline(spec([{ caption: 'x', dur: 2 }]));
   assert.equal(ARCH.fadeAt(tl, tl.outro.start), 1);
