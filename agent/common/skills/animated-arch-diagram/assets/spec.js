@@ -1,6 +1,8 @@
 // 図の中身。書き換えるのはこのファイルだけ。書式は SKILL.md の「spec の書き方」
 // 見本: dotfiles の bw-secret load が、Bitwarden の secret を環境変数にするまで
-window.SPEC = {
+// window.SPECS に名前で登録する。index.html の data-spec の名前と合わせる
+window.SPECS = window.SPECS || {};
+window.SPECS.diagram = {
   title: 'bw-secret load の仕組み',
   subtitle: 'Bitwarden の secret を、シェルの環境変数にするまで',
   grid: [3, 2], // 列数, 行数 (col / row は 0 始まり、小数も可)

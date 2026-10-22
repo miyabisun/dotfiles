@@ -321,8 +321,9 @@
     return { render, tl };
   }
 
-  // 小窓の再生操作。ボタン、シークバー、?t=秒 で止めて開く。Space と ←/→ はプレイヤーを選んでいるときだけ効く
-  function play(figure, spec) {
+  // 小窓の再生操作。ボタン、シークバー、?t=秒 で止めて開く。Space と ←/→ はプレイヤーを選んでいるときだけ効く。
+  // autoplay でないときは、全体が出そろった絵で止めておく
+  function play(figure, spec, autoplay = true) {
     const svg = figure.querySelector('svg');
     const kicker = figure.querySelector('.kicker');
     const caption = figure.querySelector('.text');
@@ -394,27 +395,27 @@
 
     const at = Number.parseFloat(new URLSearchParams(location.search).get('t'));
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // ?t= はその時刻で止める。動きを減らす設定では、全体が出そろった絵で止める
-    jump(Number.isFinite(at) ? Math.min(at, tl.total) : still ? tl.introEnd : 0);
-    setPlaying(!Number.isFinite(at) && !still);
+    // ?t= はその時刻で止める。動きを減らす設定でも、全体が出そろった絵で止める
+    jump(Number.isFinite(at) ? Math.min(at, tl.total) : still || !autoplay ? tl.introEnd : 0);
+    setPlaying(autoplay && !Number.isFinite(at) && !still);
   }
 
   const api = { timeline, sceneAt, appearAt, drawAt, tokenAt, typedAt, lineAt, nextStart, prevStart, fadeAt, edgePath, notePos, mount, play };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.ARCH = api;
 
-  if (typeof document !== 'undefined' && root.SPEC) {
+  // spec は window.SPECS に名前で登録し、<figure class="player" data-spec="名前"> ごとに描く
+  if (typeof document !== 'undefined' && root.SPECS) {
     // 見出しは印を付けた要素にだけ入れる。ほかのページに埋め込んだときは、そのページの見出しを残す
-    const title = document.querySelector('[data-spec-title]');
-    if (title) {
-      title.textContent = root.SPEC.title ?? '';
-      document.title = root.SPEC.title ?? document.title;
+    for (const el of document.querySelectorAll('[data-spec-title]')) {
+      el.textContent = root.SPECS[el.dataset.specTitle]?.title ?? '';
+      document.title = el.textContent || document.title;
     }
-    const subtitle = document.querySelector('[data-spec-subtitle]');
-    if (subtitle) {
-      subtitle.textContent = root.SPEC.subtitle ?? '';
-      subtitle.hidden = !root.SPEC.subtitle;
+    for (const el of document.querySelectorAll('[data-spec-subtitle]')) {
+      el.textContent = root.SPECS[el.dataset.specSubtitle]?.subtitle ?? '';
+      el.hidden = !el.textContent;
     }
-    play(document.querySelector('.player'), root.SPEC);
+    // 自動で再生するのはページの最初の図だけにし、2 つ目からは止めて始める
+    document.querySelectorAll('.player[data-spec]').forEach((figure, i) => play(figure, root.SPECS[figure.dataset.spec], i === 0));
   }
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -25,7 +25,8 @@ description: >-
 字幕（小見出しと1文）は図の下にHTMLで出る。
 再生と一時停止はボタンか図のクリック、前後のステップへはボタンで移り、シークバーと全画面ボタンもある。
 プレイヤーを選んでいるときは、Spaceで再生・一時停止、←/→で前後のステップへ移る。ページに埋め込んでも、Spaceでのスクロールを奪わない。
-`?t=秒` を付けて開くと、その時刻で止まる。動きを減らす設定のブラウザでは自動再生せず、全体が出そろった絵で止める。
+`?t=秒` を付けて開くと、その時刻で止まる。1ページに図を複数置いたときは、自動で再生するのは最初の図だけで、2つ目からは全体が出そろった絵で止めて始める。
+動きを減らす設定のブラウザでは、最初の図も止めて始める。
 
 ## 手順
 
@@ -44,7 +45,8 @@ description: >-
    - 文書サイト（GitHub PagesのJekyllなど）の各ページに埋め込むときは、`arch.js` を1つだけ置き、ページごとにspecを読み込む。
      プレイヤーの部品は `index.html` の `<figure class="player">` と `<style>` をサイトのレイアウトへ写す。
      ページの見出しは書き換えない（specのtitleが入るのは `data-spec-title` を付けた要素だけ）。
-5. ChromiumとPlaywrightで開いて確かめる。ステップの時刻は、ページで `ARCH.timeline(SPEC)` を評価すると取れる。
+     図は `<figure class="player" data-spec="名前">` ごとに描かれるので、1ページに複数置ける。
+5. ChromiumとPlaywrightで開いて確かめる。ステップの時刻は、ページで `ARCH.timeline(SPECS.<名前>)` を評価すると取れる。
    各ステップの終わり1秒前と、札が流れている途中を `?t=` で撮って見る。
    - 線がノードを横切らず、吹き出しがノードや別の吹き出しに重ならない。
    - consoleに `edge not found` などが出ない。
@@ -58,7 +60,8 @@ description: >-
 `assets/spec.js` は、dotfilesの `bw-secret load` の流れを描いた見本である。上書きする前に書き方を読む。
 
 ```js
-window.SPEC = {
+window.SPECS = window.SPECS || {};
+window.SPECS.diagram = { // 名前は data-spec と合わせる
   title: 'ページの見出し', subtitle: '見出しの下の1文 (無くてよい)',
   grid: [3, 2], // 列数, 行数。既定 [3, 2]
   nodes: [ // 並び順 = 登場順
