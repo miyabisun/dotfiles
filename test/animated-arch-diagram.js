@@ -161,6 +161,20 @@ test('止めて始める絵は、ノードと線が出そろい、まだどの�
   assert.equal(ARCH.drawAt(1, 2, t), 1);
 });
 
+test('字幕の欄は、ステップ前は図のタイトル、ステップ中は番号付きの小見出しと字幕、締めは締めの一言を出す', () => {
+  const s = spec([{ kicker: 'PC 版', caption: 'ゲームを起動する', dur: 3 }], {
+    title: '起動方法',
+    outro: { kicker: '準備完了', caption: '一覧を開くだけ' },
+  });
+  const tl = ARCH.timeline(s);
+  assert.deepEqual(ARCH.captionAt(s, tl, 0), { kicker: '', text: '起動方法' });
+  assert.deepEqual(ARCH.captionAt(s, tl, ARCH.stillAt(tl)), { kicker: '', text: '起動方法' });
+  assert.deepEqual(ARCH.captionAt(s, tl, tl.steps[0].end - 0.5), { kicker: '01  PC 版', text: 'ゲームを起動する' });
+  assert.deepEqual(ARCH.captionAt(s, tl, tl.outro.start + 2), { kicker: '準備完了', text: '一覧を開くだけ' });
+  // タイトルの無い図は、ステップ前の欄を空けておく
+  assert.deepEqual(ARCH.captionAt({ ...s, title: undefined }, tl, 0), { kicker: '', text: '' });
+});
+
 test('最後は消えて終わり、頭に戻ってもつなぎ目が出ない', () => {
   const tl = ARCH.timeline(spec([{ caption: 'x', dur: 2 }]));
   assert.equal(ARCH.fadeAt(tl, tl.outro.start), 1);
