@@ -152,6 +152,15 @@ test('吹き出しはノードの指定した側に出て、画面の外へは�
   assert.ok(ARCH.notePos(box(800, 700), 300, 120).y < 700);
 });
 
+test('止めて始める絵は、ノードと線が出そろい、まだどのステップも始まっていない', () => {
+  const s = spec([{ caption: 'x', dur: 2 }]);
+  const tl = ARCH.timeline(s);
+  const t = ARCH.stillAt(tl);
+  assert.equal(ARCH.sceneAt(tl, t), -1);
+  s.nodes.forEach((_, i) => assert.equal(ARCH.appearAt(i, t), 1));
+  assert.equal(ARCH.drawAt(1, 2, t), 1);
+});
+
 test('最後は消えて終わり、頭に戻ってもつなぎ目が出ない', () => {
   const tl = ARCH.timeline(spec([{ caption: 'x', dur: 2 }]));
   assert.equal(ARCH.fadeAt(tl, tl.outro.start), 1);

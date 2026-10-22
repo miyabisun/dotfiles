@@ -7,6 +7,7 @@
   const GAP = 0.22; // ノードが 1 つずつ現れる間隔
   const POP = 0.45; // ノード 1 つが現れきるまで
   const DRAW = 0.5; // 線 1 本を引ききるまで
+  const SETTLE = 0.3; // 全体が出そろってから最初のステップまでの間
   const HOP = 0.8; // 札が 1 区間を流れる時間 (step.hop で上書き)
   const LINE = 0.35; // 吹き出しの行が次の行を出すまで
   const LINE_FADE = 0.3; // 吹き出しの 1 行が現れきるまで
@@ -37,7 +38,7 @@
   // 各場面の開始・終了秒
   function timeline(spec) {
     const n = spec.nodes.length;
-    const introEnd = n ? (n - 1) * GAP + POP + DRAW : 0;
+    const introEnd = n ? (n - 1) * GAP + POP + DRAW + SETTLE : 0;
     let t = introEnd;
     const steps = spec.steps.map((step) => {
       const span = { start: t, end: t + stepDur(step) };
@@ -82,6 +83,8 @@
   }
 
   const fadeAt = (tl, t) => 1 - ease((t - (tl.total - FADE)) / FADE);
+  // 止めて始めるときの絵: ノードと線が出そろい、まだどのステップも始まっていない
+  const stillAt = (tl) => Math.max(0, tl.introEnd - SETTLE / 2);
 
   // ---- ここから下は DOM に描く部分 ----
 
@@ -396,11 +399,11 @@
     const at = Number.parseFloat(new URLSearchParams(location.search).get('t'));
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     // ?t= はその時刻で止める。動きを減らす設定でも、全体が出そろった絵で止める
-    jump(Number.isFinite(at) ? Math.min(at, tl.total) : still || !autoplay ? tl.introEnd : 0);
+    jump(Number.isFinite(at) ? Math.min(at, tl.total) : still || !autoplay ? stillAt(tl) : 0);
     setPlaying(autoplay && !Number.isFinite(at) && !still);
   }
 
-  const api = { timeline, sceneAt, appearAt, drawAt, tokenAt, typedAt, lineAt, nextStart, prevStart, fadeAt, edgePath, notePos, mount, play };
+  const api = { timeline, sceneAt, appearAt, drawAt, tokenAt, typedAt, lineAt, nextStart, prevStart, fadeAt, stillAt, edgePath, notePos, mount, play };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.ARCH = api;
 
