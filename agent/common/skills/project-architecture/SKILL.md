@@ -21,7 +21,11 @@ description: >-
 - エージェントはpush後のCIの結果を門として読まない。GitHub Actionsへlint・format・testのゲートを足さない。
   CIはtagを契機とするreleaseのbuildとartifactの公開を持つ。
   経路はknowledgeの `library/playbooks/tag-driven-service-release.md` にある。
+  CIに残す照合は、tagと版・archiveの中身・checksum・image digestの一致だけにする。
+  formatterの検査、linter、smoke・e2eを含むテストは、repoの手元の検証手順に置く。
   既存repoにpushで動くlint・testのjobがあっても、手本にして他のrepoへ広げない。
+- execution_targetがgameの製品はWindowsで走らせるので、CIのこの前提から外す。
+  製品のknowledgeにCIの方針があれば、それに従う。
 
 根拠（2026-10-22 user）:
 
@@ -29,6 +33,7 @@ description: >-
 - 「お前はlinterやformatterで確認すらしていないような物を出来ました！とコミットするつもりか？」
 - 「PR駆動開発じゃないし、このAIエージェントはCIの結果なんて読まないから
   GitHub ActionsのCIでテストやLinterのゲートを書く意味が全くない」
+- 「gameタグを割り振っているものはWindowsで走らせているので、それ以外に対してlinter, formatter、テストを削ってください。」
 
 ## 手順
 
