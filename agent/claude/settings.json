@@ -115,7 +115,7 @@
   },
   "enabledPlugins": {
     "code-review@claude-plugins-official": true,
-    "ponytail@ponytail": true,
+    "ponytail@ponytail": false,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
   },
