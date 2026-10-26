@@ -19,21 +19,24 @@ Banner-only v0.1.0/v0.1.1 releases are rejected as new download artifacts.
 Failures preserve the existing binary. Fix the release or connection, then retry.
 Unrecognized targets are refused.
 
-## yomiyasu skill
+## Agent tools: yomiyasu and meiseki
 
 [yomiyasu](https://github.com/nanaism/yomiyasu) is an Agent Skill that refines Japanese prose.
-From the checkout, install it or move to the pinned version:
+[meiseki](https://github.com/bamboo-nova/meiseki) holds the textlint rules behind `meiseki-lint`, `meiseki`, and `meiseki-rewrite`.
+Their versions belong to the agent-tools updater in
+[home-server](https://github.com/miyabisun/home-server/blob/main/systemd/README.md#agent-tools).
+A daily systemd timer follows each upstream's latest release, checks the tool, and goes back on failure.
+yomiyasu is linked at `~/.agents/skills/yomiyasu`, which the agents read as `agent/common/skills`; Git ignores the link there.
+meiseki is linked at `~/.local/share/meiseki`.
+
+`bin/install-apps` keeps no versions. When `~/.local/bin/agent-tools-update` exists, it runs the updater once:
 
 ```bash
-bash bin/install-apps --run-step install_yomiyasu
+bash bin/install-apps --run-step install_agent_tools
 ```
 
-`install_yomiyasu` pins an upstream commit and the version its skill states (now 2.0.1).
-It places the skill in `~/.local/share/yomiyasu` and links it from `~/.agents/skills`,
-which the agents read as `agent/common/skills`; Git ignores the link there.
-To follow a new release, change `version` and `commit` in `install_yomiyasu`.
-An installed copy of another version is replaced; a download of another version is refused.
-Unrecognized targets are refused.
+Without the updater, the step is skipped.
+The updater refuses downgrades, so running `install-apps` again never lowers a version.
 
 ## Checkout sync
 

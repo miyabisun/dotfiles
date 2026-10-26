@@ -10,7 +10,7 @@
 # 前提エラー (exit 2) にする。
 #
 # 前提は npx と meiseki の textlint config だけで、claude も CLIProxyAPI も
-# client key も要らない (bin/install-apps が ~/.local/share/meiseki へ置く)。
+# client key も要らない (home-server の agent-tools updater が ~/.local/share/meiseki へ置く)。
 set -euo pipefail
 
 self="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || true)"

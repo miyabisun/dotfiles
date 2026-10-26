@@ -80,7 +80,7 @@ If an update fails, keep existing data and inspect the reported conflict before 
 |---|---|
 | Coding-agent setup and skills | [agent/README.md](agent/README.md) |
 | Neovim bookmark spaces and navigation | [config/nvim/README.md](config/nvim/README.md) |
-| Optional CLI installers, including pen and the yomiyasu skill | [Tools and secrets](docs/utilities.md) |
+| Optional CLI installers, including pen, and the yomiyasu and meiseki agent tools | [Tools and secrets](docs/utilities.md) |
 | Rust toolchain through rustup | [Rust toolchain](docs/utilities.md#rust-toolchain) |
 | Bitwarden-backed secrets, SSH keys, and env files | [Bitwarden commands](docs/utilities.md#bitwarden-commands) |
 | TypeSafe credentials on another machine | [TypeSafe setup](docs/utilities.md#typesafe-credentials) |

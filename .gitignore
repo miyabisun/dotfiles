@@ -15,5 +15,5 @@ __pycache__/
 # Claude Code writes claude.ai account skills here through the ~/.claude/skills symlink.
 agent/common/skills/synced/
 
-# bin/install-apps links the upstream yomiyasu skill here through ~/.agents/skills.
+# home-server's agent-tools updater links the upstream yomiyasu skill here through ~/.agents/skills.
 agent/common/skills/yomiyasu

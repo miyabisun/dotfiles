@@ -11,7 +11,7 @@
 # 終わればその exit code を透過し、exit 0 でも output.md が無ければ exit 1。
 # 実行ファイルは MEISEKI_CLAUDE で差し替えられる。
 #
-# 前提: bin/install-apps が ~/.local/share/meiseki へ meiseki 本体を置き、
+# 前提: home-server の agent-tools updater が ~/.local/share/meiseki へ meiseki 本体を置き、
 # CLIProxyAPI が 127.0.0.1:8317 で動き、~/.cli-proxy-api/client.key がある。
 set -euo pipefail
 

@@ -199,20 +199,6 @@ PEN
     printf '%s  %s\n' "$digest" "$archive_name" >"$output"
     exit 0
     ;;
-  https://github.com/nanaism/yomiyasu/archive/*.tar.gz)
-    # 上流の archive と同じ形: yomiyasu-<commit>/skills/yomiyasu/ に skill 一式
-    commit="$(basename "$url" .tar.gz)"
-    archive_root="${output}.root"
-    skill="$archive_root/yomiyasu-$commit/skills/yomiyasu"
-    mkdir -p "$skill/scripts"
-    printf '%s
-' '---' 'name: yomiyasu' 'metadata:'       "  version: \"${INSTALL_APPS_TEST_YOMIYASU_VERSION:-2.0.1}\"" '---' >"$skill/SKILL.md"
-    printf '%s
-' '# check' >"$skill/scripts/yomiyasu_check.py"
-    tar -czf "$output" -C "$archive_root" "yomiyasu-$commit"
-    rm -rf "$archive_root"
-    exit 0
-    ;;
   *) exit 64 ;;
 esac
 
@@ -673,150 +659,36 @@ test ! -e "$test_root/unknown-pen-curl.log" \
   || test "$(grep -Fc 'pen-cli' "$test_root/unknown-pen-curl.log" || true)" -eq 0
 test -z "$(find "$unknown_pen_tmp" -mindepth 1 -print -quit)"
 
-# meiseki — clone した plugin 一式を ~/.local/share/meiseki へ配置し、
-# 再実行では clone し直さない。git / node は stub を PATH 先頭に置き、
-# 本物の network / clone は決して走らせない。
-meiseki_stub_bin="$test_root/meiseki-bin"
-meiseki_home="$test_root/meiseki-home"
-meiseki_tmp="$test_root/meiseki-tmp"
-meiseki_dest="$meiseki_home/.local/share/meiseki"
-meiseki_git_log="$test_root/meiseki-git.log"
-mkdir -p "$meiseki_stub_bin"
-prepare_mux_case "$meiseki_home" "$meiseki_tmp"
-cp "$fake_home/.local/bin/mux" "$meiseki_home/.local/bin/mux"
-cp "$fake_home/.local/bin/pen" "$meiseki_home/.local/bin/pen"
-make_stub node "$meiseki_stub_bin"
+# agent のツール (yomiyasu・meiseki) — 版は home-server の agent-tools updater が持つ。
+# install-apps は版を持たず、updater が入っていれば 1 回実行し、無ければ飛ばす。
+agent_tools_home="$test_root/agent-tools-home"
+mkdir -p "$agent_tools_home/.local/bin"
+run_agent_tools() {
+  env PATH="$fake_bin:/usr/bin:/bin" HOME="$agent_tools_home" \
+    bash "$repo_root/bin/install-apps" --run-step install_agent_tools
+}
+agent_tools_runs() {
+  cat "$agent_tools_home/updater.log" 2>/dev/null | grep -Fxc run || true
+}
 
-# git stub: clone 引数を記録し、network の代わりに meiseki の実構成を作る
-cat >"$meiseki_stub_bin/git" <<'STUB'
+run_agent_tools >"$test_root/agent-tools-1.out"
+grep -F "Skipping yomiyasu and meiseki" "$test_root/agent-tools-1.out" >/dev/null
+test "$(agent_tools_runs)" -eq 0
+
+cat >"$agent_tools_home/.local/bin/agent-tools-update" <<'STUB'
 #!/usr/bin/env bash
-set -euo pipefail
-
-{
-  printf '<call>\n'
-  printf '%s\n' "$@"
-} >>"$INSTALL_APPS_TEST_GIT_LOG"
-
-test "${1:-}" = clone
-shift
-test "${1:-}" = --depth
-shift 2
-test "${1:-}" = "https://github.com/bamboo-nova/meiseki.git"
-dest="$2"
-
-mkdir -p "$dest/.claude-plugin" "$dest/.agents/skills/meiseki/references" \
-  "$dest/hooks" "$dest/scripts" "$dest/examples"
-printf '%s\n' '{"name":"meiseki"}' >"$dest/.claude-plugin/plugin.json"
-printf '%s\n' '# meiseki skill' >"$dest/.agents/skills/meiseki/SKILL.md"
-printf '%s\n' '{}' >"$dest/.agents/skills/meiseki/references/textlint.config.json"
-printf '%s\n' license >"$dest/LICENSE"
-printf '%s\n' '# meiseki' >"$dest/README.md"
-printf '%s\n' '{"name":"meiseki"}' >"$dest/package.json"
-printf '%s\n' '{"lockfileVersion":3}' >"$dest/package-lock.json"
-printf '%s\n' hook >"$dest/hooks/meiseki-hook.mjs"
-printf '%s\n' script >"$dest/scripts/lint.mjs"
-printf '%s\n' example >"$dest/examples/before.md"
+echo run >>"$HOME/updater.log"
+exit "${INSTALL_APPS_TEST_UPDATER_EXIT:-0}"
 STUB
-chmod +x "$meiseki_stub_bin/git"
+chmod +x "$agent_tools_home/.local/bin/agent-tools-update"
+run_agent_tools >"$test_root/agent-tools-2.out"
+test "$(agent_tools_runs)" -eq 1
 
-PATH="$meiseki_stub_bin:$fake_bin:$meiseki_home/.local/bin:/usr/bin:/bin" \
-  HOME="$meiseki_home" \
-  INSTALL_APPS_TEST_LOG="$test_root/meiseki-curl.log" \
-  INSTALL_APPS_TEST_ARGS_LOG="$test_root/meiseki-curl-args.log" \
-  INSTALL_APPS_TEST_GIT_LOG="$meiseki_git_log" \
-  TMPDIR="$meiseki_tmp" \
-  bash "$repo_root/bin/install-apps" >"$test_root/meiseki-1.out"
-
-grep -F "meiseki installed ($meiseki_dest)" "$test_root/meiseki-1.out" >/dev/null
-for meiseki_member in .claude-plugin/plugin.json \
-  .agents/skills/meiseki/SKILL.md \
-  .agents/skills/meiseki/references/textlint.config.json \
-  LICENSE README.md package.json package-lock.json \
-  hooks/meiseki-hook.mjs scripts/lint.mjs examples/before.md; do
-  if [ ! -f "$meiseki_dest/$meiseki_member" ]; then
-    echo "install-apps must place $meiseki_member under $meiseki_dest" >&2
-    exit 1
-  fi
-done
-test "$(grep -Fxc clone "$meiseki_git_log")" -eq 1
-test -z "$(find "$meiseki_tmp" -mindepth 1 -print -quit)"
-
-PATH="$meiseki_stub_bin:$fake_bin:$meiseki_home/.local/bin:/usr/bin:/bin" \
-  HOME="$meiseki_home" \
-  INSTALL_APPS_TEST_LOG="$test_root/meiseki-curl.log" \
-  INSTALL_APPS_TEST_ARGS_LOG="$test_root/meiseki-curl-args.log" \
-  INSTALL_APPS_TEST_GIT_LOG="$meiseki_git_log" \
-  TMPDIR="$meiseki_tmp" \
-  bash "$repo_root/bin/install-apps" >"$test_root/meiseki-2.out"
-
-grep -F "meiseki already installed ($meiseki_dest)" "$test_root/meiseki-2.out" >/dev/null
-test "$(grep -Fxc clone "$meiseki_git_log")" -eq 1
-test -f "$meiseki_dest/.agents/skills/meiseki/SKILL.md"
-test -z "$(find "$meiseki_tmp" -mindepth 1 -print -quit)"
-
-# yomiyasu — 上流のコミットに固定した skill を ~/.local/share/yomiyasu へ置き、
-# 共通の skills (~/.agents/skills) へリンクする。同じ版は取り直さず、古い版は
-# 置き換え、版の違う中身と見知らぬ置き場は拒む。
-yomiyasu_home="$test_root/yomiyasu-home"
-yomiyasu_tmp="$test_root/yomiyasu-tmp"
-yomiyasu_dest="$yomiyasu_home/.local/share/yomiyasu"
-yomiyasu_log="$test_root/yomiyasu-curl.log"
-mkdir -p "$yomiyasu_home/.agents/skills" "$yomiyasu_tmp"
-run_yomiyasu() { # [版] 取ってきた archive の skill が名乗る版
-  env PATH="$fake_bin:/usr/bin:/bin" HOME="$yomiyasu_home"     INSTALL_APPS_TEST_LOG="$yomiyasu_log"     INSTALL_APPS_TEST_ARGS_LOG="$test_root/yomiyasu-curl-args.log"     INSTALL_APPS_TEST_YOMIYASU_VERSION="${1:-2.0.1}"     TMPDIR="$yomiyasu_tmp"     bash "$repo_root/bin/install-apps" --run-step install_yomiyasu
-}
-yomiyasu_fetches() {
-  grep -Fc 'https://github.com/nanaism/yomiyasu/archive/' "$yomiyasu_log" || true
-}
-yomiyasu_skill() { # <版> [名前] 置き場の SKILL.md をその skill のその版のものにする
-  printf '%s\n' '---' "name: ${2:-yomiyasu}" 'metadata:' "  version: \"$1\"" '---' >"$yomiyasu_dest/SKILL.md"
-}
-
-run_yomiyasu >"$test_root/yomiyasu-1.out"
-grep -F "yomiyasu 2.0.1 installed ($yomiyasu_dest)" "$test_root/yomiyasu-1.out" >/dev/null
-grep -Fx '  version: "2.0.1"' "$yomiyasu_dest/SKILL.md" >/dev/null
-test -f "$yomiyasu_dest/scripts/yomiyasu_check.py"
-test "$(readlink "$yomiyasu_home/.agents/skills/yomiyasu")" = "$yomiyasu_dest"
-test "$(yomiyasu_fetches)" -eq 1
-test -z "$(find "$yomiyasu_tmp" -mindepth 1 -print -quit)"
-
-run_yomiyasu >"$test_root/yomiyasu-2.out"
-grep -F "yomiyasu 2.0.1 already installed ($yomiyasu_dest)" "$test_root/yomiyasu-2.out" >/dev/null
-test "$(yomiyasu_fetches)" -eq 1
-
-yomiyasu_skill 2.0.0
-run_yomiyasu >"$test_root/yomiyasu-3.out"
-grep -F "yomiyasu 2.0.1 installed ($yomiyasu_dest)" "$test_root/yomiyasu-3.out" >/dev/null
-grep -Fx '  version: "2.0.1"' "$yomiyasu_dest/SKILL.md" >/dev/null
-test "$(yomiyasu_fetches)" -eq 2
-
-yomiyasu_skill 2.0.0
-if run_yomiyasu 9.9.9 >"$test_root/yomiyasu-4.out" 2>&1; then
-  echo "install-apps must refuse a yomiyasu archive of another version" >&2
+# updater が上げられなかったら install-apps も失敗を返す
+if INSTALL_APPS_TEST_UPDATER_EXIT=1 run_agent_tools >"$test_root/agent-tools-3.out" 2>&1; then
+  echo "install-apps must fail when agent-tools-update fails" >&2
   exit 1
 fi
-grep -F "is not yomiyasu 2.0.1" "$test_root/yomiyasu-4.out" >/dev/null
-grep -Fx '  version: "2.0.0"' "$yomiyasu_dest/SKILL.md" >/dev/null
-test -z "$(find "$yomiyasu_tmp" -mindepth 1 -print -quit)"
-
-rm -rf "$yomiyasu_dest"
-mkdir -p "$yomiyasu_dest"
-printf '%s
-' other >"$yomiyasu_dest/notes.txt"
-if run_yomiyasu >"$test_root/yomiyasu-5.out" 2>&1; then
-  echo "install-apps must refuse an unrecognized yomiyasu target" >&2
-  exit 1
-fi
-grep -F "Refusing to replace unrecognized yomiyasu target" "$test_root/yomiyasu-5.out" >/dev/null
-test -f "$yomiyasu_dest/notes.txt"
-# 版を名乗っていても、ほかの skill なら置き換えない
-yomiyasu_skill 2.0.0 meiseki
-if run_yomiyasu >"$test_root/yomiyasu-6.out" 2>&1; then
-  echo "install-apps must refuse another skill in the yomiyasu target" >&2
-  exit 1
-fi
-grep -F "Refusing to replace unrecognized yomiyasu target" "$test_root/yomiyasu-6.out" >/dev/null
-grep -Fx 'name: meiseki' "$yomiyasu_dest/SKILL.md" >/dev/null
-test "$(yomiyasu_fetches)" -eq 3
+test "$(agent_tools_runs)" -eq 2
 
 echo "install-apps Linux/macOS agent CLI test: pass"
