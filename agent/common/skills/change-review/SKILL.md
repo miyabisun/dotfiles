@@ -57,7 +57,7 @@ UIではDESIGN.mdと変更前後の画面の確認結果を添える。
 [公式本文](https://raw.githubusercontent.com/typesafe-ai/skills/main/skills/typesafe-ai/SKILL.md)を直接読み、
 導入は[dotfilesの手順](https://github.com/miyabisun/dotfiles/blob/master/docs/utilities.md#typesafe-credentials)に従う。
 公式skillや専用ツールが見つからないことは、Jevを利用できない理由にしない。
-APIキーは `TYPESAFE_API_KEY` を使う。sandboxでは `~/.config/typesafe/env`（mode600）から読む。
+APIキーは `TYPESAFE_API_KEY` を使う。agent-hubでは `~/.config/typesafe/env`（mode600）から読む。
 Bitwardenの `Env Files` / `typesafe` との同期は初回・キー更新時だけとし、通常実行では `rbw` を呼ばない。
 非対話実行では、APIを呼ぶのと同じshellで次を実行する。キーの値は表示・記録しない。
 

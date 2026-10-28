@@ -11,7 +11,7 @@ description: >-
 
 - GitHub Actionsのworkflow、format・lint・testを実行する場所
 - ブランチとPR、release・配備の経路
-- 実行先（sandbox・homeserver・game）、repo・crateの構成
+- 実行先（agent-hub・homeserver・game）、repo・crateの構成
 
 ## 前提
 

@@ -28,7 +28,7 @@ agentが実行する作業の登録は [task-creater](../task-creater/SKILL.md)�
    - `title`: 次に何をするかが一目で分かる1行。
    - `url`: 手を動かす先のページ (`http(s)`)。号令や会話に出たものだけを入れる。
    - `due`: 期日が指定されたときだけ `YYYY-MM-DD` で入れる。
-   - `source`: 登録したagentと場所 (例: `Claude Code (sandbox)`)。
+   - `source`: 登録したagentと場所 (例: `Claude Code (agent-hub)`)。
    - `body`: 「これから何をするか」と「そのために何の情報・準備が必要か」だけを
      必要最小限に書く。titleで足りれば空にする。購入日・症状・証明の所在・
      開始条件など、行動に要る事実は残す。経緯・会話の引用・登録やレビューの
@@ -45,8 +45,8 @@ userが終わったと言ったToDoは `todo_complete`、内容の変更は `tod
 ## 接続
 
 MCPのURLはマシンごとの設定に登録し、dotfilesのテンプレートへ入れない。
-todo-listは母艦の5009番で動く。
-母艦では `http://127.0.0.1:5009/mcp`、sandboxなど別のマシンでは
+todo-listはhomeserverの5009番で動く。
+homeserverでは `http://127.0.0.1:5009/mcp`、agent-hubなど別のマシンでは
 `http://192.168.1.100:5009/mcp` を使う。
 未登録なら次で追加し、`claude mcp get todo-list` で接続を確かめる。
 追加したMCPのツールは次のsessionから使える。今のsessionでは同じURLへ

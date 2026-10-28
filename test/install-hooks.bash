@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Contract: dotfiles の主 checkout で commit / merge すると bin/install が
-# 自動で走る (sandbox の sync-checkouts に当たる母艦側の追従)。
+# 自動で走る (sync-checkouts に当たる、開発する machine 側の追従)。
 #
 #   - hooks/run-install は post-commit と post-merge から呼ばれ、主 checkout
 #     (linked worktree ではない) のときだけ、その checkout の bin/install を

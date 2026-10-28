@@ -9,10 +9,10 @@ APIと利用例は[OrcaServerのMCPガイド](https://github.com/miyabi-sunny-si
 
 | クライアントの実行場所 | MCP URL |
 | --- | --- |
-| OrcaServerと同じ母艦 | 公開ポートが3000なら`http://127.0.0.1:3000/mcp` |
-| sandboxや別PC | クライアントから到達できる母艦のLAN/Tailscaleホスト名と公開ポートに`/mcp`を付ける |
+| OrcaServerと同じhomeserver | 公開ポートが3000なら`http://127.0.0.1:3000/mcp` |
+| agent-hubや別PC | クライアントから到達できるhomeserverのLAN/Tailscaleホスト名と公開ポートに`/mcp`を付ける |
 
-sandboxの`127.0.0.1`はsandbox自身です。母艦への接続に読み替えないでください。
+agent-hubの`127.0.0.1`はagent-hub自身です。homeserverへの接続に読み替えないでください。
 接続先は利用するマシンの設定へ保存し、dotfilesの共有テンプレートへホスト名・資格情報を取り込みません。
 接続範囲はOrcaServerの運用に合わせて信頼できるLAN/Tailscaleとします。
 
@@ -54,4 +54,4 @@ CodexのMCP登録は、それらのクライアントへ共有されません。
 プレート保存だけでは印刷を開始しません。未指定の条件は未設定のままで、追加可否は別に確認できます。
 
 検証には隔離したOrcaServerとDBを使えます。その場合だけ一時環境のURLへ接続し、
-終了後は本来の接続先へ戻してください。母艦へ反映する際は同じ手順を母艦のCodexで実行します。
+終了後は本来の接続先へ戻してください。本来の接続先へ戻す際も同じ手順で登録し直します。

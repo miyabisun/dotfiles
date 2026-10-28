@@ -1,8 +1,8 @@
 ---
 name: herdr-worker
 description: >-
-  homeserverからherdrでsandbox等のマシンにagentを起動し、作業を渡して終わるまで見届ける。
-  sandboxで開発させる、別の実行先へ作業を委譲する、task-workの配車で使う。
+  agent-hubのherdrでworkerのagentを起動し、作業を渡して終わるまで見届ける。
+  workerに開発させる、別の実行先のタスクを委譲する、task-workの配車で使う。
 ---
 
 # herdr-worker
@@ -13,11 +13,12 @@ herdr CLIの細部は `herdr --skill` に従う。
 
 | 実行先 | herdr | worker の cwd |
 | --- | --- | --- |
+| agent-hub | ローカル | `~/projects/household/workers` |
 | homeserver | ローカル | `~/projects/household/workers` |
-| sandbox | `--machine sandbox` | `~/projects/household/workers/main` |
 
-依頼元はhomeserverに置く（sandboxからhomeserverへは届かない）。以下の `herdr` には実行先の列を付ける。
-machineが無ければ `herdr machine add --label sandbox sandbox` で足す。両マシンのherdrが0.9.1以上であること。
+依頼元とworkerはagent-hubに置く。本番のhomeserverにはagentを置かない。
+homeserver向けのタスクも、agent-hubのworkerが `ssh homeserver` で本番に触って進める。
+homeserverのrootが要る操作は、目的ごとのコマンドをuserに渡す。
 
 ## 起動して渡す
 

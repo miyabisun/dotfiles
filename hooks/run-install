@@ -1,8 +1,8 @@
 #!/bin/sh
 # git hook (post-commit / post-merge): 主 checkout が動いたら bin/install を回す。
 #
-# sandbox は sync-checkouts timer が ff のたびに ./bin/install を呼ぶが、母艦は
-# この checkout 上で commit するので、commit / merge 自体を引き金にする。
+# sync-checkouts を使う machine は timer が ff のたびに ./bin/install を呼ぶが、
+# 開発する machine はこの checkout 上で commit するので、commit / merge 自体を引き金にする。
 # 配線は bin/install が core.hooksPath=hooks を repo-local に設定する。
 #
 # linked worktree (rebase / merge skill が作る一時 checkout) では走らせない —

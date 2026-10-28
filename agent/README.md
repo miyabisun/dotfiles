@@ -106,10 +106,9 @@ CLI 会話履歴に残るため、別の journal や mailbox への転記は要�
 
 ### daemon の配布
 
-daemon は homeserver だけで動かす。binary・user service・更新 timer は
+daemon は agent-hub だけで動かす。binary・user service・更新 timer は
 [home-server](https://github.com/miyabisun/home-server) の `systemd/agent-talk/` が所有する。
 HTTP の待受 (:5002) と Tailscale HTTPS の入口 (8443) も home-server が設定する。
-sandbox のセッションは homeserver の Herdr に足した sandbox machine から見る。
 dotfiles は daemon のコピーや MCP adapter を配置しない。
 
 Grok は全般の完了通知を `agent/grok/hooks` の下で所有する。また skills・rules・
@@ -144,10 +143,10 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 - `deliver` — 事前判断を引き継ぎ、TDD・実装レビュー・commit・pushまで届ける
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
 - `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
-- `task-work` — task-serverの全件処理。homeserverが配車係となり、各タスクを実行先のherdr上の
+- `task-work` — task-serverの全件処理。agent-hubが配車係となり、各タスクをherdr上の
   workerへ1件ずつ渡す（deliver → merge → patchリリース）。
-  homeserverで `/goal task-serverのタスクを全て完了させてください` と打って起動する
-- `herdr-worker` — homeserverからherdrでsandbox等にagentを起動して作業を渡し、
+  agent-hubで `/goal task-serverのタスクを全て完了させてください` と打って起動する
+- `herdr-worker` — agent-hubのherdrでworkerのagentを起動して作業を渡し、
   終わるまで見届ける。task-workの配車もこの経路を使う
 - `project-architecture` — CI・検証の門・release経路・repo構成へ触れる前に、自宅開発の前提を確かめる。
   検査は手元で通し、Actionsへlint・testのゲートを足さない

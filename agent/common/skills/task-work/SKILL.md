@@ -8,7 +8,7 @@ description: >-
 # task-work
 
 担当は台帳と次の工程を持ち、各タスクを成果まで進める。
-入口はhomeserverでの `/goal task-serverのタスクを全て完了させてください`。
+入口はagent-hubでの `/goal task-serverのタスクを全て完了させてください`。
 Codexでは `/goal $task-work を使ってtask-serverのタスクを全てこなして` と書く。
 userによる実行依頼は、対象タスクのcommit・push・mergeを含む。
 リリース対象productでは `$bump-tag patch` まで実行する。 スキルの作成・説明依頼では実行しない。
@@ -19,14 +19,14 @@ task_idを指定して起動されたworkerは、[引き取る](#引き取る)�
 
 ## 配車
 
-homeserverで動かす。配車係は台帳を読み、自分ではclaimせず、workerを全体で同時に1本だけ動かす。
+agent-hubで動かす。配車係は台帳を読み、自分ではclaimせず、workerを全体で同時に1本だけ動かす。
 workerの起動・依頼・見届け・片付けは [herdr-worker](../herdr-worker/SKILL.md) に従う。
 配車するのは、実行先がherdr-workerの表にあるタスクだけ。表にない実行先は残件にする。
 task-serverはエージェントの台帳であり、userが手を動かす作業は載せない。それは `todo` でToDoへ追加する。
 
 1. `knowledge-read` を読む。MCPで対象のタスクを一覧する。next_offsetがnullになるまで取得し、
    通常タスクのdraft・ready・再開できるblockedを対象にする。closedとarchivedは除く。
-   再開時は、名前が `task-` で始まる両machineのworkspaceに残ったworkerを先に待つ。
+   再開時は、名前が `task-` で始まるworkspaceに残ったworkerを先に待つ。
    後から追加されたタスクも同じ全件依頼の範囲なら取り込む。対象を狭めた依頼では範囲外を実行しない。
 2. 再開できるタスクをreadyにし、依存がdone・releasedで、実行先が表にある1件を優先度順に選ぶ。
    blockedの原因が変わっていないものは同じ実行を反復しない。

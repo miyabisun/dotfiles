@@ -44,8 +44,8 @@ CI・検証の門・ブランチ・release/配備の経路・実行先・repo構
 一般利用者に必要な互換性・導入方法の説明はREADMEに残す。読者と文書配置の判断は
 [visitor-docs](../visitor-docs/SKILL.md) に従う。
 
-- Neovimプラグインの実装・公開 → dotfilesへの導入とsandbox上の利用確認は、両方sandboxになり得る。
-- サーバーの修正・回帰検証・公開(sandbox) → 必要な配備と実機確認(homeserver)は実行先を分ける。
+- Neovimプラグインの実装・公開 → dotfilesへの導入とagent-hub上の利用確認は、両方agent-hubになり得る。
+- サーバーの修正・回帰検証・公開(agent-hub) → 必要な配備と実機確認(homeserver)は実行先を分ける。
 - 通常リリースが既存の自動更新で足りる場合、配備タスクを無条件に作らない。
 
 task-serverはエージェントの台帳であり、userが手を動かす作業（設定画面の操作・物理操作・目視確認）は
