@@ -54,6 +54,25 @@ OrcaServerで公開モデルをプレートへ保存したり、フィラメン�
 [MCP接続手順](orca-mcp.md)に従い、利用するマシンの接続先を登録します。
 操作は小さな[orca-plate](common/skills/orca-plate/SKILL.md)と[orca-material](common/skills/orca-material/SKILL.md)に分かれています。
 
+Blenderは、agent-hubに常駐する[blender-live](https://github.com/miyabi-sunny-side/blender-live)のMCPから操作します。
+agent-hubのClaude CodeとCodexへ`http://127.0.0.1:5014/mcp`を登録します。
+`127.0.0.1`はagent-hub自身を指すため、他のマシンには登録しません。
+
+```sh
+claude mcp add --transport http --scope user blender-live http://127.0.0.1:5014/mcp
+```
+
+Codexは`~/.codex/config.toml`の末尾へ次の表を追記します。
+`codex mcp add`は既存の`required = false`を落とすため使いません。
+
+```toml
+[mcp_servers.blender_live]
+url = "http://127.0.0.1:5014/mcp"
+```
+
+新しいsessionでblender-liveのtoolが一覧に出て、`scene_summary`が返れば登録できています。
+blender-liveが止まっていても、Claude CodeとCodexは起動します。
+
 ## Claude Codeの指示ファイル
 
 共有規約は `~/.claude/rules/GLOBAL.md` から読み込みます。
