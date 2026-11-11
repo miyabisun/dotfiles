@@ -222,10 +222,11 @@ submoduleを含むrepoは現在対象外で、黙って検証済みにはしな�
 
 ## Markdown lint
 
-編集後の hook が、変更された `.md` だけに `meiseki-lint` の決定論層を掛ける。
-共通処理は `common/bin/meiseki-lint-markdown` (Python 3) が持つ。
-既存の textlint 起動形は `common/bin/meiseki-lint` に置く。
-LLM rewrite や repo 全体の検査は起動しない。
+編集後の hook が、変更された `.md` だけに yomiyasu の決定論の lint (`yomiyasu-lint --json`) を掛ける。
+共通処理は `common/bin/yomiyasu-lint-markdown` (Python 3) が持つ。
+lint は編集した file の directory で動かし、その repo の `.yomiyasu-words/` を読ませる。
+`common/bin/yomiyasu-lint` は agent-tools updater が置く `~/.agents/skills/yomiyasu` の linter を呼ぶ入口である。
+書き直しや repo 全体の検査は起動しない。書き直しは yomiyasu skill で行う。
 
 | runtime | 対象の編集 | 指摘の返却 |
 | --- | --- | --- |
@@ -238,9 +239,9 @@ Grok 1.0.13 は `PostToolUse` の出力本文を破棄するため、adapter が
 `GROK_HOME` 指定時はその配下の `logs/markdown-lint.log` を使う。
 指摘を編集担当モデルへ返す経路と、この構成で利用不可の `apply_patch` は未対応である。
 任意の shell コマンドや MCP tool の書込みは自動検出しない。その経路では担当が
-変更した Markdown へ `meiseki-lint <file>` を実行する。
+変更した Markdown へ `yomiyasu-lint <file>` を実行する。
 
-正常時は無出力、指摘と起動失敗は区別して返す。複数ファイルの patch は編集先を
+候補が無ければ無出力、見直し候補と起動失敗は区別して返す。候補は info を含め全件を返す。複数ファイルの patch は編集先を
 重複なく検査し、削除ファイルは除く。hook 全体の時間枠を超えた対象は未実行として返す。
 指摘は補助情報であり、文章の好みを承認待ちや検証完了の証明にしない。
 knowledge repository の形式 lint は OKF の検査を所有し、この hook からは呼ばない。
@@ -250,9 +251,7 @@ machine-local なので matcher の変更を `config-merge` で取り込む。Co
 `/hooks` で内容を確認して trust するまで実行されない。自動試験では、内容を検査済みの
 隔離 hook に限り `--dangerously-bypass-hook-trust` を使った。
 
-隔離検証は `python3 -B test/markdown-edit-hook.py` と
-`bash test/meiseki-lint-hook.bash` で行う。
-決定論層は `bash test/meiseki-lint.bash` で検証する。
+隔離検証は `python3 -B test/markdown-edit-hook.py` と `python3 -B test/yomiyasu-lint.py` で行う。
 
 ## 新しい agent tool を足す
 

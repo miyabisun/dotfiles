@@ -11,11 +11,15 @@ import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOK = ROOT / "agent/common/bin/meiseki-lint-markdown"
+HOOK = ROOT / "agent/common/bin/yomiyasu-lint-markdown"
 loader = importlib.machinery.SourceFileLoader("markdown_hook", str(HOOK))
 spec = importlib.util.spec_from_loader(loader.name, loader)
 hook = importlib.util.module_from_spec(spec)
 loader.exec_module(hook)
+
+FINDINGS = json.dumps({"format": "yomiyasu-lint", "format_version": 2, "findings": [
+    {"rule": "katakana_term", "line": 2, "severity": "info", "message": "カタカナ語"},
+    {"rule": "hedge", "line": 5, "severity": "warn", "message": "fix \"quoted\"\nnext"}]})
 
 
 class MarkdownEditHook(unittest.TestCase):
@@ -63,25 +67,31 @@ class MarkdownEditHook(unittest.TestCase):
     def test_integration_feedback_and_no_repository_artifacts(self):
         with tempfile.TemporaryDirectory() as tmp:
             work = Path(tmp)
+            docs = work / "docs"
+            docs.mkdir()
             stub = work / "lint"
             stub.write_text('''#!/usr/bin/env python3
 import json, os, sys
-with open(os.environ["CALLS"], "a") as f: f.write(json.dumps(sys.argv[1:]) + "\\n")
+with open(os.environ["CALLS"], "a") as f:
+    f.write(json.dumps({"argv": sys.argv[1:], "cwd": os.getcwd()}) + "\\n")
 print(os.environ["LINT_OUTPUT"])
 print("startup diagnostic", file=sys.stderr)
 sys.exit(int(os.environ["LINT_STATUS"]))
 ''')
             stub.chmod(0o755)
             calls = work / "calls"
-            event = {"tool_name": "Write", "cwd": tmp, "tool_input": {"file_path": "note.md"}}
+            event = {"tool_name": "Write", "cwd": tmp, "tool_input": {"file_path": "docs/note.md"}}
+            target = str(docs / "note.md")
             for status, output, expected in (
-                (0, "[]", ""),
-                (1, '[{"messages":[{"line":2,"column":3,"ruleId":"rule","message":"fix"}]}]', "note.md:2:3 [rule] fix"),
-                (1, "broken json", "未実行"),
+                (0, json.dumps({"findings": []}), ""),
+                (0, FINDINGS, f"{target}:5 [warn hedge] fix \"quoted\"\nnext"),
+                (0, FINDINGS, f"{target}:2 [info katakana_term] カタカナ語"),
+                (0, "broken json", "未実行"),
+                (0, json.dumps({"no": "findings"}), "未実行"),
                 (2, "", "startup diagnostic"),
             ):
                 result = subprocess.run([str(HOOK)], input=json.dumps(event), text=True,
-                    capture_output=True, cwd=tmp, env={**os.environ, "MEISEKI_LINT": str(stub),
+                    capture_output=True, cwd=tmp, env={**os.environ, "YOMIYASU_LINT": str(stub),
                     "CALLS": str(calls), "LINT_OUTPUT": output, "LINT_STATUS": str(status)})
                 self.assertEqual(result.returncode, 0, result.stderr)
                 if expected:
@@ -89,19 +99,35 @@ sys.exit(int(os.environ["LINT_STATUS"]))
                     self.assertIn(expected, context)
                 else:
                     self.assertEqual(result.stdout, "")
+            # JSON once per edited file, run beside the file so its repository's word lists apply.
             self.assertEqual([json.loads(line) for line in calls.read_text().splitlines()],
-                             [[str(work / "note.md")]] * 4)
-            self.assertEqual(sorted(p.name for p in work.iterdir()), ["calls", "lint"])
+                             [{"argv": ["--json", target], "cwd": str(docs)}] * 6)
+            self.assertEqual(sorted(p.name for p in work.iterdir()), ["calls", "docs", "lint"])
 
     def test_grok_reports_diagnostics_to_log(self):
         event = {"tool_name": "search_replace", "tool_input": {"file_path": "note.md"}}
         with tempfile.TemporaryDirectory() as tmp:
-            result = subprocess.run([str(ROOT / "agent/grok/hooks/meiseki-lint-markdown.sh")],
+            result = subprocess.run([str(ROOT / "agent/grok/hooks/yomiyasu-lint-markdown.sh")],
                 input=json.dumps(event), text=True, capture_output=True,
-                env={**os.environ, "GROK_HOME": tmp, "MEISEKI_LINT": "/missing/lint"})
+                env={**os.environ, "GROK_HOME": tmp, "YOMIYASU_LINT": "/missing/lint"})
             self.assertEqual(result.returncode, 0)
             self.assertEqual(result.stdout, "")
             self.assertIn("未実行", (Path(tmp) / "logs/markdown-lint.log").read_text())
+
+    def test_each_runtime_wires_an_existing_hook_script(self):
+        claude = json.loads((ROOT / "agent/claude/settings.json").read_text())
+        codex = json.loads((ROOT / "agent/codex/hooks.json").read_text())
+        grok = json.loads((ROOT / "agent/grok/hooks/markdown.json").read_text())
+        wired = {
+            "claude": [h["command"] for e in claude["hooks"]["PostToolUse"] for h in e["hooks"]],
+            "codex": [h["command"] for e in codex["hooks"]["PostToolUse"] for h in e["hooks"]],
+            "grok": [h["command"] for e in grok["hooks"]["PostToolUse"] for h in e["hooks"]],
+        }
+        for runtime, commands in wired.items():
+            lint = [c for c in commands if "lint-markdown" in c]
+            self.assertEqual(len(lint), 1, f"{runtime}: {commands}")
+            script = ROOT / "agent" / runtime / "hooks" / lint[0].rstrip('"').rsplit("/", 1)[-1]
+            self.assertTrue(os.access(script, os.X_OK), f"{runtime} wires missing {script}")
 
 
 if __name__ == "__main__":

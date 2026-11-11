@@ -1,0 +1,17 @@
+#!/bin/bash
+# yomiyasu の決定論の lint (scripts/yomiyasu_lint.py) を PATH から呼ぶ入口。
+#
+#   yomiyasu-lint [--json] [--doc-type 種類] … <file>
+#   echo "日本語" | yomiyasu-lint
+#
+# 引数・stdin・stdout・exit code は素通しする (オプションは yomiyasu-lint --help)。
+# 本体の版と置き場は home-server の agent-tools updater が持ち、
+# ~/.agents/skills/yomiyasu へ link する。無ければ exit 2 で、clean とは区別する。
+set -euo pipefail
+
+lint="$HOME/.agents/skills/yomiyasu/scripts/yomiyasu_lint.py"
+[[ -f "$lint" ]] || {
+    echo "yomiyasu-lint: yomiyasu is not installed at ~/.agents/skills/yomiyasu (run the agent-tools updater)" >&2
+    exit 2
+}
+exec python3 "$lint" "$@"

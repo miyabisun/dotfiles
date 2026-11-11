@@ -40,7 +40,7 @@ description: >-
 ```sh
 python3 <skill-dir>/scripts/evaluate.py --context /tmp/context.json \
   --output <evidence-dir> README.md
-meiseki-lint README.md > <evidence-dir>/lint.json
+yomiyasu-lint --json README.md > <evidence-dir>/lint.json
 ```
 
 [採点基準](scripts/questions.json) は客観性、読者適合、初回利用、構成、簡潔さの5項目。
@@ -59,8 +59,8 @@ Scoreが2.5未満かconfidenceが0.5未満なら重点確認へ回す。これ�
   高得点でも既知の欠陥を残さず、低得点を誤判定とするなら原文の根拠と判断を記録する。
 - 修正した本文を使って影響する項目を再確認した。点数を上げるだけの反復はしない。
   API失敗、入力不足、項目欠落、根拠との不一致が未解決なら完了にしない。
-- meiseki-lintを実行した。終了0は指摘なし、1は指摘あり、2以上は実行エラー。
-  指摘は修正するか誤検知の理由を残し、実行エラーを指摘なしとは扱わない。
+- yomiyasu-lintを実行した。終了0は実行済みで、見直し候補は `findings` にある。0以外は実行エラー。
+  候補は修正するか誤検知の理由を残し、実行エラーを候補なしとは扱わない。
 - コマンド例・参照先・翻訳間の整合を確認し、既存の形式検査も通した。
   Markdownの字面を固定するテストは作らない。
 

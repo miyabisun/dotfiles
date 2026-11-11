@@ -19,15 +19,14 @@ Banner-only v0.1.0/v0.1.1 releases are rejected as new download artifacts.
 Failures preserve the existing binary. Fix the release or connection, then retry.
 Unrecognized targets are refused.
 
-## Agent tools: yomiyasu and meiseki
+## Agent tools: yomiyasu
 
 [yomiyasu](https://github.com/nanaism/yomiyasu) is an Agent Skill that refines Japanese prose.
-[meiseki](https://github.com/bamboo-nova/meiseki) holds the textlint rules behind `meiseki-lint`, `meiseki`, and `meiseki-rewrite`.
-Their versions belong to the agent-tools updater in
+Its deterministic linter runs as `yomiyasu-lint`; see `yomiyasu-lint --help` for the options.
+Its version belongs to the agent-tools updater in
 [home-server](https://github.com/miyabisun/home-server/blob/main/systemd/README.md#agent-tools).
-A daily systemd timer follows each upstream's latest release, checks the tool, and goes back on failure.
+A daily systemd timer follows the upstream's latest release, checks the tool, and goes back on failure.
 yomiyasu is linked at `~/.agents/skills/yomiyasu`, which the agents read as `agent/common/skills`; Git ignores the link there.
-meiseki is linked at `~/.local/share/meiseki`.
 
 `bin/install-apps` keeps no versions. When `~/.local/bin/agent-tools-update` exists, it runs the updater once:
 

@@ -80,12 +80,12 @@ If an update fails, keep existing data and inspect the reported conflict before 
 |---|---|
 | Coding-agent setup and skills | [agent/README.md](agent/README.md) |
 | Neovim bookmark spaces and navigation | [config/nvim/README.md](config/nvim/README.md) |
-| Optional CLI installers, including pen, and the yomiyasu and meiseki agent tools | [Tools and secrets](docs/utilities.md) |
+| Optional CLI installers, including pen, and the yomiyasu agent tool | [Tools and secrets](docs/utilities.md) |
 | Rust toolchain through rustup | [Rust toolchain](docs/utilities.md#rust-toolchain) |
 | Bitwarden-backed secrets, SSH keys, and env files | [Bitwarden commands](docs/utilities.md#bitwarden-commands) |
 | TypeSafe credentials on another machine | [TypeSafe setup](docs/utilities.md#typesafe-credentials) |
 
-Local helpers include `review`, `agent-test`, `meiseki-lint`, and tmux launchers.
+Local helpers include `review`, `agent-test`, `yomiyasu-lint`, and tmux launchers.
 Some use separately installed applications; their source and setup are linked above.
 `bin/install-apps` installs optional CLIs.
 `bin/install-envs` restores TypeSafe credentials.

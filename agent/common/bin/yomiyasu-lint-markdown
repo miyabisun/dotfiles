@@ -26,21 +26,23 @@ def edited_markdown(event):
 
 
 def lint_file(lint, path, timeout):
+    # Beside the file, so yomiyasu finds that repository's .yomiyasu-words/.
+    folder = Path(path).parent
     try:
-        # The shared wrapper also terminates npx/textlint descendants on timeout.
+        # The shared wrapper also terminates the linter's descendants on timeout.
         bounded = str(Path(__file__).resolve().with_name("with-timeout"))
-        result = subprocess.run([bounded, str(max(1, int(timeout))), lint, path],
-                                capture_output=True, text=True)
+        result = subprocess.run([bounded, str(max(1, int(timeout))), lint, "--json", path],
+                                capture_output=True, text=True,
+                                cwd=folder if folder.is_dir() else None)
     except OSError as error:
         return f"{path}: Markdown lint 未実行 (clean ではない): {error}"
     if result.returncode == 0:
-        return ""
-    if result.returncode == 1:
         try:
-            findings = [f"{path}:{msg['line']}:{msg['column']} [{msg['ruleId']}] {msg['message']}"
-                        for entry in json.loads(result.stdout) for msg in entry["messages"]]
-            if findings:
-                return "meiseki-lint の指摘 (編集済み・advisory):\n" + "\n".join(findings)
+            findings = [f"{path}:{item['line']} [{item['severity']} {item['rule']}] {item['message']}"
+                        for item in json.loads(result.stdout)["findings"]]
+            if not findings:
+                return ""
+            return "yomiyasu-lint の見直し候補 (編集済み・advisory):\n" + "\n".join(findings)
         except (ValueError, KeyError, TypeError):
             pass
     return (f"{path}: Markdown lint 未実行 (clean ではない): {lint} exit {result.returncode}\n"
@@ -49,7 +51,7 @@ def lint_file(lint, path, timeout):
 
 def main():
     event = json.load(sys.stdin)
-    lint = os.environ.get("MEISEKI_LINT", str(Path.home() / ".local/bin/meiseki-lint"))
+    lint = os.environ.get("YOMIYASU_LINT", str(Path.home() / ".local/bin/yomiyasu-lint"))
     # Leave time for feedback before the harness's 60 second hook timeout.
     deadline = time.monotonic() + 50
     messages = []

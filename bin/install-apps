@@ -375,7 +375,7 @@ MSG
 }
 
 # ---------------------------------------------------------------------------
-# agent のツール (yomiyasu・meiseki) — 版と置き場は home-server の agent-tools updater
+# agent のツール (yomiyasu) — 版と置き場は home-server の agent-tools updater
 # (systemd/agent-tools/tools.yaml と 1 日 1 回の timer) が持つ。ここは版を持たず、
 # updater が入っていれば 1 回実行するだけ。updater は downgrade を拒否するので、
 # 流し直しても版は下がらない。
@@ -383,10 +383,10 @@ MSG
 install_agent_tools() {
   updater="$HOME/.local/bin/agent-tools-update"
   if [ ! -x "$updater" ]; then
-    echo "==> Skipping yomiyasu and meiseki: install the agent-tools updater from home-server (make -C systemd install-agent-tools)"
+    echo "==> Skipping yomiyasu: install the agent-tools updater from home-server (make -C systemd install-agent-tools)"
     return
   fi
-  echo "==> Updating yomiyasu and meiseki with agent-tools-update..."
+  echo "==> Updating yomiyasu with agent-tools-update..."
   "$updater"
 }
 

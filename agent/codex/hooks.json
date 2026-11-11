@@ -6,9 +6,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.codex/hooks/meiseki-lint-markdown.sh\"",
+            "command": "bash \"$HOME/.codex/hooks/yomiyasu-lint-markdown.sh\"",
             "timeout": 60,
-            "statusMessage": "Markdown の日本語 lint (meiseki)"
+            "statusMessage": "Markdown の日本語 lint (yomiyasu)"
           }
         ]
       }

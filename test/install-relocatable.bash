@@ -75,6 +75,11 @@ sha256_file() {
 
 home1="$test_root/home1"
 seed_rc "$home1"
+# Retired meiseki commands: links into this checkout go, a user's own command stays.
+mkdir -p "$home1/.local/bin"
+ln -s "$repo_copy/agent/common/bin/meiseki" "$home1/.local/bin/meiseki"
+ln -s "$repo_copy/agent/common/bin/meiseki-lint" "$home1/.local/bin/meiseki-lint"
+ln -s /opt/elsewhere/meiseki-rewrite "$home1/.local/bin/meiseki-rewrite"
 run_install "$home1" >"$test_root/run1.out"
 
 # 全 managed symlink がコピーした repo を直接指すこと。
@@ -104,9 +109,7 @@ managed_links="
 .agents/agents agent/common/agents
 .agents/designs agent/common/designs
 .local/bin/notify-turn-end.sh agent/codex/hooks/notify-turn-end.sh
-.local/bin/meiseki agent/common/bin/meiseki
-.local/bin/meiseki-lint agent/common/bin/meiseki-lint
-.local/bin/meiseki-rewrite agent/common/bin/meiseki-rewrite
+.local/bin/yomiyasu-lint agent/common/bin/yomiyasu-lint
 .local/bin/tmux-session-picker config/tmux/bin/tmux-session-picker
 .local/bin/tmux-mux config/tmux/bin/tmux-mux
 .config/sheldon/plugins.toml config/zsh/plugins.toml
@@ -129,6 +132,11 @@ while read -r link_rel target_rel; do
     exit 1
   fi
 done <<<"$managed_links"
+
+for retired in meiseki meiseki-lint; do
+  test ! -e "$home1/.local/bin/$retired" && test ! -L "$home1/.local/bin/$retired"
+done
+test "$(readlink "$home1/.local/bin/meiseki-rewrite")" = /opt/elsewhere/meiseki-rewrite
 
 # The shared rule is loaded directly; fresh installs do not create old wrappers.
 for old_rule in CLAUDE.md GLOBAL.md; do

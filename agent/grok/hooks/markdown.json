@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./meiseki-lint-markdown.sh",
+            "command": "./yomiyasu-lint-markdown.sh",
             "timeout": 60
           }
         ]

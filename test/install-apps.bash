@@ -659,7 +659,7 @@ test ! -e "$test_root/unknown-pen-curl.log" \
   || test "$(grep -Fc 'pen-cli' "$test_root/unknown-pen-curl.log" || true)" -eq 0
 test -z "$(find "$unknown_pen_tmp" -mindepth 1 -print -quit)"
 
-# agent のツール (yomiyasu・meiseki) — 版は home-server の agent-tools updater が持つ。
+# agent のツール (yomiyasu) — 版は home-server の agent-tools updater が持つ。
 # install-apps は版を持たず、updater が入っていれば 1 回実行し、無ければ飛ばす。
 agent_tools_home="$test_root/agent-tools-home"
 mkdir -p "$agent_tools_home/.local/bin"
@@ -672,7 +672,7 @@ agent_tools_runs() {
 }
 
 run_agent_tools >"$test_root/agent-tools-1.out"
-grep -F "Skipping yomiyasu and meiseki" "$test_root/agent-tools-1.out" >/dev/null
+grep -F "Skipping yomiyasu" "$test_root/agent-tools-1.out" >/dev/null
 test "$(agent_tools_runs)" -eq 0
 
 cat >"$agent_tools_home/.local/bin/agent-tools-update" <<'STUB'
