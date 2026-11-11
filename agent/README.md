@@ -224,7 +224,8 @@ submoduleを含むrepoは現在対象外で、黙って検証済みにはしな�
 
 編集後の hook が、変更された `.md` だけに yomiyasu の決定論の lint (`yomiyasu-lint --json`) を掛ける。
 共通処理は `common/bin/yomiyasu-lint-markdown` (Python 3) が持つ。
-lint は編集した file の directory で動かし、その repo の `.yomiyasu-words/` を読ませる。
+lint は編集した file の directory で動かす。yomiyasu 3 は作業 directory の外の file を読まず、
+その repo の `.yomiyasu-words/` もそこから探すためである。
 `common/bin/yomiyasu-lint` は agent-tools updater が置く `~/.agents/skills/yomiyasu` の linter を呼ぶ入口である。
 書き直しや repo 全体の検査は起動しない。書き直しは yomiyasu skill で行う。
 

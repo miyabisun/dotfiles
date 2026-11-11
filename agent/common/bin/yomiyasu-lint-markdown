@@ -26,7 +26,8 @@ def edited_markdown(event):
 
 
 def lint_file(lint, path, timeout):
-    # Beside the file, so yomiyasu finds that repository's .yomiyasu-words/.
+    # Beside the file: yomiyasu 3 reads no file outside its working directory,
+    # and finds that repository's .yomiyasu-words/ from there.
     folder = Path(path).parent
     try:
         # The shared wrapper also terminates the linter's descendants on timeout.
