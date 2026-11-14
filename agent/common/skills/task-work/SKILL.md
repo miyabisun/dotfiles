@@ -81,7 +81,7 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
 ## 開発と実機作業の引き継ぎ
 
 タスク作成・範囲変更、利用先の確認、実行先・depends_on・完了条件の分割は
-[task-creater](../task-creater/SKILL.md) が所有する。通常のready化では事前レビューを重ねない。
+[task-creater](../task-creater/SKILL.md) が所有する。通常のready化では登録前の確認を重ねない。
 実行担当は事前判断をdeliverへ渡し、前提タスクの完了報告から対象版と検証証拠を後続へ引き継ぐ。
 授権済みの後続を続け、範囲外の発見はdeliverのdraft登録に従う。
 
