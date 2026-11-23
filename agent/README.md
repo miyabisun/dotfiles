@@ -54,6 +54,9 @@ OrcaServerで公開モデルをプレートへ保存したり、フィラメン�
 [MCP接続手順](orca-mcp.md)に従い、利用するマシンの接続先を登録します。
 操作は小さな[orca-plate](common/skills/orca-plate/SKILL.md)と[orca-material](common/skills/orca-material/SKILL.md)に分かれています。
 
+agent-hubのGPUを使う仕事（ComfyUIの動画・画像、three-liveの書き出し）は、切換器 gpu-switch で持ち主を切り替えてから始めます。
+手順とMCPの登録は[gpu-switch](common/skills/gpu-switch/SKILL.md)にあります。
+
 ## Claude Codeの指示ファイル
 
 共有規約は `~/.claude/rules/GLOBAL.md` から読み込みます。
