@@ -48,11 +48,12 @@ MCPのURLはマシンごとの設定に登録し、dotfilesのテンプレート
 todo-listはhomeserverの5009番で動く。
 homeserverでは `http://127.0.0.1:5009/mcp`、agent-hubなど別のマシンでは
 `http://192.168.1.100:5009/mcp` を使う。
-未登録なら次で追加し、`claude mcp get todo-list` で接続を確かめる。
+未登録なら次で追加し、`claude mcp get todo-list`（agyは `agy mcp list`）で接続を確かめる。
 追加したMCPのツールは次のsessionから使える。今のsessionでは同じURLへ
 MCPのHTTP（`initialize` → `tools/call`）で直接問い合わせてよい。
 
 ```sh
 claude mcp add --transport http --scope user todo-list <MCP URL>
 codex mcp add todo_list --url <MCP URL>
+agy mcp add todo-list <MCP URL>
 ```

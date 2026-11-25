@@ -43,8 +43,8 @@ Keep the checkout in place while using its linked settings.
 | Local commands | Helpers are installed under `~/.local/bin`; see below |
 | Checkout sync | With `~/.config/sync-checkouts.list`, a user timer fast-forwards the listed checkouts; see [Checkout sync](docs/utilities.md#checkout-sync) |
 
-Claude's `settings.json`, Codex's `config.toml`, and Grok's `config.toml` are local copies.
-They are seeded from `agent/` only when absent.
+Claude's `settings.json`, Codex's `config.toml`, Grok's `config.toml`, and the Antigravity CLI's `mcp_config.json` are local copies.
+They are seeded from `agent/` only when absent (an empty `mcp_config.json` counts as absent).
 A legacy link to the matching template is converted to a copy with its contents preserved.
 Existing local settings are kept. Retired agent-talk peer MCP tables are removed.
 Use the [config-merge skill](agent/common/skills/config-merge/SKILL.md) to sync later template changes.
@@ -52,6 +52,7 @@ Use the [config-merge skill](agent/common/skills/config-merge/SKILL.md) to sync 
 Claude reads the shared rules through `~/.claude/rules/GLOBAL.md`.
 Managed legacy links are migrated.
 See [Claude instruction files](agent/README.md#claude-codeの指示ファイル) for `AGENTS.md` support and settings.
+The Antigravity CLI (`agy`) reads them through `~/.gemini/AGENTS.md`; see [Antigravity CLI](agent/README.md#antigravity-cliagy).
 
 Shell settings outside the managed block are preserved.
 Broken or duplicate block markers stop shell-file updates; correct them before retrying.

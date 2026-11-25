@@ -33,6 +33,8 @@ sha256_file() {
 
 make_stub delta
 make_stub obscura
+# agy has its own contract in install-apps-agy.bash; here it is already installed.
+make_stub agy
 
 cat >"$fake_bin/uname" <<'STUB'
 #!/usr/bin/env bash

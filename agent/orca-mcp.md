@@ -42,12 +42,27 @@ url = "http://mother-host:3000/mcp"
 差分の扱いは[config-merge](common/skills/config-merge/SKILL.md)、
 対応オプションは[Codex公式MCP仕様](https://developers.openai.com/codex/mcp/)を参照してください。
 
+## Antigravity CLI（agy）へ登録する
+
+agyの登録先は`~/.gemini/config/mcp_config.json`です。
+`bin/install`はこのファイルが無いか空のときだけテンプレートから作り、登録済みの内容は書き換えません。
+上で選んだURLを`ORCA_MCP_URL`に設定して、次を実行します。
+
+```sh
+agy mcp add orca-server "$ORCA_MCP_URL"
+agy mcp list
+```
+
+agyのremote MCPはStreamable HTTPだけを受け付けます。登録は`serverUrl`の項目として保存されます。
+形式は[agyのMCP仕様](https://antigravity.google/docs/mcp)を参照してください。
+
 ## 接続と保存を確かめる
 
 新しいCodexセッションの`/mcp`で接続を確認し、`scad_models`で公開モデル、
 `filament_products`で製品が読めることを確認します。CLIの`mcp get`は登録の確認だけです。
 skillは既存の`~/.agents/skills`から読み込みます。Claude Code/Grokには同じskillを既存リンクで配布します。
 CodexのMCP登録は、それらのクライアントへ共有されません。各クライアントでも同じURLを登録してください。
+agyも同じ`~/.agents/skills`からskillを読みます。
 
 「このモデルを10個のプレートとして保存」と依頼したら、返された管理画面リンクで個数・条件を確認します。
 「同じ製品へ黄を追加」と依頼したら、製品の色一覧と共通設定を確認します。

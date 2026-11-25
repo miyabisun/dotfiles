@@ -1,8 +1,8 @@
 ---
 name: config-merge
 description: >-
-  agent harness の live config (~/.codex/config.toml、~/.claude/settings.json)
-  と、~/projects/miyabisun/dotfiles 側の portable な config を突き合わせる。
+  agent harness の live config (~/.codex/config.toml、~/.claude/settings.json、
+  ~/.gemini/config/mcp_config.json) と、~/projects/miyabisun/dotfiles 側の portable な config を突き合わせる。
   設定がローカルで変わったとき、dotfiles が別のマシンから設定を持ち込んだとき、
   または user がマシン固有の状態を失わずに config の merge・同期・promote・
   配布を求めたときに使う。
@@ -22,6 +22,7 @@ portable な意図は dotfiles に置き、runtime やマシン固有の状態�
 | --- | --- | --- | --- |
 | Codex | `$HOME/.codex/config.toml` | `agent/codex/config.toml` | TOML |
 | Claude Code | `$HOME/.claude/settings.json` | `agent/claude/settings.json` | JSON |
+| Antigravity CLI (agy) | `$HOME/.gemini/config/mcp_config.json` | `agent/antigravity/mcp_config.json` | JSON |
 
 dotfiles の root は `$HOME/projects/miyabisun/dotfiles` である。
 
@@ -57,6 +58,8 @@ runtime の状態**である。
 - Codex: `projects.*` / `tui.model_availability_nux.*` / `hooks.state.*`
 - Claude Code: `model` — このマシンとセッションの状態であって portable な意図
   ではない。ほかに harness が書き込むと確認できた key も同じ扱いにする
+- agy: `serverUrl` (`url`) を持つ remote の `mcpServers.*` — 接続先はマシンごとに
+  登録し、dotfiles の template へ入れない
 
 secret や host 限定の値を含まないなら、次は portable の候補として扱う:
 
@@ -65,6 +68,7 @@ secret や host 限定の値を含まないなら、次は portable の候補と
   恒常的な TUI と通知の設定 / 再利用できる hooks と sandbox の設定
 - Claude Code: `permissions` / `hooks` / `env` / `outputStyle` / `language` /
   `effortLevel` — いずれも user が意図して選んだ振る舞いである
+- agy: host に依らない `command` の `mcpServers.*` (例: `obscura mcp`)
 
 混在する table や object は field ごとに分類する。**key の順序が動いただけで
 値が同じものは差分として扱わない** — harness が書き戻すときに順序を並べ替える
@@ -104,7 +108,7 @@ local 限定の設定は live file に残り、shared には無いはずであ�
    `codex --strict-config --version` を実行する。Claude Code には
    `--strict-config` に相当するものが無い。`claude doctor` は settings を
    読むが schema validator ではないので、**JSON として妥当なことの確認は
-   `jq -e .` が担う**。
+   `jq -e .` が担う**。agy は `agy mcp list` に登録した server が並ぶことを確かめる。
 3. `git -C "$HOME/projects/miyabisun/dotfiles" diff --check` を実行する。
    shared config diff の全体を確認する。
 4. secret や local 限定の table が shared の diff に入っていないことを確認する。

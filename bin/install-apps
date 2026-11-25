@@ -47,9 +47,90 @@ install_grok() {
   echo "==> Grok CLI installed"
 }
 
+# Antigravity CLI (agy): the same steps as the official install.sh (platform
+# manifest -> tar.gz -> sha512 -> ~/.local/bin/agy), except its final
+# `agy install`, which appends PATH lines to the shell rc files.
+install_agy() (
+  manifest_base="https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/manifests"
+  target="$HOME/.local/bin/agy"
+
+  if command -v agy >/dev/null 2>&1; then
+    echo "==> Antigravity CLI already installed ($(agy --version 2>/dev/null | head -1))"
+    return
+  fi
+
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64) platform="linux_amd64" ;;
+    Linux-aarch64) platform="linux_arm64" ;;
+    Darwin-arm64) platform="darwin_arm64" ;;
+    Darwin-x86_64) platform="darwin_amd64" ;;
+    *)
+      echo "==> Antigravity CLI does not support $(uname -s)-$(uname -m)" >&2
+      return 1
+      ;;
+  esac
+
+  tmpdir="$(mktemp -d)"
+  target_tmp=""
+  # 下の trap EXIT から呼ぶ (shellcheck は間接呼び出しを追えない)
+  # shellcheck disable=SC2329
+  cleanup() {
+    rm -rf "$tmpdir"
+    [ -z "$target_tmp" ] || rm -f "$target_tmp"
+  }
+  trap cleanup EXIT
+
+  echo "==> Installing Antigravity CLI..."
+  curl --proto '=https' --tlsv1.2 -fsSL \
+    "$manifest_base/$platform.json" -o "$tmpdir/manifest.json"
+  manifest_value() {
+    sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+      "$tmpdir/manifest.json" | head -1
+  }
+  version="$(manifest_value version)"
+  url="$(manifest_value url)"
+  expected_hash="$(manifest_value sha512)"
+  case "$url" in
+    https://*.tar.gz) ;;
+    *)
+      echo "==> Invalid Antigravity CLI manifest for $platform" >&2
+      return 1
+      ;;
+  esac
+  if ! printf '%s\n' "$expected_hash" | grep -Eq '^[0-9a-f]{128}$'; then
+    echo "==> Invalid Antigravity CLI manifest for $platform" >&2
+    return 1
+  fi
+
+  curl --proto '=https' --tlsv1.2 -fsSL "$url" -o "$tmpdir/agy.tar.gz"
+  if [ "$(uname -s)" = Darwin ]; then
+    actual_hash="$(shasum -a 512 "$tmpdir/agy.tar.gz" | awk '{ print $1 }')"
+  else
+    actual_hash="$(sha512sum "$tmpdir/agy.tar.gz" | awk '{ print $1 }')"
+  fi
+  if [ "$actual_hash" != "$expected_hash" ]; then
+    echo "==> Checksum mismatch for Antigravity CLI $version" >&2
+    return 1
+  fi
+
+  tar -xzf "$tmpdir/agy.tar.gz" -C "$tmpdir" antigravity
+  if [ ! -f "$tmpdir/antigravity" ] || [ -L "$tmpdir/antigravity" ]; then
+    echo "==> Invalid Antigravity CLI binary in $version" >&2
+    return 1
+  fi
+
+  mkdir -p "$HOME/.local/bin"
+  target_tmp="$(mktemp "$HOME/.local/bin/.agy.XXXXXX")"
+  install -m755 "$tmpdir/antigravity" "$target_tmp"
+  mv -f "$target_tmp" "$target"
+  target_tmp=""
+  echo "==> Antigravity CLI $version installed"
+)
+
 install_agent_clis() {
   install_codex
   install_grok
+  install_agy
 }
 
 # ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ RECHECK = dict(verdict="pass", items=[dict(id="1", resolved=True, reason="fixed"
 
 class ReviewPresets(unittest.TestCase):
     caller = "claude"
+    backend = "codex"
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -64,9 +65,9 @@ sys.exit(int(os.environ.get('STATUS', '0')))
         self.assertEqual(run.returncode, 0, run.stderr)
         capture = json.loads(self.capture.read_text())
         args = capture["args"]
-        flag, model = ("--model", "claude-fable-5-1") if self.caller == "codex" else ("-m", "gpt-6-astra")
+        flag, model = ("--model", "claude-fable-5-1") if self.backend == "claude" else ("-m", "gpt-6-astra")
         self.assertEqual(args[args.index(flag)+1], model)
-        if self.caller == "codex":
+        if self.backend == "claude":
             self.assertEqual(capture["cwd"], str(self.root))
             self.assertEqual(args[args.index("--tools")+1], "Read,Glob,Grep")
             self.assertIn("--safe-mode", args)
@@ -136,6 +137,7 @@ sys.exit(int(os.environ.get('STATUS', '0')))
 
 class ClaudePresets(ReviewPresets):
     caller = "codex"
+    backend = "claude"
 
     def test_error_envelope_is_not_pass(self):
         run = self.run_review(ERROR="1")
@@ -157,6 +159,18 @@ class ClaudePresets(ReviewPresets):
         self.assertEqual(run.returncode, 0, run.stderr)
         self.assertEqual(json.loads(self.result.read_text()), ["custom"])
         self.assertEqual(json.loads(self.capture.read_text())["prompt"], "custom task")
+
+
+class AgyPresets(ClaudePresets):
+    """agy has no review CLI of its own to pair with, so it asks Claude like Codex does."""
+    caller = "agy"
+
+    def test_rejects_workspace_write(self):
+        run = subprocess.run([str(REVIEW), str(self.root), "--from", self.caller, "--kind", "implementation",
+                              "--result", str(self.result), "--sandbox", "workspace-write"],
+                             input="task", text=True, capture_output=True, env=self.env)
+        self.assertEqual(run.returncode, 2)
+        self.assertFalse(self.capture.exists())
 
 
 if __name__ == "__main__":

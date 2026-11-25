@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-model review: Codex -> Claude Fable 5.1, Claude -> GPT-6 Astra.
+"""Cross-model review: Codex/agy -> Claude Fable 5.1, Claude -> GPT-6 Astra.
 
 --schema retains the legacy Codex prompt/log/exit-code passthrough contract.
 --kind writes verbose logs to <result>.log; exit 0 means a valid report, NOT pass.
@@ -91,7 +91,7 @@ class Parser(argparse.ArgumentParser):
 def main():
     parser = Parser(description=__doc__)
     parser.add_argument("dir", type=Path)
-    parser.add_argument("--from", dest="caller", choices=["codex", "claude"], required=True)
+    parser.add_argument("--from", dest="caller", choices=["codex", "claude", "agy"], required=True)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--schema", type=Path)
     mode.add_argument("--kind", choices=SCHEMAS)
@@ -109,11 +109,11 @@ def main():
         parser.error("schema and result must be different files")
     if not re.fullmatch(r"[1-9][0-9]*", args.timeout):
         parser.error("--timeout must be positive integer seconds")
-    if args.caller == "codex" and args.sandbox != "read-only":
+    backend = "codex" if args.caller == "claude" else "claude"
+    if backend == "claude" and args.sandbox != "read-only":
         parser.error("Claude reviews support read-only access only")
     # Never let a previous successful report survive a new execution failure.
     args.result.unlink(missing_ok=True)
-    backend = "claude" if args.caller == "codex" else "codex"
     executable = shutil.which(os.environ.get(f"REVIEW_{backend.upper()}", backend))
     runner = Path(__file__).resolve().with_name("with-timeout")
     if not executable or not os.access(runner, os.X_OK):

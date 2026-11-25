@@ -19,6 +19,19 @@ Banner-only v0.1.0/v0.1.1 releases are rejected as new download artifacts.
 Failures preserve the existing binary. Fix the release or connection, then retry.
 Unrecognized targets are refused.
 
+## Antigravity CLI (agy)
+
+`bin/install-apps` installs Google's Antigravity CLI as `~/.local/bin/agy` when no `agy` is on `PATH`:
+
+```bash
+bash bin/install-apps --run-step install_agy
+```
+
+It follows the official `install.sh`: it reads the platform manifest, downloads the archive, and checks its SHA-512.
+It skips the final `agy install`, so `.bashrc` and `.zshrc` stay unchanged; `bin/install` already puts `~/.local/bin` on `PATH`.
+A checksum mismatch installs nothing. An installed `agy` updates itself, so the step leaves it alone.
+Sign in once with an interactive `agy` session before using headless `agy -p`.
+
 ## Agent tools: yomiyasu
 
 [yomiyasu](https://github.com/nanaism/yomiyasu) is an Agent Skill that refines Japanese prose.

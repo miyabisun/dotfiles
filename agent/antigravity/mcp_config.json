@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "obscura": {
+      "command": "obscura",
+      "args": ["mcp"]
+    }
+  }
+}

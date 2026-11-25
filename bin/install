@@ -131,6 +131,21 @@ remove_peer_mcp() {
 remove_peer_mcp "$HOME/.codex/config.toml" || exit 1
 remove_peer_mcp "$HOME/.grok/config.toml" || exit 1
 
+# Antigravity CLI (agy): ~/.gemini/AGENTS.md is a global rule without
+# frontmatter, so the shared rules link there like Codex/Grok. agy-only rules
+# and agent adapters live in agent/antigravity; skills reach agy through
+# ~/.agents/skills below. mcp_config.json is machine-local; agy's first run
+# leaves it empty, which counts as not seeded yet.
+mkdir -p "$HOME/.gemini/config"
+link "agent/common/rules/GLOBAL.md" "$HOME/.gemini/AGENTS.md"
+link "agent/antigravity/rules" "$HOME/.gemini/config"
+link "agent/antigravity/agents" "$HOME/.gemini/config"
+gemini_mcp="$HOME/.gemini/config/mcp_config.json"
+if [ -f "$gemini_mcp" ] && [ ! -L "$gemini_mcp" ] && [ ! -s "$gemini_mcp" ]; then
+  rm -f "$gemini_mcp" || exit 1
+fi
+local_config "$gemini_mcp" "$(pwd)/agent/antigravity/mcp_config.json"
+
 mkdir -p "$HOME/.agents"
 link "agent/common/skills" "$HOME/.agents"
 link "agent/common/agents" "$HOME/.agents"

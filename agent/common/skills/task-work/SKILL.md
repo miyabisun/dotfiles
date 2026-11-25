@@ -10,6 +10,8 @@ description: >-
 担当は台帳と次の工程を持ち、各タスクを成果まで進める。
 入口はagent-hubでの `/goal task-serverのタスクを全て完了させてください`。
 Codexでは `/goal $task-work を使ってtask-serverのタスクを全てこなして` と書く。
+Antigravity CLI（agy）では `/goal task-work skillに従ってtask-serverのタスクを全て完了させてください` と書く。
+agyは配車係を務め、workerは [herdr-worker](../herdr-worker/SKILL.md) に従ってClaude Codeで起動する。
 userによる実行依頼は、対象タスクのcommit・push・mergeを含む。
 リリース対象productでは `$bump-tag patch` まで実行する。 スキルの作成・説明依頼では実行しない。
 タスクに明示されたrelease水準やuserの制限は優先する。

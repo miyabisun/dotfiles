@@ -20,9 +20,13 @@ agent/
 │   ├── agents/      # Codex subagent TOML role adapters
 │   ├── hooks/ + hooks.json
 │   └── config.toml
-└── grok/            # Grok CLI only
-    ├── hooks/       # lifecycle + guards (JSON + shell adapters)
-    └── config.toml  # portable template → seed ~/.grok/config.toml
+├── grok/            # Grok CLI only
+│   ├── hooks/       # lifecycle + guards (JSON + shell adapters)
+│   └── config.toml  # portable template → seed ~/.grok/config.toml
+└── antigravity/     # Antigravity CLI (agy) only
+    ├── rules/       # agy-only global rules (language, Claude Code memory)
+    ├── agents/      # agy subagent adapters (tools + pointer to common/agents)
+    └── mcp_config.json  # portable template → seed ~/.gemini/config/mcp_config.json
 ```
 
 `bin/install`が張るsymlink（既存ファイルへの影響は[導入案内](../README.md)を参照）:
@@ -34,8 +38,9 @@ agent/
 | `~/.claude/designs`, `~/.grok/designs` | `agent/common/designs` |
 | `~/.claude/hooks` | `agent/claude/hooks` |
 | `~/.codex/agents`, `~/.codex/hooks`, `~/.codex/hooks.json` | `agent/codex/*` |
-| `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.claude/rules/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
+| `~/.codex/AGENTS.md`, `~/.grok/AGENTS.md`, `~/.gemini/AGENTS.md`, `~/.claude/rules/GLOBAL.md` | `agent/common/rules/GLOBAL.md` |
 | `~/.grok/hooks` | `agent/grok/hooks` |
+| `~/.gemini/config/rules`, `~/.gemini/config/agents` | `agent/antigravity/*` |
 | `~/.agents/skills`, `~/.agents/agents`, `~/.agents/designs` | `agent/common/*` |
 
 次の設定はmachine-localなコピーとして配置します。
@@ -45,8 +50,10 @@ agent/
 | `~/.claude/settings.json` | `agent/claude/settings.json` |
 | `~/.codex/config.toml` | `agent/codex/config.toml` |
 | `~/.grok/config.toml` | `agent/grok/config.toml` |
+| `~/.gemini/config/mcp_config.json` | `agent/antigravity/mcp_config.json` |
 
 未作成の設定をseedし、対応する旧symlinkは内容を保ってコピーへ変換します。
+agyが初回起動で作る空の `mcp_config.json` は未作成として扱います。
 既存の通常ファイルは保持します。ただしCodex/Grokの廃止したpeer MCP登録は除去します。
 テンプレートの後続変更は[config-merge](common/skills/config-merge/SKILL.md)で同期します。
 
@@ -81,6 +88,62 @@ Bedrockやtelemetry無効などの一部セッションは2.1.281未満では読
 詳細は[公式のAGENTS.md仕様](https://code.claude.com/docs/en/memory#agentsmd)を参照してください。
 
 AGENTS.md用の追加設定は、既定のフォールバックが使える環境では不要です。
+
+## Antigravity CLI（agy）
+
+agyにはtask-serverの読み書きと、Claude Codeへの実装の委譲を任せる。
+導入は `bin/install-apps` の `install_agy`（[導入手順](../docs/utilities.md#antigravity-cli-agy)）、
+配線は `bin/install` が持つ。agyが読む場所は[公式のcustomization discovery](https://antigravity.google/docs/customization-discovery)に従う。
+
+| 届ける物 | agyが読む場所 | 中身 |
+| --- | --- | --- |
+| 共有規約 | `~/.gemini/AGENTS.md` | GLOBAL.mdへのlink。frontmatterの要らない常時のglobal rule |
+| agy専用の規約 | `~/.gemini/config/rules/*.md` | 応答言語と、Claude Codeの記憶の読み方。`trigger: always_on` |
+| skill | `~/.agents/skills` | 共通のlinkをそのまま読む |
+| agent | `~/.gemini/config/agents/*.md` | 共通定義を読ませるadapter |
+| MCP | `~/.gemini/config/mcp_config.json` | machine-localな登録。templateはobscuraだけ |
+
+`rules/` の各fileはfrontmatterに正しい `trigger` が無いとagyに読まれない。
+GLOBAL.mdには書かず、agyだけに要る指示をここに置く。
+
+### 記憶
+
+agyはClaude Codeの記憶（`~/.claude/projects/<cwdの英数字以外を-にした名前>/memory/MEMORY.md`）を、
+作業の始めに自分で読む。読み方は `rules/claude-memory.md` が持ち、記憶が無い場所ではそのまま動く。
+記憶の中のClaude Codeの道具名はagyの道具（`run_command`・`read_file`・`invoke_subagent` など）へ読み替える。
+agyから記憶へ書き込む仕組みは持たない。
+
+### agent
+
+共通定義（`common/agents/*.md`）を `~/.gemini/config/agents` へそのまま張ると、agyは起動できるが
+`tools` の無い定義に `run_command`・`write_file` を渡さない（1.5.17で実測）。
+そこでCodexの `agents/*.toml` と同じく、`antigravity/agents/` にtoolを宣言したadapterを置き、
+本文は共通定義を読ませるだけにする。共通定義にはagyのtool名を書かない。
+agyは綴りを誤ったtool名で固まることがあるので、adapterのtoolは実測した名前だけにする。
+
+### MCP
+
+templateには接続先の要らないobscuraだけを入れる。task-server・todo-list・gpu-switchなどは
+マシンごとに `agy mcp add <名前> <URL>` で登録し、URLをdotfilesへ入れない（[todo](common/skills/todo/SKILL.md)・
+[gpu-switch](common/skills/gpu-switch/SKILL.md)・[OrcaServer](orca-mcp.md)）。
+remote MCPはStreamable HTTPだけを受け付ける。
+
+### 委譲とレビュー
+
+agyから実装を頼むときは、[herdr-worker](common/skills/herdr-worker/SKILL.md)でClaude Codeのworkerを起動する。
+task-workの入口は[task-work](common/skills/task-work/SKILL.md)にある。
+`review --from agy` はCodexからと同じく、Claudeにレビューさせる。
+
+### 扱わない物
+
+権限（`permissions`・`toolPermission`）、hook（`~/.gemini/config/hooks.json`）、Herdrへの状態報告
+（`herdr integration install antigravity-cli`）、agent-talkは配らない。
+そのため `~/.gemini/antigravity-cli/settings.json` のtemplateも無い。
+権限が要る確認は、その回だけの `agy --settings '<JSON>'` で渡す。
+
+Claude Codeの code-review・rust-analyzer-lsp・typescript-lsp に当たるpluginは、agyの公式marketplace
+（`antigravity-plugins-official`）に無い。partnerのCodeRabbit・Qodoは外部serviceのレビューで、
+`change-review`・`review` と重なるため入れない。
 
 ## 実行環境との連携
 
@@ -123,7 +186,7 @@ plugin は、`grok inspect` になお現れることがある。Grok は plugin 
 
 ## agent (`common/agents`)
 
-Claude Code と Grok が共有する役割定義である。frontmatter は `name` /
+Claude Code と Grok が共有する役割定義である。Codex と agy は各自の adapter から同じ定義を読む。frontmatter は `name` /
 `description` だけを持つので、親の chat model を継承する (`model` の既定は
 `inherit`)。Claude 固有の `model` / `effort` / `tools` は意図的に省く。
 
@@ -241,5 +304,9 @@ machine-local なので matcher の変更を `config-merge` で取り込む。Co
 ## 新しい agent tool を足す
 
 1. tool 固有の設定を持つ `agent/<tool>/` を作る
-2. `agent/common/skills` を symlink する (必要なら rules の形式を合わせる)
-3. `bin/install` へ install 手順を足す
+2. `agent/common/skills` を symlink する (`~/.agents/skills` を読む tool なら不要)
+3. `agent/common/rules/GLOBAL.md` を tool の global rule の入口へ link する。本文の写しは作らない
+4. 共通の agent 定義が tool で動くかを実測し、動かなければ `agent/<tool>/agents/` に adapter を置く
+5. machine-local な設定は template を置いて `local_config` で seed する
+6. `bin/install` へ install 手順を、`bin/install-apps` へ導入を足し、一時 HOME の試験を書く
+7. `review --from`、`config-merge` の対象表、`herdr-worker` の runtime を合わせる

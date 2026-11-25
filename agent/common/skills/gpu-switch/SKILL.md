@@ -74,6 +74,12 @@ Codexは `~/.codex/config.toml` に次の表を足す。
 url = "http://127.0.0.1:5017/mcp"
 ```
 
+Antigravity CLI（agy）は次で `~/.gemini/config/mcp_config.json` へ足し、`agy mcp list` で確かめる。
+
+```sh
+agy mcp add gpu-switch http://127.0.0.1:5017/mcp
+```
+
 追加したMCPのtoolは次のsessionから使える。今のsessionやMCPの無い場所では、同じ操作をHTTPで行う。
 
 ```sh
