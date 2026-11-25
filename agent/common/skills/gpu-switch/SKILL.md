@@ -2,7 +2,7 @@
 name: gpu-switch
 description: >-
   agent-hubのGPU（RTX 5060 Ti 1枚）を使う仕事の前に持ち主を切り替え、終わったら返す。
-  ComfyUIの動画（10Eros Singularity V2）・画像（H3-Image）を生成するとき、three-liveを書き出すとき、
+  ComfyUIの動画・画像（H3-Image）を生成するとき、three-liveを書き出すとき、
   「GPUを切り替えて」「GPUは空いている？」「ComfyUIが動いていない」と言われたときに使う。
   GPUを使わない仕事には使わない。
 ---
@@ -18,12 +18,12 @@ agent-hubのGPUは1枚で、three-live・動画・画像は同じVRAMを食う�
 
 ## 候補
 
-`status` が返す `tenants` が正である。2026-11-24 時点では次の3つ。
+`status` が返す `tenants` が正である。2026-11-25 時点では次の3つ。
 
 | id | 仕事 | 切り替えると |
 |---|---|---|
 | `three-live` | three-liveの書き出し（`render`・`frames`） | ComfyUIが止まる |
-| `video` | ComfyUIの動画（10Eros Singularity V2） | ComfyUIが起きる（約6秒）。画像のmodelは降りる |
+| `video` | ComfyUIの動画。画面の行の名前は video-desk（動画のモデルは video-desk の頼む欄で選ぶ） | ComfyUIが起きる（約6秒）。画像のmodelは降りる |
 | `image` | ComfyUIの画像（H3-Image） | ComfyUIが起きる。動画のmodelは降りる |
 
 ## 手順
@@ -54,7 +54,7 @@ serviceを手で起こさず `switch` する（手で起こしても、切換器
 ## 画面
 
 userは `http://agent-hub:5017/`（LANは `http://192.168.1.101:5017/`）で、今の持ち主を見て、行を選んで切り替える。
-ComfyUIの画面は動画か画像を選んだ後に行の右端のリンクから開く。
+行の右端のリンクは、video-desk の行が video-desk（:5018）、画像の行が ComfyUI の画面（:8188）を開く。
 
 ## 接続
 
