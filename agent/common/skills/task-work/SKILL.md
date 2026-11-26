@@ -39,7 +39,7 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
    - blocked: 配車係が判断・情報で解けるなら本文へ追記してreadyに戻す。物理操作・userの持ち物が要るものは残件にする。
    - claimされたまま: herdr-workerに従って画面を読み、答えるか続行を促して待つ。workerが終了してreportが無いときは、
      lease満了後に1回だけ配車し直す。2回目もreportが無ければblockedにする。
-5. workerを片付けて2へ戻る。
+5. workerを片付け、[一時領域の片付け](#一時領域の片付け)のチェックリストを通して2へ戻る。
 6. 表の実行先に配車できるタスクが無くなったら終わる。完了件数、release、
    残件（物理操作待ちのblocked、表にない実行先）と実際に必要な対応だけを返す。
 
@@ -79,6 +79,7 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
 6. 要求された成果がそろってから、doneと結果の原文を一度reportする（haystackにも保存される）。
    merge済みcommitをtaskの対象SHAとし、release tag・artifact・CI URLも証拠に残す。
    commit・pushやCIの起動で依頼を終えない。
+7. reportの前に [一時領域の片付け](#一時領域の片付け) のチェックリストを通し、消した物と残した物をreportに書く。
 
 ## 開発と実機作業の引き継ぎ
 
@@ -99,3 +100,29 @@ CI失敗は原因を修正して再確認する。公開済みtagは動かさず
 同じ依頼の範囲でbump-tagを使う。失敗を理由に最初からdeliverやbumpを繰り返さない。
 
 進められない1件は理由・保存先・残工程をblockedのreportに残す。
+
+## 一時領域の片付け
+
+一時領域（`/tmp`・`$TMPDIR`・`%TEMP%`・scratchpadなど）に作った物は、作った者が消す。
+担当は1件のreportの前に、配車係はworkerの完了を確かめた直後に、下のチェックリストを通す。blockedで止まる時も同じ。
+
+一時領域の意味はOSと設定で変わる。着手時に実体を確かめ（Linuxなら `findmnt -T /tmp`、`df -h /tmp`）、その機械に合わせて判断する。
+
+- tmpfsはRAMを使う。置いた分だけ空きメモリが減り、ほかの仕事（モデルの読み込み・build）を止める。
+- ディスク上の一時領域は容量を使う。
+- 自動の掃除（再起動時、数日〜10日触らなかった物など）は有無も時期も機械ごとに違う。長く動き続ける機械では来ない。「いずれ消える」を理由に置いたままにしない。
+
+### チェックリスト
+
+消す前に、使っているprocessが無い事と、自分か自分のworkerが作った物である事を確かめる。
+
+- [ ] 着手時に、一時領域の実体（RAMかディスクか）と空きを確かめた。
+- [ ] 起動したprocess（server・browser・emulator・別portで起こした常駐の写し）を止め、**止めた直後に**その一時fileを消した。
+      Android emulatorは一時領域の `android-<user>/` にsnapshot（数GB）を残す。emulatorを止めたら、その場で消す。
+- [ ] 作業用directory（scratchpad、log、レビューの依頼と応答、buildの写し、一時のstate・DB、取得したfile）を消した。
+- [ ] この作業で一時領域に出来たtoolのcache・profile（build、test runner、browser）を消した。
+- [ ] 配車係: 終えたworkerのsession・作業directoryが残っていない事を確かめ、残りを消した。
+- [ ] 残す物（reportにpathを書いた証拠の画像など）は、名前と大きさをreportに書いた。
+- [ ] 一時領域の使用量（`du -sh`、`df -h`）を見て、自分の物がほかに残っていない事を確かめた。
+
+他者の物と、稼働中のprocessが使っている物は消さない。持ち主・大きさ・最後に書かれた日時をreportに書く。
