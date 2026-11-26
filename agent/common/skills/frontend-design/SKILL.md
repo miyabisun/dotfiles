@@ -1,7 +1,7 @@
 ---
 name: frontend-design
 description: >-
-  HTML・CSS・JavaScript・SvelteなどブラウザUIを作る・直すときに使う。画面の引き算（初期表示の削減・アイコン化・開閉）と、ChromiumとPlaywrightでの実測まで行う。native UI、backend、文書だけの変更には使わない。
+  HTML・CSS・JavaScript・SvelteなどブラウザUIを作る・直すときに使う。画面の引き算（初期表示の削減・アイコン化・開閉）と、Chromiumの実画面での実測まで行う。native UI、backend、文書だけの変更には使わない。
 ---
 
 # Web UIを作り、削り、実測する
@@ -40,8 +40,8 @@ description: >-
 
 ## 実測
 
-1. 対象repoのbuild・起動・E2E設定を使い、ChromiumとPlaywrightで実行する。
-   Obscuraはアサーション駆動E2Eの代わりにしない。
+1. 対象repoのbuild・起動・試験の設定を使い、画面をChromiumで開いてChromeDriverで操作する。
+   道具の決まりはGLOBALの「ツール」が持つ。
 2. 同じデータとviewportで変更前後の全体を表示し、画像と実際の操作を確認する。
    主情報の面積、見える件数、重複、アクセントの強さも比べる。
 3. 新規UIは明暗・狭幅・長文・空/失敗・keyboard/focusを通す。部分変更は影響する条件だけを選ぶ。
@@ -52,8 +52,9 @@ description: >-
 
    `document.documentElement` の `scrollWidth`・`scrollHeight` を `innerWidth`・`innerHeight` と比べて測る。
    headless Chromiumの画像にはスクロールバーの映らない場合があるため、目視だけで合格にしない。
-5. 必要な挙動の回帰テストは対象repoへ残す。散文やライブラリそのものを再テストしない。
-   自分のプロセスと隔離データだけを片付ける。
+5. 必要な挙動の回帰テストは対象repoへ残す。層の分け方はGLOBALの「ツール」に従う。
+   画面の試験が無い新しい製品は、jsdomの層から作り、Chromiumの層はengineが要る試験が出た時に足す。
+   散文やライブラリそのものを再テストしない。自分のプロセスと隔離データだけを片付ける。
 
 出力は差分、引き算のbefore/after（文字数・操作回数）、条件ごとの観測・画像と未確認。
 未達は担当が直し、[ui-review](../ui-review/SKILL.md)へ渡す。commit/pushまでの依頼は[deliver](../deliver/SKILL.md)へ戻して完走する。

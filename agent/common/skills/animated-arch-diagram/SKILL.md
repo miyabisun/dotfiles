@@ -46,7 +46,7 @@ description: >-
      プレイヤーの部品は `index.html` の `<figure class="player">` と `<style>` をサイトのレイアウトへ写す。
      ページの見出しは書き換えない（specのtitleが入るのは `data-spec-title` を付けた要素だけ）。
      図は `<figure class="player" data-spec="名前">` ごとに描かれるので、1ページに複数置ける。
-5. ChromiumとPlaywrightで開いて確かめる。ステップの時刻は、ページで `ARCH.timeline(SPECS.<名前>)` を評価すると取れる。
+5. Chromiumで開き、ChromeDriverで操作して確かめる。ステップの時刻はページで `ARCH.timeline(SPECS.<名前>)` を評価すると取れる。
    各ステップの終わり1秒前と、札が流れている途中を `?t=` で撮って見る。
    - 線がノードを横切らず、吹き出しがノードや別の吹き出しに重ならない。
    - consoleに `edge not found` などが出ない。

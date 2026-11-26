@@ -74,7 +74,14 @@ stub を用意して隔離して観測できる範囲 (script・hooks・installe
 
 ## ツール
 
-- **ブラウザ E2E テスト**: 自動 E2E は **Chromium + Playwright** を使う。
-  Obscura の CDP にはリクエスト介入 (`page.route`) と title 報告が無いため
-  である。Obscura はスクレイピングと対話的確認向けで、アサーション駆動の
-  E2E 向けではない。
+- **Web 画面の試験**: 配置・座標・実際の色・本物の再生を測らない試験は、
+  jsdom (browser を起こさない層) に書く。event は試験から発火する。
+  browser の engine が要る試験だけを **Chromium** (版を固定した Chrome for
+  Testing の headless shell) で流す。操縦は ChromeDriver (W3C WebDriver) へ、
+  repository の言葉から HTTP で直に行う。browser は 1 つにして、試験は
+  順に流す。並べて流す仕組みを前提にしない。
+- **Playwright は新しく足さない**。試験を動かす道具の主記憶が browser 本体
+  より大きかったうえ、操縦は規格の口 (WebDriver) で足りるためである。
+  今ある Playwright の試験は repository ごとに移すまでそのまま使ってよい。
+- **Obscura** はスクレイピングと対話的確認向けで、アサーション駆動の試験
+  向けではない。CDP にリクエスト介入と title 報告が無いためである。
