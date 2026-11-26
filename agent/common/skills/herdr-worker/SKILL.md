@@ -22,11 +22,13 @@ homeserverのrootが要る操作は、目的ごとのコマンドをuserに渡�
 
 ## 起動して渡す
 
-1. `herdr workspace create --label <名前> --cwd <cwd> --no-focus` で作る。返る `.result.root_pane.pane_id` を次に使う。
+1. `herdr workspace create --label <名前> --cwd <cwd> --no-focus` で作る。返る JSON から
+   終了時に使う `workspace_id`（`.result.workspace.id` 等）と、起動時に使う `.result.root_pane.pane_id` を控える。
    名前は依頼が分かる短いもの。同名のworkspaceが残っていれば作り直さず、そのworkerを待つ。
-2. `herdr agent start <名前> --kind <runtime> --pane <pane_id>`。runtimeは依頼元と同じ物にする。
+2. `herdr agent start <名前> --kind <runtime> --pane <pane_id>`。`--kind` には `herdr --skill` が定義する
+   runtime 名（`claude`・`codex` など）を渡し、原則は依頼元と同じ物にする。
    依頼元がAntigravity CLI（agy）のときは `claude` にして、実装をClaude Codeへ任せる。
-3. `herdr agent prompt <名前> "<依頼>" --wait` を背景で実行する。依頼は `/goal` で始め、
+3. `herdr agent prompt <名前> "<依頼>" --wait` を、実行ツールの非同期/バックグラウンド実行（シェルの `&` 放置ではない）で待つ。依頼は `/goal` で始め、
    目的・対象（repo・タスクID）・完了条件・報告先を書く。依頼元の会話を前提にしない。
    「userには質問せず、判断できない点は理由を書いて止まる」を添える。
 

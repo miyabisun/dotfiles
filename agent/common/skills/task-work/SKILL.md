@@ -13,7 +13,7 @@ Codexでは `/goal $task-work を使ってtask-serverのタスクを全てこな
 Antigravity CLI（agy）では `/goal task-work skillに従ってtask-serverのタスクを全て完了させてください` と書く。
 agyは配車係を務め、workerは [herdr-worker](../herdr-worker/SKILL.md) に従ってClaude Codeで起動する。
 userによる実行依頼は、対象タスクのcommit・push・mergeを含む。
-リリース対象productでは `$bump-tag patch` まで実行する。 スキルの作成・説明依頼では実行しない。
+リリース対象productでは `bump-tag patch` まで実行する。 スキルの作成・説明依頼では実行しない。
 タスクに明示されたrelease水準やuserの制限は優先する。
 
 全件・範囲の依頼は [配車](#配車) で受け、各タスクをその実行先のworkerへ渡す。
@@ -27,10 +27,10 @@ workerの起動・依頼・見届け・片付けは [herdr-worker](../herdr-work
 task-serverはエージェントの台帳であり、userが手を動かす作業は載せない。それは `todo` でToDoへ追加する。
 
 1. `knowledge-read` を読む。MCPで対象のタスクを一覧する。next_offsetがnullになるまで取得し、
-   通常タスクのdraft・ready・再開できるblockedを対象にする。closedとarchivedは除く。
+   通常タスクのdraft・ready・再開できるblockedを対象にする。closed（done・cancelled・dropped）は除く。
    再開時は、名前が `task-` で始まるworkspaceに残ったworkerを先に待つ。
    後から追加されたタスクも同じ全件依頼の範囲なら取り込む。対象を狭めた依頼では範囲外を実行しない。
-2. 再開できるタスクをreadyにし、依存がdone・releasedで、実行先が表にある1件を優先度順に選ぶ。
+2. 再開できるタスクをreadyにし、依存タスクがdone（release対象productならrelease済み）で、実行先が表にある1件を優先度順に選ぶ。
    blockedの原因が変わっていないものは同じ実行を反復しない。
 3. 選んだタスクの実行先で、herdr-workerに従いworkerを `task-<id先頭8桁>` の名前で起動して、次の依頼を渡す。
    `/goal task-workの1件モードでtask_id=<id>を完走し、doneかblockedをreportする。userには質問せず、判断できない点はblockedの理由に書く。`
@@ -50,7 +50,7 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
    未設定のrepository・releasesは実在と運用設定を確認して`product_update`で補う。releasesの未設定とfalseを混同しない。
    本文はtask_get、報告原文はrun_get、証拠履歴はtask_history、再開情報はtask_checkpoint_getで
    必要なものだけ取得する。一覧や更新応答に詳細が埋め込まれる前提を置かない。
-   詳細はfileへ保存し、本文・legacy・ログ全文を毎回展開しない。
+   詳細はfileへ保存し、本文・`product_get` の `legacy` 欄・ログ全文を毎回展開しない。
 2. [台帳との接続](references/queue.md) に従い、担当がclaim・heartbeat・reportを所有する。
    委譲先や別のloopへ二重に引き取らせない。
 3. task_idを指定して1件claimする。依存未完了・実行先不一致の204は待機であり、blockedにしない。

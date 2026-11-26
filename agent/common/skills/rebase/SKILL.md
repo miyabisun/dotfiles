@@ -20,7 +20,7 @@ description: >-
 ## 起動条件
 
 - **遅れを見つけたとき**: 号令は要らない。その feature branch を載せ直す
-- **user が `$rebase` を起動したとき**: 名指しされた repository と feature branch を載せ直す
+- **user が `rebase` スキルを起動したとき**: 名指しされた repository と feature branch を載せ直す
 - **`merge` から持ち替えて来たとき**: feature を載せ直して push したら、**`merge` へ戻る**。
   rebase 自身は統合まで進まない
 

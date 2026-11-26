@@ -6,7 +6,7 @@ description: >-
 
 # 開発を成果まで届ける
 
-主担当は元の要求と達成条件、現在の工程、残件を持つ。GLOBALの自律性・他者の作業保護に従い、
+主担当は元の要求と達成条件、現在の工程、残件を持つ。共通ルール（Global Rules）の自律性・他者の作業保護に従い、
 依頼された後続まで進める。このskillはcommit・pushまでを授権する。同期と配達は [git](../git/SKILL.md)。
 
 1. [knowledge-read](../knowledge-read/SKILL.md)で関連判断・共有テスト戦略を読み、実装と照合する。

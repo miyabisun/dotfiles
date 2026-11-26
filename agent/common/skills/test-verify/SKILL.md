@@ -22,10 +22,10 @@ description: >-
   通す範囲と回数は[検証の回数と時間](#検証の回数と時間)に従う。
 - UI実測はWebならfrontend-design、Androidならandroid-ui-checkへ渡す。
 
-対象repoで、上の検証を `agent-test run -- <既存コマンドと引数>` で実行する。
+Claude Code / Codex など `agent-test` hook が導入された環境では、対象repoで上の検証を `agent-test run -- <既存コマンドと引数>` で実行する。hook が無い環境では対象repoの既存コマンドを直接実行する。
 stage・検証・commitは別コマンドにし、検証後に編集したら影響範囲を再検証する。
 空の成功コマンドで代用せず、必須検証とhookを迂回しない。各repoへのGit hook配布はしない。
-赤状態の途中作業は許すが、未通過でcommit・完了にしない。中断報告なら `agent-test pause` を使う。
+赤状態の途中作業は許すが、未通過でcommit・完了にしない。hook 環境で中断報告するなら `agent-test pause` を使う。
 これはcommitの許可ではなく、hookはTDDの順序や網羅性も証明しない。
 
 出力は実行コマンド、結果、対象差分/版、mock境界、未確認と実際の障害。

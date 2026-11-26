@@ -17,7 +17,7 @@ description: >-
 
 - 開発はPR駆動ではない。既定ブランチへ直接commitする（[git](../git/SKILL.md)）。
 - 検証の門は手元にある。format・lint・test・buildはcommit前に[test-verify](../test-verify/SKILL.md)で通す。
-  未検証のcommitは `agent-test` hookが拒否する（dotfilesの `agent/README.md`「エージェント共通のテストゲート」）。
+  Claude Code / Codex など `agent-test` hook が導入された環境では、未検証のcommitをhookが拒否する（dotfilesの `agent/README.md`「エージェント共通のテストゲート」）。
 - エージェントはpush後のCIの結果を門として読まない。GitHub Actionsへlint・format・testのゲートを足さない。
   CIはtagを契機とするreleaseのbuildとartifactの公開を持つ。
   経路はknowledgeの `library/playbooks/tag-driven-service-release.md` にある。
