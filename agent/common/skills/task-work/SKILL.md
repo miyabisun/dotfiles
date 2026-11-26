@@ -78,6 +78,7 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
    確認し、空のreleaseを作らない。配備・実機確認は、その作業を含むhomeserver向けタスクで実施する。
 6. 要求された成果がそろってから、doneと結果の原文を一度reportする（haystackにも保存される）。
    merge済みcommitをtaskの対象SHAとし、release tag・artifact・CI URLも証拠に残す。
+   検証の所要は [test-verify](../test-verify/SKILL.md#検証の回数と時間) に従って書く。
    commit・pushやCIの起動で依頼を終えない。
 7. reportの前に [一時領域の片付け](#一時領域の片付け) のチェックリストを通し、消した物と残した物をreportに書く。
 

@@ -219,6 +219,8 @@ git push origin <branch> && git push origin vX.Y.Z
 ```
 
 - message: `release: vX.Y.Z` (Conventional Commits、英語)
+- `git commit` の前に `agent-test run --` で検証を通す (hook は未検証の commit を拒否する)。
+  版の行だけの変更なので、通す物は [test-verify の「検証の回数と時間」](../test-verify/SKILL.md#検証の回数と時間) に従う
 - **§2 が既にそろっていると判定したものは飛ばす** — 一致する release commit や
   local tag はそのまま残す。`git add` は §5 の version file だけを対象にする
 - branch と tag の**両方**を push する (tag だけの push は main を置き去りにする)。

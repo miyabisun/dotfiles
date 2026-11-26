@@ -25,7 +25,7 @@ git コマンドで操作する場面の共通ルール。
 
 ## コミット前の検査
 
-- commitする前に、対象repoのformatterの検査とlinterをテストと一緒に通す。手順は
+- commitする前に、対象repoのformatterの検査とlinterをテストと一緒に通す。手順と、通す範囲・回数は
   [test-verify](../test-verify/SKILL.md)。通っていない差分、検査の後に編集した差分をcommitしない。
 
 ## コミットメッセージ
