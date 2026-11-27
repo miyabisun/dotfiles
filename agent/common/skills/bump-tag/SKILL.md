@@ -19,7 +19,7 @@ description: >-
 user が発行した release task も、より狭い条件でその号令を運べる。
 **claim した task が与えるのは同じ手順であって、同じ scope ではない**。
 その authority が及ぶのは、task が名指しする repository・branch・操作だけである。
-またそれは、user が起動した worker skill が保持している間しか存続しない。
+またそれは、user が起動した task-work の実行が続いている間しか存続しない。
 authority は task の終わりとともに終わる — 自分で作り出さない。
 **自分の release を授権することになる release task を、自分で作らない。**
 
@@ -29,7 +29,7 @@ release は、user がこのskillを起動した場合、user発行のrelease ta
 場合、またはuserが [task-work](../task-work/SKILL.md) による実行を依頼した場合に行う。
 task-workでは、その実行が引き受けたタスクのproductに限りpatchを既定とする。
 明示された水準と制限を優先し、依頼の終了後や別productへ授権を持ち出さない。
-通常のdeliver・レビュー・worker cycleだけではreleaseを発火させない。
+deliverやレビューを終えただけではreleaseしない。
 
 ## 1. bump 水準を決める
 

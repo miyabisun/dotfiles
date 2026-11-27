@@ -1,8 +1,9 @@
 # 台帳との接続
 
-task-serverのMCP接続先を稼働設定から取得する。`/mcp` を除いたURLをHTTPのbaseに
-使う。接続情報はこのskillやdotfilesへ複製しない。MCPは一覧・詳細・readyへの更新、
-HTTPはleaseと結果記録を担う。現行MCPにclaim/heartbeat/reportツールはない。
+HTTPのbaseは今のruntimeに登録したtask-serverのMCPのURLから `/mcp` を除いたものにする。
+URLはClaude Codeなら `claude mcp get task-server`、Codex・Grok・agyなら `codex mcp list` などの `mcp list` で読む。
+登録が無ければURLを推測せず、その不足をblockedの理由に書く。接続情報はこのskillやdotfilesへ複製しない。
+MCPは一覧・詳細・readyへの更新、HTTPはleaseと結果記録を担う。現行MCPにclaim/heartbeat/reportツールはない。
 
 ## 実行者
 
@@ -17,15 +18,12 @@ claimし、heartbeatとreportまで所有する。同じタスクの外部claim�
 | path | 入力 / 応答 |
 | --- | --- |
 | `/worker/claim` | `{"worker":"task-work:<run-id>","execution_target":"<タスクの実行先>","task_id":"…"}` → workerは`task_id`を必ず指定する。204、または `{claim_id,lease_expires_at,task}` |
-| `/worker/heartbeat` | `{"claim_id":"…"}` → 更新された期限。応答期限の半分以内、最大30秒間隔で更新 |
+| `/worker/heartbeat` | `{"claim_id":"…"}` → 期限を延ばした `{claim_id,lease_expires_at,task}`。送る間隔は[leaseの更新](#leaseの更新) |
 | `/worker/report` | `{claim_id,outcome:"done"または"blocked",report_markdown,commit_sha?,checks?,milestones?,run:{worker:"task-work"}}` → `report_id`を含むtask（`?`は省略可） |
 
-claimは `execution_target` に一致し、依存がdoneのreadyから選ぶ。実行先は
-運用側の外部設定から注入された任意名を1つ指定する。製品は名称を固定しない。
-定義と任意の既定値は `EXECUTION_TARGETS_FILE` が指す外部YAMLに置く。
-MCP `execution_targets_get` または `GET /api/execution-targets` で読める。
-タスク・旧claimの未指定を補えるのは、この外部既定値がある場合だけ。
-既定値なしのclaimは400となり、別キューへは配送されない。新しい呼び出しは実行先を明示する。
+claimは `execution_target` に一致し、依存がdoneのreadyから選ぶ。実行先はtask-serverに定義された名前を1つ指定する。
+定義と既定値はMCP `execution_targets_get` または `GET /api/execution-targets` で読める。
+既定値が無い時に実行先を省いたclaimは400となり、別キューへは配送されない。新しい呼び出しは実行先を明示する。
 返されたIDと実行先を確認する。
 実行先不一致・依存未完了はID指定時も204で待機し、それだけでblockedにしない。
 400/404/409は理由を確認し、IDや実行先を外した再取得で代用しない。
@@ -34,12 +32,20 @@ claim中はMCPからtaskを更新できない。heartbeatで期限切れ・claim
 古いclaimで未受理のreportを押し通さない。
 
 成果・検証・残件・参照先は自由なMarkdownの`report_markdown`へ一度書く。
-reportはその原文をhaystackへ保存し、taskとmilestoneから参照する。別のruns追記は不要。
+reportはその原文をtask-serverのrun記録へ1件として保存し、taskとmilestoneから参照する。
+run記録は追記だけの記録で、MCPの説明ではhaystackとも呼ぶ。reportのほかに書き足す必要は無い。
 milestoneは `{name,commit_sha?}`。nameはimplemented/verified/reviewed/merged/released。
 taskの対象SHAに対応する今回の達成分だけを渡す。証拠の説明は原文にまとめ、各欄へ複製しない。
 返された`report_id`の原文はMCP `run_get({id:"…"})`で取得できる。送信失敗なら保存した同じpayloadを
 再送してから次のclaimへ進む。同claim・同payloadは冪等。内容不一致409なら、保存した
 元payloadとtaskの`report_id`を照合し、別内容で上書きしない。
+
+## leaseの更新
+
+claimとheartbeatは、期限をその時点からtask-serverの設定時間だけ先へ延ばす。期限は応答の `lease_expires_at` で分かる。
+残りが半分を切る前にheartbeatを送る。作業の区切りごとに残りを見て送り、build・CI・workerの待機など
+残りの半分より長く続く待ちの間は、実行ツールのバックグラウンド実行で、その半分より短い間隔でheartbeatを繰り返すloopを動かす。
+loopはreportの前と、heartbeatが失敗した時に止める。失敗した時の扱いは[HTTP契約](#http契約)に書いたとおりである。
 
 ## 引き継ぎ情報
 

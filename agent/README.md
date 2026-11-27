@@ -205,13 +205,13 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 
 主な skill:
 
-- `task-creater` — 元の依頼・最小性・利用先を実行前にレビューし、必要な依存タスクを登録する
+- `task-creator` — 元の依頼・最小性・利用先を実行前にレビューし、必要な依存タスクを登録する
 - `deliver` — 事前判断を引き継ぎ、TDD・実装レビュー・commit・pushまで届ける
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
 - `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
 - `task-work` — task-serverの全件処理。agent-hubが配車係となり、各タスクをherdr上の
   workerへ1件ずつ渡す（deliver → merge → patchリリース）。
-  agent-hubで `/goal task-serverのタスクを全て完了させてください` と打って起動する
+  agent-hubの対話型agentに `/goal` で全件の完了を頼んで起動する（runtimeごとの書き方はtask-workにある）
 - `herdr-worker` — agent-hubのherdrでworkerのagentを起動して作業を渡し、
   終わるまで見届ける。task-workの配車もこの経路を使う
 - `project-architecture` — CI・検証の門・release経路・repo構成へ触れる前に、自宅開発の前提を確かめる。
@@ -224,7 +224,7 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 設計・実装・検証は [deliver](common/skills/deliver/SKILL.md) が所有する。
 通常は着手時にリモートと同期し、完了時にcommit・pushする。明示されたローカル限定の指示は優先する。
 同期と競合時の進め方は [git](common/skills/git/SKILL.md) が所有し、push・pullの追加指示を待たない。
-事前の要件・方針判断は [task-creater](common/skills/task-creater/SKILL.md) で担当が行う。登録前に Jev などのレビューは挟まない。
+事前の要件・方針判断は [task-creator](common/skills/task-creator/SKILL.md) で担当が行う。登録前に別モデルなどのレビューは挟まない。
 実装後はその実現と検証証拠を [change-review](common/skills/change-review/SKILL.md) で確認する。
 
 開発の入口は [deliver](common/skills/deliver/SKILL.md)。変更する責務に応じて小さなskillを読み、成果を渡す。
@@ -233,7 +233,7 @@ Webは `frontend-design` で実装・画面の引き算・実測までつなぎ�
 `ui-review` が要求・設計・画像・操作結果を照合し、共通の `test-verify` / `change-review` と配達へ戻す。
 非UI変更ではUI skillを呼ばず、部分変更では関係する責務だけを使う。全件への多人数レビューや新しい承認段階は設けない。
 
-実装後のレビューでは、通常はJevへ元の要求と実差分・検証結果を渡し、適用する観点をそれぞれ0〜1で評価する。
+実装後のレビューでは、通常はTypeSafeのJev（問いごとに確率を返すモデル）へ元の要求と実差分・検証結果を渡し、適用する観点をそれぞれ0〜1で評価する。
 共通review手順のチェックリストを使い、数値と根拠を担当が照合する。合計点による自動合否にはしない。
 Jevを利用できない場合の代替も同じ手順に従う。別モデル・Claude Code・共通コマンド `review` は必須にしない。
 Claude の編集ごとの一括テスト・build hooks は使わず、変更に必要な checks を

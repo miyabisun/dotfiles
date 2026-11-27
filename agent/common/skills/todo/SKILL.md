@@ -10,7 +10,7 @@ description: >-
 
 ToDoはuser本人が手を動かす用事で、agentが実行するタスクではない。
 todo-listのMCP (`todo_list`・`todo_get`・`todo_add`・`todo_update`・`todo_complete`) で扱う。
-agentが実行する作業の登録は [task-creater](../task-creater/SKILL.md)、
+agentが実行する作業の登録は [task-creator](../task-creator/SKILL.md)、
 思いつきの記録は [idea](../idea/SKILL.md) が所有する。
 
 ## 確かめる

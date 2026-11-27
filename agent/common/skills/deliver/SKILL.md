@@ -11,14 +11,14 @@ description: >-
 
 1. [knowledge-read](../knowledge-read/SKILL.md)で関連判断・共有テスト戦略を読み、実装と照合する。
    [実装方針の適用境界](implementation-scope.md)を読み、今回の工程に適用する。
-   [task-creater](../task-creater/SKILL.md)の元の要求と事前判断を引き継ぎ、未実施分だけ行う。
+   [task-creator](../task-creator/SKILL.md)の元の要求と事前判断を引き継ぎ、未実施分だけ行う。
    直接開発の台帳登録は必須にせず、同じ範囲の判断を繰り返さない。
 2. 下の条件に該当するskillを実際に読み、成果を次へ渡す。既読で充足しているものは再利用する。
    新規UIでは適用するデザイン方針・操作・配置・テーマを揃える。backend-onlyではUI skillを呼ばない。
 3. [test-verify](../test-verify/SKILL.md)のTDDと実検証を行い、未達は実装へ戻して修正する。
 4. UIは環境別実測と [ui-review](../ui-review/SKILL.md)の照合を終え、
    [change-review](../change-review/SKILL.md)で元の要求・実差分・検証証拠をレビューする。
-   指摘を直し、影響範囲を確認する。外側がレビューを明示所有する場合だけ [PROCESS.md](PROCESS.md)を使う。
+   指摘を直し、影響範囲を確認する。
 5. gitで自分の差分をcommit・pushし、成果、検証・レビュー、送信先、残件を返す。
    依頼済みのmerge/release/配備は対応skillへ続ける。変更不要なら空commitを作らない。
 
@@ -35,5 +35,5 @@ description: >-
 
 実装方法・可逆な修正・規則の不足は要求と現状から解決し、新しい承認段階にしない。
 実際に不足する情報・権限だけを尋ね、独立した作業を続ける。ツール拒否は実際の理由を区別する。
-範囲外で観測した具体的な問題と、後回しにした目標は、task-createrで重複/利用先を確認して後続タスクに登録し、IDまたは未登録理由と保存先を残す。
+範囲外で観測した具体的な問題と、後回しにした目標は、task-creatorで重複/利用先を確認して後続タスクに登録し、IDまたは未登録理由と保存先を残す。
 元の要求の達成に必要な修正はdraftへ逃がさない。再利用する判断はknowledge-depositでknowledgeへ記録する。

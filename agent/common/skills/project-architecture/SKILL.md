@@ -7,7 +7,7 @@ description: >-
 
 # 開発基盤の前提を確かめる
 
-[task-creater](../task-creater/SKILL.md)の候補や[deliver](../deliver/SKILL.md)の実装が次に触れるとき、書く前に読む。
+[task-creator](../task-creator/SKILL.md)の候補や[deliver](../deliver/SKILL.md)の実装が次に触れるとき、書く前に読む。
 
 - GitHub Actionsのworkflow、format・lint・testを実行する場所
 - ブランチとPR、release・配備の経路
@@ -15,7 +15,7 @@ description: >-
 
 ## 前提
 
-- 開発はPR駆動ではない。既定ブランチへ直接commitする（[git](../git/SKILL.md)）。
+- 開発はPR駆動ではない。レビュー待ちのPRを作らず、既定ブランチへ直接commitするか、作業branchを自分で既定ブランチへmergeする（[git](../git/SKILL.md)）。
 - 検証の門は手元にある。format・lint・test・buildはcommit前に[test-verify](../test-verify/SKILL.md)で通す。
   Claude Code / Codex など `agent-test` hook が導入された環境では、未検証のcommitをhookが拒否する（dotfilesの `agent/README.md`「エージェント共通のテストゲート」）。
 - エージェントはpush後のCIの結果を門として読まない。GitHub Actionsへlint・format・testのゲートを足さない。

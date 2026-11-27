@@ -1,21 +1,19 @@
 ---
 name: change-review
 description: >-
-  実装差分を元の要求と照合し、Jevの項目別評価を根拠確認・修正へつなぐ。deliverの実装後レビューで使う。タスク登録前の候補には使わない。
+  実装差分を元の要求と照合し、TypeSafeのJevによる項目別評価を根拠確認・修正へつなぐ。deliverの実装後レビューで使う。タスク登録前の候補には使わない。
 ---
 
 # Jevの項目別レビュー
 
-実装後の確認として [deliver](../deliver/SKILL.md) が呼び出す。タスク登録前の候補は [task-creater](../task-creater/SKILL.md) の担当が自分で確認し、ここへは渡さない。
-外側が実装レビューを所有する場合は [deliver/PROCESS.md](../deliver/PROCESS.md) に従い、localでは重ねない。
+実装後の確認として [deliver](../deliver/SKILL.md) が呼び出す。タスク登録前の候補は [task-creator](../task-creator/SKILL.md) の担当が自分で確認し、ここへは渡さない。
 
 実装レビューでは、主担当が[実装方針の適用境界](../deliver/implementation-scope.md)に従って実差分を確認する。
 UI差分は [ui-review](../ui-review/SKILL.md) の結果と適用するデザイン方針の関連本文を含める。
 実差分と検証結果を使う。同じ範囲の評価を重ねない。
 
 通常はJevへ、適用する観点をまとめて問い合わせる。各値を0〜1の小数のまま扱い、真偽へ丸めない。
-[Jevを利用できない](#jevへの問い合わせ)場合は、同じ観点を別セッション・サブエージェントへ渡す。
-代替した事実を明記し、担当の推定値をJevの応答とは扱わない。別モデルへの切替は必須にしない。
+Jevを使えない時は [Jevを使えない時](#jevを使えない時) の代わりの手順に従う。
 
 ## 入力と対象選択
 
@@ -52,34 +50,49 @@ UIではDESIGN.mdと変更前後の画面の確認結果を添える。
 
 ## Jevへの問い合わせ
 
-公式 `typesafe-ai` skillを読み、現在のAPI仕様に従う。ローカルに無ければ当回は
-[公式本文](https://raw.githubusercontent.com/typesafe-ai/skills/main/skills/typesafe-ai/SKILL.md)を直接読み、
-導入は[dotfilesの手順](https://github.com/miyabisun/dotfiles/blob/master/docs/utilities.md#typesafe-credentials)に従う。
-公式skillや専用ツールが見つからないことは、Jevを利用できない理由にしない。
-APIキーは `TYPESAFE_API_KEY` を使う。agent-hubでは `~/.config/typesafe/env`（mode600）から読む。
-Bitwardenの `Env Files` / `typesafe` との同期は初回・キー更新時だけとし、通常実行では `rbw` を呼ばない。
+JevはTypeSafeのモデルで、渡した文章（`state`）について、各問いの答えを確率で返す。
+[HTTP API](https://docs.typesafe.ai/api/system-one) の `POST https://api.typesafe.ai/v1/systemone` を、
+`Authorization: Bearer <TYPESAFE_API_KEY>` を付けて呼ぶ。本文は次の形にする。
+
+```json
+{
+  "model": "jev-latest",
+  "state": "<元の要求・実差分・検証結果>",
+  "questions": {"<項目名>": {"type": "noul", "instructions": "<本表の問い>"}}
+}
+```
+
+`type: "noul"` は、問いの文が真である確率を0〜1で返す型である（[Noul](https://docs.typesafe.ai/primitives/noul)）。
+ID自体はモデルへの指示にならないため、問いには意味と除外条件を含める。
+選んだ項目を同じ `state` で一括評価する。各問は独立しており、他の回答を参照させない。
+長さの上限などが要る時だけ公式文書を読む。公式の `typesafe-ai` skillは組み込み方の指針で、この呼び出しには要らない。
+
+APIキーは環境変数 `TYPESAFE_API_KEY` から読む。dotfilesの[導入手順](https://github.com/miyabisun/dotfiles/blob/master/docs/utilities.md#typesafe-credentials)を
+済ませたマシンでは `~/.config/typesafe/env`（mode600）にある。保管庫との同期は導入手順が持ち、通常の実行では `rbw` を呼ばない。
 非対話実行では、APIを呼ぶのと同じshellで次を実行する。キーの値は表示・記録しない。
 
 ```sh
 . "$HOME/.config/typesafe/env" && export TYPESAFE_API_KEY
 ```
 
-[HTTP API](https://docs.typesafe.ai/api) の `POST /v1/systemone` に `model: "jev-latest"` を指定する。
-`questions` のキーを項目名とし、各値に `type: "noul"` と本表の問いを `instructions` として渡す。
-ID自体はモデルへの指示にならないため、問いには意味と除外条件を含める。
-選んだ項目を同じ `state` で一括評価する。各問は独立しており、他の回答を参照させない。
-
 `answers.<項目>.noul` を項目名とともに報告する。
 各回答が `type: "noul"` で、値が有限の数値かつ0〜1であることを確認する。
 欠落・不正値・API失敗は未確認として扱い、0点で埋めない。
 
-Jevを利用できないと判断するのは、キーを読めない認証不足、HTTP・通信の失敗、
-応答全体の不正を実際に確認した場合だけとする。キーが無いと分かればAPIは呼ばない。
-代替へ進むときは、確認した段階と失敗した段階を報告に残す。
+## Jevを使えない時
+
+次のどれかを実際に確かめた時だけ、Jevを使えないと判断する。
+
+- キーが無い、または読めない。この時はAPIを呼ばない。
+- 通信できない。通信を止めるsandboxでは、そのruntimeの設定で通信を許された実行方法があれば、それで1回呼ぶ。
+- HTTPの失敗、または応答全体が上の形に合わない。
+
+その時は同じ `state` と問いをサブエージェントか別セッションに渡し、各項目を0〜1で答えさせる。
+どちらも使えなければ、担当が各項目を自分で評価する。別モデルへの切り替えは要らない。
+失敗した段階と理由、代わりに評価した者を報告に書き、代わりの値をJevの応答として書かない。
 
 ## 値を受け取った後
 
-[Noul](https://docs.typesafe.ai/primitives/noul) は各問いが真である確率を返す。
 0.5は肯定と否定が同程度に不確かという意味で、問題の重大度が半分という意味ではない。
 重大度の段階評価用のScoreとは区別し、今回は各問題の該当確率として扱う。
 

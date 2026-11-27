@@ -8,16 +8,20 @@ description: >-
 # task-work
 
 担当は台帳と次の工程を持ち、各タスクを成果まで進める。
-入口はagent-hubでの `/goal task-serverのタスクを全て完了させてください`。
-Codexでは `/goal $task-work を使ってtask-serverのタスクを全てこなして` と書く。
-Antigravity CLI（agy）では `/goal task-work skillに従ってtask-serverのタスクを全て完了させてください` と書く。
+agent-hubの対話型agentへ `/goal` で全件の完了を頼む一言が入口になる
+（`/goal` の意味は [herdr-worker](../herdr-worker/SKILL.md#起動して渡す)）。runtimeごとに次のように書く。
+
+- Claude Code: `/goal task-serverのタスクを全て完了させてください`
+- Codex: `/goal $task-work を使ってtask-serverのタスクを全てこなして`
+- Antigravity CLI（agy）: `/goal task-work skillに従ってtask-serverのタスクを全て完了させてください`
+
 agyは配車係を務め、workerは [herdr-worker](../herdr-worker/SKILL.md) に従ってClaude Codeで起動する。
 userによる実行依頼は、対象タスクのcommit・push・mergeを含む。
 リリース対象productでは `bump-tag patch` まで実行する。 スキルの作成・説明依頼では実行しない。
 タスクに明示されたrelease水準やuserの制限は優先する。
 
 全件・範囲の依頼は [配車](#配車) で受け、各タスクをその実行先のworkerへ渡す。
-task_idを指定して起動されたworkerは、[引き取る](#引き取る)以降でその1件だけを完走する。
+task_idを指定して起動されたworkerは、[引き取る](#引き取る)以降でその1件だけを完走する（1件モード）。
 
 ## 配車
 
@@ -26,8 +30,8 @@ workerの起動・依頼・見届け・片付けは [herdr-worker](../herdr-work
 配車するのは、実行先がherdr-workerの表にあるタスクだけ。表にない実行先は残件にする。
 task-serverはエージェントの台帳であり、userが手を動かす作業は載せない。それは `todo` でToDoへ追加する。
 
-1. `knowledge-read` を読む。MCPで対象のタスクを一覧する。next_offsetがnullになるまで取得し、
-   通常タスクのdraft・ready・再開できるblockedを対象にする。closed（done・cancelled・dropped）は除く。
+1. `knowledge-read` を読む。MCPの `task_list` で対象のタスクを、next_offsetがnullになるまで取得する。
+   draft・ready・再開できるblockedを対象にする。closed（done・cancelled・dropped）は除く。
    再開時は、名前が `task-` で始まるworkspaceに残ったworkerを先に待つ。
    後から追加されたタスクも同じ全件依頼の範囲なら取り込む。対象を狭めた依頼では範囲外を実行しない。
 2. 再開できるタスクをreadyにし、依存タスクがdone（release対象productならrelease済み）で、実行先が表にある1件を優先度順に選ぶ。
@@ -61,7 +65,8 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
    存在しない・未設定なら、登録済みrepositoryからこの実行者のローカル領域へcloneする。
    別マシンの絶対パスを再現せず、共有productのlocal_pathも書き換えない。
    originの既定ブランチからタスク専用branch・worktreeを作る。通常cloneならそのrepositoryで同じ操作を
-   行う。再開時は記録した自分のworktreeと変更を再利用し、他者の作業を保護する。
+   行う。同じcheckoutにあるuserや他sessionの未commitの変更から離し、中断後に同じ作業先へ戻るためである。
+   再開時は記録した自分のworktreeと変更を再利用し、他者の作業を保護する。
 2. そのworktreeで `knowledge-read` → `deliver` を進め、検証・レビュー・指摘修正と
    commit・pushまで完了する。分担とレビュー方法はdeliverの手順に従う。
    委譲する場合はタスク本文・worktree・規約・達成条件・再開時の証拠の参照先を渡す。
@@ -76,7 +81,7 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
    workflowの成功、公開artifactを確認する。起動確認だけではreleasedにしない。
    `releases: false` はリリース不要と記録する。変更不要なら既存artifactの包含を
    確認し、空のreleaseを作らない。配備・実機確認は、その作業を含むhomeserver向けタスクで実施する。
-6. 要求された成果がそろってから、doneと結果の原文を一度reportする（haystackにも保存される）。
+6. 要求された成果がそろってから、doneと結果の原文を一度reportする。
    merge済みcommitをtaskの対象SHAとし、release tag・artifact・CI URLも証拠に残す。
    検証の所要は [test-verify](../test-verify/SKILL.md#検証の回数と時間) に従って書く。
    commit・pushやCIの起動で依頼を終えない。
@@ -85,7 +90,7 @@ task-serverはエージェントの台帳であり、userが手を動かす作�
 ## 開発と実機作業の引き継ぎ
 
 タスク作成・範囲変更、利用先の確認、実行先・depends_on・完了条件の分割は
-[task-creater](../task-creater/SKILL.md) が所有する。通常のready化では登録前の確認を重ねない。
+[task-creator](../task-creator/SKILL.md) が所有する。通常のready化では登録前の確認を重ねない。
 実行担当は事前判断をdeliverへ渡し、前提タスクの完了報告から対象版と検証証拠を後続へ引き継ぐ。
 授権済みの後続を続け、範囲外の発見はdeliverのdraft登録に従う。
 

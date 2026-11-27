@@ -9,7 +9,7 @@ description: >-
 
 アイデアはタスクの手前にあるメモで、状態と実行先を持たない。task-serverのMCP
 (`idea_list`・`idea_get`・`idea_create`・`idea_update`・`idea_archive`・`idea_promote`) で扱う。
-タスクの登録・範囲変更は [task-creater](../task-creater/SKILL.md) が所有する。
+タスクの登録・範囲変更は [task-creator](../task-creator/SKILL.md) が所有する。
 
 ## 記録する
 
@@ -37,6 +37,6 @@ conflictなら読み直して追記を統合し、送り直す。
 
 ## タスクにする
 
-userが明示したときだけ行う。task-createrで元の依頼・範囲・完了条件・実行先を決める。
+userが明示したときだけ行う。task-creatorで元の依頼・範囲・完了条件・実行先を決める。
 `idea_promote` には、`body` にタスクの範囲と完了条件、`execution_target` に実行先を渡す。
 作られるタスクはdraftのままで、アイデアの本文は変わらない。再実行しても同じタスクが返る。

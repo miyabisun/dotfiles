@@ -8,7 +8,7 @@
 | 場面 | スキル |
 |---|---|
 | git コマンドでの操作 | `git` |
-| タスクの作成・目的や範囲の大幅な変更 | `task-creater` |
+| タスクの作成・目的や範囲の大幅な変更 | `task-creator` |
 | アイデアの記録・アイデア出し・調査・タスク化 | `idea` |
 | 自分が手を動かすToDoの追加・確認・完了 (「todoに追加して」「todo-server」) | `todo` |
 | 開発を行う | `knowledge-read` → `deliver` |

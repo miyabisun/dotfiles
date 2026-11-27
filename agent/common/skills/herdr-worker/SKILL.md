@@ -28,9 +28,12 @@ homeserverのrootが要る操作は、目的ごとのコマンドをuserに渡�
 2. `herdr agent start <名前> --kind <runtime> --pane <pane_id>`。`--kind` には `herdr --skill` が定義する
    runtime 名（`claude`・`codex` など）を渡し、原則は依頼元と同じ物にする。
    依頼元がAntigravity CLI（agy）のときは `claude` にして、実装をClaude Codeへ任せる。
-3. `herdr agent prompt <名前> "<依頼>" --wait` を、実行ツールの非同期/バックグラウンド実行（シェルの `&` 放置ではない）で待つ。依頼は `/goal` で始め、
-   目的・対象（repo・タスクID）・完了条件・報告先を書く。依頼元の会話を前提にしない。
+3. `herdr agent prompt <名前> "<依頼>" --wait` を、実行ツールの非同期/バックグラウンド実行（シェルの `&` 放置ではない）で待つ。
+   依頼には目的・対象（repo・タスクID）・完了条件・報告先を書く。依頼元の会話を前提にしない。
    「userには質問せず、判断できない点は理由を書いて止まる」を添える。
+   依頼の先頭には `/goal` を付け、workerが途中の報告で止まらずに完了条件まで進むようにする。
+   `/goal <達成条件>` は対話型のagent CLI（Claude Code・Codex・Grok・agy）のcommandで、
+   続く文を達成条件にして、満たすまでturnをまたいで作業を続けさせる。受け付けないruntimeでは付けずに送る。
 
 ## 見届ける
 
