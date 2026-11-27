@@ -20,8 +20,10 @@ description: >-
 
 ## Jevによる項目別の確認
 
-公式 `typesafe-ai` を読み、現行のScore APIを確認する。未導入時の参照、認証、利用不可の判定は
-[change-reviewの問い合わせ手順](../change-review/SKILL.md#jevへの問い合わせ) を使う。
+下のスクリプトが TypeSafe の Jev へ Score API で問い合わせる。認証は
+[change-reviewの問い合わせ手順](../change-review/SKILL.md#jevへの問い合わせ)、
+利用不可の判定は [Jevを使えない時](../change-review/SKILL.md#jevを使えない時) に従う
+（仕様の細部が要る時だけ公式の [HTTP API](https://docs.typesafe.ai/api/system-one) を読む。`typesafe-ai` skill の導入は要らない）。
 新たな認証設定や共通レビュー基盤は作らない。このskillのスクリプトは文書評価だけを担う。
 
 対象文書ごとに、repo外へ `context.json` を用意する。必須項目は以下の4つの文字列。
