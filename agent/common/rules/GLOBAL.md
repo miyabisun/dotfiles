@@ -11,6 +11,7 @@
 | タスクの作成・目的や範囲の大幅な変更 | `task-creator` |
 | アイデアの記録・アイデア出し・調査・タスク化 | `idea` |
 | 自分が手を動かすToDoの追加・確認・完了 (「todoに追加して」「todo-server」) | `todo` |
+| 作った動画・画像を user に見せる・検査や試しで書き出す・depot の物を消す | `depot` |
 | 開発を行う | `knowledge-read` → `deliver` |
 | agent-talk のブラウザから届いた人間の指示への対応 | `agent-talk` |
 

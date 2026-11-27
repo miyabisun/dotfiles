@@ -64,6 +64,9 @@ OrcaServerで公開モデルをプレートへ保存したり、フィラメン�
 agent-hubのGPUを使う仕事（ComfyUIの動画・画像、three-liveの書き出し）は、切換器 gpu-switch で持ち主を切り替えてから始めます。
 手順とMCPの登録は[gpu-switch](common/skills/gpu-switch/SKILL.md)にあります。
 
+userに見せる動画・画像はagent-hubのdepot-serverへ入れ、URLを渡します。
+入れる物・入れない物と消してよい物は[depot](common/skills/depot/SKILL.md)にあります。
+
 ## Claude Codeの指示ファイル
 
 共有規約は `~/.claude/rules/GLOBAL.md` から読み込みます。
