@@ -1,42 +1,25 @@
 ---
 name: idea
 description: >-
-  タスクになるか未定の思いつき・構想を、task-serverのアイデアとして記録・調査・破棄・タスク化する。
+  タスクになるか未定の思いつき・構想を、task-server の ideas フォルダで記録・調査・破棄・タスク化する。
   「アイデア出し」「アイデアとして残す」「このアイデアを調べて」などの依頼で使う。
 ---
 
 # idea
 
-アイデアはタスクの手前にあるメモで、状態と実行先を持たない。task-serverのMCP
-(`idea_list`・`idea_get`・`idea_create`・`idea_update`・`idea_archive`・`idea_promote`) で扱う。
-タスクの登録・範囲変更は [task-creator](../task-creator/SKILL.md) が所有する。
+アイデアは task-server の `ideas` フォルダで管理する。MCP ツールはタスクと共通（`task_list` / `task_search` / `task_get` / `task_create` / `task_append` / `task_move` / `task_delete`）。
 
 ## 記録する
 
-1. `idea_list` (分かれば `product_id` で絞る) で同じ主題のアイデアを探す。
-   あれば新規作成せず、そのアイデアへ追記する。
-2. `idea_create` で登録する。タイトルだけでもよい。本文 (Markdown) には分かる範囲で次を書く。
-   - 元の発言 (引用) と、そこから読み取った狙い
-   - 実現案・調べた事実・出典URL
-   - 未決の問い
-   事実・userの決定・担当の推測を分けて書く。対象productが登録済みなら `product_id` を付ける。
-3. 作成したID・タイトル・revisionを短く返す。
-
-「アイデア出し」を頼まれたら、担当が候補を考えて会話で示す。
-userが選んだものを1件1アイデアで登録する。登録まで頼まれていれば全件を登録する。
+1. `task_search`（または `task_list(status="ideas")`）で同じ主題が無いか探す。あれば新規作成せず `task_append` で追記する。
+2. `task_create(title=..., status="ideas", project=..., body=...)` で登録する。ユーザーの生発言・誤字脱字を引用コピペせず、狙い・案・調査結果・未決事項を素直な日本語で短く書く。
+3. ID とタイトルを短く返す。
 
 ## 調べて育てる
 
-`idea_get` で本文とrevisionを読み、調査結果を足した本文全体を
-`idea_update` に `expected_revision` 付きで送る。本文は全置換なので、読んだ内容を落とさない。
-conflictなら読み直して追記を統合し、送り直す。
+`task_append(id, text=...)` で調査結果や出典 URL を末尾へ追記する（本文全体を送り直さない）。
 
-## 破棄する
+## 破棄する・タスク化する
 
-やめる理由を本文に追記してから `idea_archive` する。アーカイブ後は読めるが編集できない。
-
-## タスクにする
-
-userが明示したときだけ行う。task-creatorで元の依頼・範囲・完了条件・実行先を決める。
-`idea_promote` には、`body` にタスクの範囲と完了条件、`execution_target` に実行先を渡す。
-作られるタスクはdraftのままで、アイデアの本文は変わらない。再実行しても同じタスクが返る。
+- 破棄: 残す価値がなければ `task_delete(id)`。経緯を残すなら理由を `task_append` して `done` へ移す（必要ならタグ `idea-archived`）。
+- タスク化: user が明示したときだけ行う。[task-creator](../task-creator/SKILL.md) に従って完了条件を整え、`task_update(id, body=..., status="draft")`（実行指示があれば `status="ready"`）で移動する。

@@ -208,13 +208,13 @@ UIの表示と操作は既存のdeliverレビューで確認する。
 
 主な skill:
 
-- `task-creator` — 元の依頼・最小性・利用先を実行前にレビューし、必要な依存タスクを登録する
+- `task-creator` — 要件と完了条件を短く整理し、task-server へ登録する
 - `deliver` — 事前判断を引き継ぎ、TDD・実装レビュー・commit・pushまで届ける
 - `refactor` — 外から見える挙動を保ち、実装の重複や不要な機構を減らす
 - `slim` — 不要な機能・設定・責務・運用工程を取り除く。refactor中に気付いた候補も受け取る
-- `task-work` — task-serverの全件処理。agent-hubが配車係となり、各タスクをherdr上の
-  workerへ1件ずつ渡す（deliver → merge → patchリリース）。
-  agent-hubの対話型agentに `/goal` で全件の完了を頼んで起動する（runtimeごとの書き方はtask-workにある）
+- `task-work` — task-server の ready タスクを全件処理する。agent-hub が配車係となり、herdr 上の
+  worker へ渡す（deliver → merge → 必要なら patch リリース）。
+  agent-hub の対話型 agent に `/goal` で全件の完了を頼んで起動する（runtime ごとの書き方は task-work にある）
 - `herdr-worker` — agent-hubのherdrでworkerのagentを起動して作業を渡し、
   終わるまで見届ける。task-workの配車もこの経路を使う
 - `project-architecture` — CI・検証の門・release経路・repo構成へ触れる前に、自宅開発の前提を確かめる。
