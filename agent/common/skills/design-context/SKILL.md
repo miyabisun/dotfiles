@@ -13,15 +13,12 @@ description: >-
 
 ## 参照する文書
 
-1. knowledgeの `library/policies/home-development-rules.md#design-ownership`、
-   `library/playbooks/project-design-md-adoption.md`、
-   `library/lessons/preserve-design-authority-across-workflow-tiers.md` を読む。
-   対象product indexの関連判断も照合し、共通原本の所在はplaybookのsourceから辿る。
-2. 製品rootの `DESIGN.md` を読む。rootがない既存製品だけは `docs/DESIGN.md` を使う。
-   新規UI、原本の導入が未確認、または今回変える規則に不足・矛盾がある場合は、
-   rust-svelte-templateのroot DESIGN.mdの該当節まで実際に読む。
-3. 現在のユーザー要求は、製品DESIGN.mdの既存記述より優先する。既存記述は過去の判断であり、
-   原文参照のない「ユーザーの決定」は担当判断として要求に合わせて直す（[knowledge-read](../knowledge-read/SKILL.md)末尾）。
+1. knowledge の `rules/design-system.md` と、対象があれば `projects/<repo>.md` を読む。
+   共通原本は `rust-svelte-template` の root `DESIGN.md` を参照する。
+2. 製品 root の `DESIGN.md` を読む。root がない既存製品だけは `docs/DESIGN.md` を使う。
+   新規 UI、原本の導入が未確認、または今回変える規則に不足・矛盾がある場合は、
+   `rust-svelte-template` の root `DESIGN.md` の該当節まで実際に読む。
+3. 現在のユーザー要求は、製品 `DESIGN.md` の既存記述より優先する。
    原本更新を理由に既存画面を一括上書きしない。
 
 ## 操作の流れ
@@ -47,10 +44,10 @@ description: >-
 
 ## 製品DESIGN.mdへ書くもの
 
-書くのは意匠の規則（色・寸法・部品・配置の原則）と、原文参照付きのユーザーの決定だけとする。
+書くのは意匠の規則（色・寸法・部品・配置の原則）だけとする。
 ボタン文言、取得間隔などのタイミング、プロトコル・API・要求ID、今回の画面の文字列や並びは書かない。
 これらは実装とテストが持つ。今回作った画面を、以後変えさせない規則にしない。
-記録の原則は [knowledge-deposit](../knowledge-deposit/SKILL.md)に従う。外部必読や非公開pathを残さない。
+外部必読や非公開pathを `DESIGN.md` に残さない。
 
 出力は確認した文書のpath/節、今回の流れ・配置・テーマの決定、製品DESIGN.mdの差分。
 Webは[frontend-design](../frontend-design/SKILL.md)、Androidは[android-ui](../android-ui/SKILL.md)へ渡す。

@@ -9,7 +9,7 @@ description: >-
 主担当は元の要求と達成条件、現在の工程、残件を持つ。共通ルール（Global Rules）の自律性・他者の作業保護に従い、
 依頼された後続まで進める。このskillはcommit・pushまでを授権する。同期と配達は [git](../git/SKILL.md)。
 
-1. [knowledge-read](../knowledge-read/SKILL.md)で関連判断・共有テスト戦略を読み、実装と照合する。
+1. [knowledge-read](../knowledge-read/SKILL.md)で `MEMORY.md` と関連メモを読み、実装と照合する。
    [実装方針の適用境界](implementation-scope.md)を読み、今回の工程に適用する。
    [task-creator](../task-creator/SKILL.md)の元の要求と事前判断を引き継ぎ、未実施分だけ行う。
    直接開発の台帳登録は必須にせず、同じ範囲の判断を繰り返さない。
@@ -36,4 +36,4 @@ description: >-
 実装方法・可逆な修正・規則の不足は要求と現状から解決し、新しい承認段階にしない。
 実際に不足する情報・権限だけを尋ね、独立した作業を続ける。ツール拒否は実際の理由を区別する。
 範囲外で観測した具体的な問題と、後回しにした目標は、task-creatorで重複/利用先を確認して後続タスクに登録し、IDまたは未登録理由と保存先を残す。
-元の要求の達成に必要な修正はdraftへ逃がさない。再利用する判断はknowledge-depositでknowledgeへ記録する。
+元の要求の達成に必要な修正はdraftへ逃がさない。再利用する NG/正解行動やコード外の地雷が得られたときだけ `knowledge-deposit` で更新する（毎回の作業日記は書かない）。

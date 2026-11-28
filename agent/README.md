@@ -111,10 +111,12 @@ GLOBAL.mdには書かず、agyだけに要る指示をここに置く。
 
 ### 記憶
 
-agyはClaude Codeの記憶（`~/.claude/projects/<cwdの英数字以外を-にした名前>/memory/MEMORY.md`）を、
-作業の始めに自分で読む。読み方は `rules/claude-memory.md` が持ち、記憶が無い場所ではそのまま動く。
-記憶の中のClaude Codeの道具名はagyの道具（`run_command`・`read_file`・`invoke_subagent` など）へ読み替える。
-agyから記憶へ書き込む仕組みは持たない。
+全エージェント共通の規範・地雷メモリは `$KNOWLEDGE_REPO/MEMORY.md` に集約し、`GLOBAL.md` と
+`knowledge-read` / `knowledge-deposit` を通じて Claude Code・Codex・agy・Grok で共有します。
+
+それに加えて agy は、既存の Claude Code ローカル記憶（`~/.claude/projects/<cwdの英数字以外を-にした名前>/memory/MEMORY.md`）も
+作業の始めに読み取り専用で参照できます。読み方は `rules/claude-memory.md` が持ち、記憶が無い場所ではそのまま動きます。
+記憶の中の Claude Code の道具名は agy の道具（`run_command`・`read_file`・`invoke_subagent` など）へ読み替えます。
 
 ### agent
 
@@ -221,8 +223,8 @@ UIの表示と操作は既存のdeliverレビューで確認する。
   検査は手元で通し、Actionsへlint・testのゲートを足さない
 - `git` — commit message とブランチフローの house rule
 - `bump-tag` — semver の bump、tag、push
-- `knowledge-deposit` — 再利用できる knowledge を預け、形式lintと担当の内容確認を経て
-  自分の差分をcommit・pushする
+- `knowledge-deposit` — 再利用する NG/正解行動やコード外の地雷だけを `$KNOWLEDGE_REPO` へ上書き維持し、
+  `scripts/lint` を通して自分の差分を commit・push する
 
 設計・実装・検証は [deliver](common/skills/deliver/SKILL.md) が所有する。
 通常は着手時にリモートと同期し、完了時にcommit・pushする。明示されたローカル限定の指示は優先する。
@@ -295,7 +297,7 @@ Grok 1.0.13 は `PostToolUse` の出力本文を破棄するため、adapter が
 候補が無ければ無出力、見直し候補と起動失敗は区別して返す。候補は info を含め全件を返す。複数ファイルの patch は編集先を
 重複なく検査し、削除ファイルは除く。hook 全体の時間枠を超えた対象は未実行として返す。
 指摘は補助情報であり、文章の好みを承認待ちや検証完了の証明にしない。
-knowledge repository の形式 lint は OKF の検査を所有し、この hook からは呼ばない。
+knowledge repository の形式 lint は秘密情報・非公開 host・リンク切れ・行数上限の検査を所有し、この hook からは呼ばない。
 
 `bin/install` は各 runtime の hooks directory をリンクする。既存の Claude settings は
 machine-local なので matcher の変更を `config-merge` で取り込む。Codex の新規・変更 hook は

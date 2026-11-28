@@ -38,10 +38,21 @@
   拒否しない。指示の優先順位と実際の実行権限には従う
 - 問題のある機能や規則は、依頼範囲内で削除・簡素化してよい。
 
+## 共有メモリ（`$KNOWLEDGE_REPO/MEMORY.md`）
+
+Claude Code・Codex・Gemini（Antigravity）・Grok の全エージェントが同じ規範と地雷を共有するため、
+`$KNOWLEDGE_REPO` を唯一の長期記憶にする。
+
+- 作業開始時と対象 repo 切替時に `$KNOWLEDGE_REPO/MEMORY.md` を読む。
+  関係する `rules/`・`projects/<repo>.md`・`profile/` だけを実装直前に開く。
+- コード・設定・今回のユーザー指示と食い違えば、今の事実と指示を優先する。
+- 再利用する「NG / 正解行動」やコード外の地雷・物理実測だけ `knowledge-deposit` で上書き維持する。
+  タスク日記・完了報告・逐語引用は書かず、ツール固有のローカル記憶へ分散させない。
+
 ## R18 の区画
 
 - R18 の属性が付いたラベルと、path に `r18/` を含む置き場の中身を、読まない・書かない・
-  要求で名指ししない。方針の本文は knowledge の `library/policies/r18-zoning.md`
+  要求で名指ししない。方針の本文は knowledge の `rules/r18-zoning.md`
 
 ## 設計
 
@@ -67,11 +78,8 @@
 stub を用意して隔離して観測できる範囲 (script・hooks・installer など) は
 実行可能コードとしてテストしてよい。
 
-上の 4 項目は default である。project 固有の共有テスト戦略は開発着手時に
-決めて外部 knowledge に置き、対象の index から辿れるようにする。何を測り、
-副作用をどう隔離するかという判断と背景を共有し、実際の検証コマンド・CI・
-テスト設定は対象 repository が持つ。既存 project では `knowledge-read` で
-関連戦略を読み、実装と設定を確認する。戦略が未記録でも一次情報で検証を進める。
+上の 4 項目を既定とする。プロジェクト固有の検証境界が `$KNOWLEDGE_REPO/projects/` にあれば
+`knowledge-read` で確認し、実際の検証コマンド・CI・テスト設定は対象 repository の一次情報に従う。
 
 ## ツール
 
